@@ -832,9 +832,9 @@ end function estimate_theta
 		! Right now, we only have approximate local optima.  We need to apply
 		! an iterative optimization algorithm to improve the precision.
 		do j=1,size(localmin)
-			if (localmin(j) == .TRUE.) then
+			if (localmin(j) .eqv. .TRUE.) then
 				thetavec(j) = brent(thetavec(j-1),thetavec(j),thetavec(j+1),lambda_for_brent,1.0e-10_dp,simplify_moments(moment_vector))
-			else if (localmax(j) == .TRUE.) then
+			else if (localmax(j) .eqv. .TRUE.) then
 				thetavec(j) = brent(thetavec(j-1),thetavec(j),thetavec(j+1),negative_lambda_for_brent,1.0e-10_dp,simplify_moments(moment_vector))
 			end if
 		end do

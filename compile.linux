@@ -1,10 +1,10 @@
+#!/bin/bash
+
 # Script for compiling RCR program on Linux (at robson.westgrid.ca)
 # IBM XL Fortran compiler, with ESSL library:
-xlf_r -o rcr -qnosave rcrlib_ibm.f90 rcrutil.f90 rcr.f90 -lessl
+# xlf_r -o rcr -qnosave rcrlib_ibm.f90 rcrutil.f90 rcr.f90 -lessl
 # gNU Fortran (gfortran) compiler, no libraries.  Does not work yet.
-# gfortran -o rcr rcrlib_aaa.f90 rcrutil.f90 rcr.f90 
+gfortran -o rcr rcrlib_aaa.f90 rcrutil.f90 rcr.f90 
 rm *.o
 rm *.mod
 rm *~
-# 
-

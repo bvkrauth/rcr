@@ -1,0 +1,235 @@
+
+Changes in Version 1.9
+	1. Changed text in RCRPLOT.ADO to use notation in published paper
+		- Updated PLOT_TEST.DO
+	2. 
+
+
+
+Changes in Version 1.1
+	1. Added new postestimation command TEST_THETA.  
+		- New ado-file TEST_THETA.ADO
+		- New help file TEST_THETA.HLP
+		- Added link to TEST_THETA.HLP in RCR_POSTESTIMATION.HLP
+		- Added TEST_THETA example to sample script RCR_EXAMPLE.DO
+		- Added TEST_THETA to certification script RCR_CERTIFICATION.DO  
+		- Added TEST_THETA.ADO and TEST_THETA.HLP to RCR.PKG and changed version number.
+
+
+Changes in Version 1.0
+	1. Updated references in help files, version numbers, and release dates.
+	2. Dropped temporary line of code in RCR.F90 that wrote results to stdout.
+
+
+Changes in Version 0.9.14 
+	1. Added new options for citype to RCR.ADO
+		- "Lower": One-tailed lower confidence interval for theta_H
+		- "Upper": One-tailed upper confidence interval for theta_L
+	2. Updated RCR.HLP to include these new options.
+
+Changes in Version 0.9.13 
+	1. Usability enhancements to RCRPLOT
+		- Minor adjustments to error handling in RCRPLOT.ADO
+		- Added Greek leters to plot in RCRPLOT.ADO (only in Stata 11.0 and up)
+		- Added code to RCR_CERTIFICATION.DO testing DETAILS option and RCRPLOT postestimation command 
+	2. Deleted references to "Stoye" confidence interval in RCR.HLP.  The published version of Stoye (2009) 
+	   identifies sufficient conditions for Imbens-Manski to be valid.  They are satisfied for this model, and 
+ 	   so the (not particularly easy) Stoye calculation isn't worth adding to the code.
+	3. Added the line "g WIN64A rcr.exe" to the file RCR.PKG.  This allows the program to be installed for users
+  	   running 64-bit Stata.
+
+
+Changes in Version 0.9.12 
+	1. The user can now specify the DETAILS option to the Stata command.  When this option is specified,
+		- The executable outputs the lambda(theta) function to a file
+		- Stata reads in this file (in place of the current data set).
+		- It creates a graph of the lambda(theta) function.
+	   This information can be used to construct graphs like those in the paper.
+	2. I have added a new Stata postestimation command RCRPLOT that graphs the lambda(theta) function.  
+	   In order for it to work, the DETAIL option must have been specified.  RCRPLOT
+	   is currently fairly primitive, but it does take the optional arguments xlim and ylim to
+	   specify what ranges of the funciton to graph.
+	3. Left to do for this version:
+		- Create help file RCRPLOT.HLP - done
+		- Add RCRPLOT.ADO and RCRPLOT.HLP to the package RCR.PKG - done.
+		- Update RCR.HLP to reflect new DETAIL option - done
+		- Update RCR_POSTESTIMATION.HLP to include reference to RCRPLOT - done
+		- Run certification script - done.
+		- Check code for potential inelegant crashes - done
+
+Changes in Version 0.9.11 
+	1. Made the sample do-file and data set provided to users more friendly and useful.
+		- Changed the names from RCR_TEST.DO and RCR_TEST.DTA to RCR_EXAMPLE.DO and RCR_EXAMPLE.DTA.
+		- Updated the contents of RCR.PKG and ARCHIVE.BAT to reflect the name change.
+		- Changed the contents of RCR_EXAMPLE.DO to provide detailed examples of all main features.
+
+
+Changes in Version 0.9.10 
+	1. Fixed BUG010.  This led to the standard errors suddenly blowing up when a sufficiently
+	   large constant is added to one of the variables.  The cause of this is that the 
+	   algorithm for approximating the derivative is unable to find a good approximation.
+	   That possibility is unavoidable; however there is supposed to be code that
+	   issued a warning message when this happens.  That code was in the wrong place,
+	   and thus never executed.
+		- In the functions ESTIMATE_PARAMETER and ESTIMATE_THETA I moved the 
+                  line "if (n .eq. nmax) then" to the right spot.
+		- I also changed the warning message to be clearer.
+
+Changes in Version 0.9.09 
+ 	1. Enhancement: RCR.ADO now prints warning messages passed in the log file.
+	2. Fixed BUG011 (hopefully).  This bug led to numerical instability in the
+	   estimate of thetaH.  Specifically, bracket_theta_star would find values
+	   of theta near thetastar that would be finite and nonzero when lambdafast
+	   was called in bracket_theta_star, but that would be zero when lambdafast
+	   was called elsewhere.  Even more troubling, the calculation works OK 
+	   for the test case in BUG011.DO if certain irrelevant write statements are 
+	   added to the code.  I believe that this bug is the result of some floating-point
+	   optimizations used with lambdafast.  It could also reflect some memory hole,
+	   and so should be monitored.  	   
+		- Added the compiler option /fltconsistency to compile.bat.  This option
+		  forces the compiler to avoid floating point optimizations that affect
+		  consistency of results.
+		- In the course of fixing this bug I noticed another potential bug.  
+		  I did not address it, but put a note in the code.
+		  In estimate_theta_segments, the bracket_theta_star function is used
+		  to take the two values in thetavec that are closest to thetastar and
+		  replace them with values that are guaranteed to give finite and nonzero
+		  lambda.  But there's nothing to guarantee that these are still the two
+		  values in thetavec that are the closest to thetastar.
+	3. Fixed potential bug in REMOVE_DUPLICATES function.  This function is designed
+	   to strip out extra spaces from a string.  Because the string cannot be resized,
+	   the end of the string needs to be padded with some arbitrary character, and
+	   then these characters deleted at the end of the function.  The function
+	   used "Z" as the arbitrary character.  But if the string includes "Z" things
+	   could go very wrong.
+		- Moved this function to the interior of the WRITE_RESULTS function 
+		  so I wouldn't be tempted to use it elsewhere.  It's only used to
+		  strip extra blanks from writing of numerical results.
+		- Added an optional argument for the arbitrary character (default is "Z")
+		- Function checks to make sure the arbitrary character isn't in the string,
+		  and issues an error if it is.
+
+
+Changes in Version 0.9.08
+	1. Fixed BUG007.  When one of the variables was either constant or perfectly collinear
+	   with the other variables, the program didn't fail very elegantly.
+		- Added code to RCR.ADO that checks for various problems.  Sometimes an error is 
+		  issued, other times a warning message.
+		- The code still doesn't catch when the control variables are perfectly unrelated
+		  to either the outcome or treatment.  That case still leads to problems
+		  with RCR.EXE but is hard to detect.
+
+
+Changes in Version 0.9.07
+	1. Fixed BUG009.  Results were not invariant to changes in scale of data.
+		- This was implemented in RCR.ADO by simply changing the line
+				format %10.0g
+		  to 
+				format $16.0g
+		  This increases the precision of data passed from Stata to the executable.
+		- In order to implement this I needed to update rcr_certification.do.
+
+Changes in Version 0.9.06 
+	1. Fixing BUG008.  This is actually two bugs.  Bug #1: When running a particular
+	   (perfectly innocuous) version of the command, the RCR.EXE program fails because
+	   it is unable to bracket the root in zbrent.  Bug #2: It fails incorrectly, because
+	   it doesn't leave any information in the log file for the Stata program to identify 
+	   the problem.
+		- Changed the zbrent function to fix bug #2.  This is simply a matter of 
+		  adding a line to the code that writes an error message to the log file before
+		  dying.
+		- Solving bug #1 is a bit more complicated.  I determined the problem was that
+		  for extreme values of theta, lambda(theta) was getting calculated as zero.
+		  This is because its denominator went above huge() and was called infinity 
+		  but its numerator did not.  The solution was to narrow the search range 
+		  for theta.  This was done by adding the line
+			thetamax = minval( (/1.0e100_dp , thetamax /) )
+		  to the function ESTIMATE_THETA_SEGMENTS
+
+
+Changes in Version 0.9.05
+	1. Fixed BUG004.  If you have too few observations it should give an error message.  But instead it
+	   tries to estimate the model and produces unpredictable results.
+		- Changed RCR.ADO so that it gives an error message.
+	2. Fixed BUG005. If the standard errors are undefined the confidence interval calculations are 
+	   based on standard errors of zero.  Standard errors are undefined if clustering on a constant,
+	   setting vceadj(0.0), or setting lambda(. .).
+		- Changed RCR.ADO (both in conservative and imbens-manski versions) so that confidence 
+		  intervals for undefined standard errors are (-inf,+inf).
+		- Confidence intervals are still reported as missing if the CI type is unsupported.
+	3. Fixed BUG006.  If you give a negative value for vceadj, it uses zero instead of giving an error 
+	   message.  
+		- Changed RCR.ADO so that it gives an error message
+
+
+Changes in Version 0.9.04
+	1. Fixed BUG001.  If you only have one control variable, then corr(zhat,yhat)=1 by construction. 
+	   With rounding error, Stata sometimes sends moments that imply corr(zhat,yhat) > 1.  
+ 	   The RCR.EXE program is designed to produce an error message when that happens - if it 
+  	   didn't something worse might happen.  Note that whether this happens or not depends on the 
+	   sign of the rounding error, and so doesn't always happen.
+		- Added a line of code in SIMPLIFY_MOMENTS that forces the correlation to be exactly 1
+		  whenever there is only one control variable.
+	2. Fixed BUG002.  In this bug, specifying the same variable for both the dependent variable and the
+	   explanatory variable of interest leads to the program crashing (stack overflow).  The source of 
+ 	   the problem was that ESTIMATE_THETA had local arrays whose size depended on the
+	   size of THETA_SEGMENTS.  This is bad, because there's almost no limit to how big THETA_SEGMENTS
+	   can be.  This particular scneario (same variable) leads to a really big THETA_SEGMENTS.
+		- CHanged all arrays in ESTIMATE_THETA whose size depends on the size of THETA_SEGMENTS
+		  to allocatable arrays (i.e., pulled from the heap rather than the stack).
+
+Changes in Version 0.9.03 
+	1. Fixed BUG003.  This bug led to the program crashing whenever there were 10 or more 
+           explanatory variables
+		- The source of the bug was a line in the READ_DATA subroutine that wrote MOMENT_VECTOR
+		  to a string buffer before calling WRITE_TO_LOGFILE on the buffer.  Problem is that
+		  the buffer is fixed length and MOMENT_VECTOR was too big.
+		- I fixed this by adding an optional real array argument (ARR) to WRITE_TO_LOGFILE and
+		  having it handle the MOMENT_VECTOR directly.
+
+
+Changes in Version 0.9.02
+	1. Introduced new (and much more sophisticated) algorithm for estimating numerical derivatives.
+		- These changes affect the ESTIMATE_PARAMETER and ESTIMATE_THETA functions.
+		- New functions IMINLOC and GEOP were also introduced.
+
+
+
+Changes in Version 0.9.01
+
+	1. Introduced clearer framework for handling of floating-point exceptions: 
+		- Renamed the existing BIG_NUMBER, SMALL_NUMBER, and STATA_BIGNUM to 
+		  INTERNAL_BIG_NUMBER, INTERNAL_SMALL_NUMBER, and EXTERNAL _SMALL_NUMBER.
+		- Added new DP variables INTERNAL_INFINITY and INTERNAL_NAN (RCRUTIL.F90).
+		- Added a new subroutine INITIALIZE that initializes INTERNAL_INFINITY=1/0 and 
+		  INTERNAL_NAN=0/0 (RCRLIB_IFC.F90)
+		- Added a call to INITIALIZE at the beginning of the READ_DATA subroutine (RCRUTIL.F90).
+	2. Improved precision of root finding and maximization:
+		- Added BRENT (optimization) and ZBRRENT (root-finding) subroutines from Numerical 
+		  Recipes book (RCRUTIL.F90)
+		- Added a call to BRENT to ESTIMATE_THETA_SEGMENTS.  The previous version found
+		  an approximate local optimum by a simple 3-point method, while the new version
+		  takes this approximate local optimum as a starting point for BRENT, which will
+		  get much closer to the true local optimum (RCRUTIL.F90).
+		- Replaced calls in ESTIMATE_THETA to self-written root finding subroutine 
+		  FIND_ROOT with calls to ZBRENT.  I have kept FIND_ROOT in this 
+		  version of the code but will delete it in the future (RCRUTIL.F90).
+		- Added new functions LAMBDA_FOR_BRENT and NEGATIVE_LAMBDA_FOR_BRENT.  These are 
+		  just versions of LAMBDAFAST that take its arguments in a form that is suited 
+		  for the BRENT and ZBRENT subroutines (RCRUTIL.F90).
+	3. Improved the handling of difficult cases:
+		- Added some code to ESTIMATE_THETA to handle cases when every value of IMPORTANT_THETAS is in range (RCRUTIL.F90).
+		- Changed the (previously very ad hoc) calculation of THETAMAX in ESTIMATE_THETA_SEGMENTS (RCRUTIL.F90).  
+		- Removed IS_POSITIVE_NORMAL (RCRUTIL.F90).	
+	4. Added many more validation checks to READ_DATA subroutine (RCRUTIL.F90).
+	5. Improved the Stata output.
+		- Added a function called TRANSLATE_TO_STATA_FORM that takes a DP matrix and converts all
+		  infinity's to big numbers and all NaN's to zeroes.  This way the output can be read by Stata (RCRUTIL.F90).
+		- Added a call to this function in the WRITE_RESULTS subroutine (RCRUTIL.F90).
+	6. Deleted the obsolete function OLS_THETA and the obsolete logical variable NOZHAT.
+	7. Added many comments.
+
+Version 0.9
+
+		Initial archived version.
+

@@ -1,0 +1,59 @@
+{smcl}
+{* 11May2015}{...}
+{cmd:help test_betax}{right:also see:  {helpb rcr}}
+{hline}
+
+{title:Title}
+
+{p2colset 5 30 37 2}{...}
+{p2col :{hi: test_betax} {hline 2}}Hypothesis test for linear regression with relative correlation restrictions{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 16 2}
+{opt test_betax} [{it:=exp}]
+
+{p 4 6 2}
+
+{title:Description}
+
+{pstd}
+{cmd:test_betax} can be used to perform hypothesis tests on the causal effect (betax) parameter in Krauth (2015).  
+The specific testing method used here is to "invert" the Imbens-Manski confidence interval.  That is we reject the null that betax equals 
+some number at 5% significance if and only if that number is not in the Imbens-Manski 95% confidence interval.  This test inherits
+the desirable properties of the Imbens-Manski confidence interval, but is unusual in that it does not generate a test statistic.
+{p_end}
+
+{pstd}
+This command is a postestimation command for {help rcr}.
+{p_end}
+
+{title:Examples:}
+
+
+{phang}
+{cmd: test_betax} is a postestimation command for {cmd: rcr}. {p_end}
+{phang}
+{cmd:. rcr y z x1 x2 x3 x4 x5}{p_end}
+{phang}
+If {cmd: test_betax} is executed without arguments, the test will be of betax = 0. {p_end}
+{phang}
+{cmd:. test_betax}{p_end}
+{phang}
+Other null hypotheses can be specified explicitly.{p_end}
+{phang}
+{cmd:. test_betax  = 1}{p_end}
+
+
+{title:Also see}
+
+{psee}
+Krauth, Brian V. (2015) "Bounding a linear causal effect using relative correlation
+restrictions." Journal of Econometric Methods, forthcoming.  Working paper version available 
+at {browse "http://www.sfu.ca/~bkrauth/papers/rcr.pdf" : http://www.sfu.ca/~bkrauth/papers/rcr.pdf}
+
+{psee}
+Online:  {help rcr postestimation}
+{p_end}

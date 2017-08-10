@@ -1,0 +1,154 @@
+{smcl}
+{* 11May2015}{...}
+{cmd:help rcr}{right:also see:  {helpb rcr postestimation}}
+{hline}
+
+{title:Title}
+
+{p2colset 5 15 22 2}{...}
+{p2col :{hi: rcr} {hline 2}}Linear regression with relative correlation restrictions{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 16 2}
+{opt rcr} {depvar} {it : {help varname: treatmentvar}} {it: {help varlist : controlvars}} {ifin} {weight}[{cmd:,} {it:options}]
+
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{syntab:Model}
+{synopt :{opt lambda(numlist)}}set the interval for the sensitivity parameter lambda; default is {cmd:lambda(0 1)}{p_end}
+
+
+{syntab:SE}
+{synopt :{opth cl:uster(varname)}}adjust standard errors for intragroup correlation{p_end}
+{synopt :{opt vceadj(#)}}the estimated variance-covariance matrix will be multiplied by #; default is {cmd: vceadj(1)}.  {p_end}
+
+
+{syntab:Reporting}
+{synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}{p_end}
+{synopt :{opt citype(string)}}set the method to calculate confidence interval;default is {cmd:citype(conservative)}{p_end}
+{synopt :{opt det:ails}}save details in memory to create plots, overwrites current data set{p_end}
+
+{synoptline}
+
+
+{p 4 6 2}
+{cmd:aweight}s, {cmd:fweight}s, {cmd:iweight}s, and {cmd:pweight}s are allowed; see {help weight}.{p_end}
+{p 4 6 2}
+See {help rcr postestimation} for additional capabilities and estimation commands.{p_end}
+
+
+{title:Description}
+
+{pstd}
+{cmd:rcr} estimates the effect of {it: treatmentvar} on {it: depvar}, according to the model 
+in Krauth (2015).  
+
+{pstd}
+Limitations:
+
+{phang}
+(1) The maximum number of control variables is 25.  The minimum number of control variables is 1.
+{p_end}
+
+{phang}
+(2) Both infinity and -infinity can be valid parameter estimates in this model, but Stata does not 
+support the reporting of infinite values.  As a result infinity is reported as a very large positive 
+number (9.0e306) and –infinity is reported as a very large negative number (-9.0e306))
+{p_end}
+
+{phang}
+(3) In some cases, a parameter estimate is undefined (i.e., it is 0/0).  In this case, it will be 
+listed as "(dropped)" in keeping with Stata's convention for unidentified regression coefficients.
+{p_end}
+
+
+{title:Options}
+
+{dlgtab:Model}
+
+{phang}
+{opt lambda(numlist)} indicates the range of values to allow for the sensitivity parameter lambda.  
+For example "lambda(3 5)" means that (3 <= lambda <= 5).  The missing value symbol (.) can be used
+to indicate that there is no upper (lower) bound.  For example "lambda(. 1)" means that
+(-infinity < lambda <= 1) and "lambda(0 .)" means that (0 <= lambda < infinity).
+
+
+
+
+{dlgtab:SE}
+
+{phang}
+{opth cluster(varname)};  specifies that the standard errors allow for intragroup correlation, relaxing the usual requirement
+        that the observations be independent.  That is, the observations are independent across groups (clusters) but not
+        necessarily within groups.  clustvar specifies to which group each observation belongs, e.g., cluster(personid) in
+        data with repeated observations on individuals.  This option affects the standard errors and
+        variance-covariance matrix of the estimators but not the estimated coefficients.
+
+
+{phang}
+{opt vceadj(#)}; The estimated variance-covariance matrix of the parameter estimates
+	will be multiplied by this factor.  This feature can be used when the data come 
+	from some transformation (e.g., first differenced or within-transformed panel data) 
+	such that the number of	observations overstates the true degrees of freedom in the data.
+
+{dlgtab:Reporting}
+
+{phang}
+{opt level(#)}; see {help estimation options##level():estimation options}.
+
+{phang}
+{opt citype(string)} indicates the type of confidence interval to calculate for the parameter of interest (betax). Current options are:{p_end}
+
+{synopt: {bf:"conservative"}}: A single confidence interval for the *set* (betax_L,betax_H).  This is calculated 
+by taking the lower bound of the confidence interval for betax_L and the upper bound of the confidence interval 
+for betax_H, and can also  be interpreted as a conservative confidence interval for the true value of betax. {p_end}
+{synopt: {bf:"imbens-manski"}}: A confidence interval for the true value of betax.  Unlike the "conservative" method,
+it takes into account the width of the identified  set.  It is defined in Imbens and Manski (Econometrica 2004),
+equations (6) and (7).{p_end}
+{synopt: {bf:"lower"}}: A one-tailed lower confidence interval for betax_H.  {p_end}
+{synopt: {bf:"upper"}}: A one-tailed upper confidence interval for betax_L.  {p_end}
+
+
+
+{phang}
+{opt details} indicates that a plot of the lambda(betax) function should be created, and the necessary
+	information to recreate that plot be saved in memory.  Note that this will overwrite the current 
+	data set.  The default plot may be improved upon by using the {help rcrplot} postestimation command.
+
+
+{title:Examples:}
+
+{phang}{cmd:. rcr y z x1 x2 x3 x4 x5}{p_end}
+
+{phang}{cmd:. rcr y z x1 x2 x3, lambda(3 5)}{p_end}
+
+{phang}{cmd:. rcr y z x1 x2 x3, lambda(. 5)}{p_end}
+{pstd}
+(Note: in this example, lambda is bounded between -infinity and 5)
+
+{phang}{cmd:. rcr y z x1 x2 x3, lambda(2 .) cluster(teacherid)}{p_end}
+{pstd}
+(Note: in this example, lambda is bounded between 2 and +infinity)
+
+{phang}{cmd:. rcr y z x1 x2 x3, lambda(2 6) cluster(teacherid)}{p_end}
+
+{phang}{cmd:. rcr y z x1 x2 x3, lambda(0,4) cluster(teacherid) citype(imbens-manski) level(90) }{p_end}
+
+{pstd}
+(Note: z is the explanatory variable of interest ({it:treatmentvar}) that might be correlated with relevant unobserved variables)
+
+{title:Also see}
+
+{psee}
+Krauth, Brian V. (2015) "Bounding a linear causal effect using relative correlation
+restrictions.  Journal of Econometric Methods, forthcoming.  Working paper version available 
+at {browse "http://www.sfu.ca/~bkrauth/papers/rcr.pdf" : http://www.sfu.ca/~bkrauth/papers/rcr.pdf}
+
+{psee}
+Online:  {help rcr postestimation}
+{p_end}

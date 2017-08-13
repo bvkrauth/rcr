@@ -1,5 +1,5 @@
-module rcrutil
-	use rcrlib, only : SP, DP, sysv, is_finite, sort, stderr, initialize
+module rcrutil_gnu
+	use rcrlib_gnu, only : SP, DP, sysv, is_finite, sort, stderr
 	implicit none
 	public get_command_arguments, read_data, estimate_model, write_results, &
 		infile, outfile, logfile, moment_vector, lambda_range, result_matrix
@@ -832,9 +832,9 @@ end function estimate_theta
 		! Right now, we only have approximate local optima.  We need to apply
 		! an iterative optimization algorithm to improve the precision.
 		do j=1,size(localmin)
-			if (localmin(j) == .TRUE.) then
+			if (localmin(j) .eqv. .TRUE.) then
 				thetavec(j) = brent(thetavec(j-1),thetavec(j),thetavec(j+1),lambda_for_brent,1.0e-10_dp,simplify_moments(moment_vector))
-			else if (localmax(j) == .TRUE.) then
+			else if (localmax(j) .eqv. .TRUE.) then
 				thetavec(j) = brent(thetavec(j-1),thetavec(j),thetavec(j+1),negative_lambda_for_brent,1.0e-10_dp,simplify_moments(moment_vector))
 			end if
 		end do
@@ -898,7 +898,7 @@ end function estimate_theta
 		! The function takes this form
 		interface
 			function func(x)
-				use rcrlib, only : SP, DP
+				use rcrlib_gnu, only : SP, DP
 				real(kind=DP), dimension(:), intent(in) :: x
 				real(kind=DP)  :: func
 			end function func
@@ -1396,7 +1396,7 @@ end function estimate_theta
 		integer :: i,j
 		interface 
 			function func(x,xopt)
-				use rcrlib, only : SP,DP
+				use rcrlib_gnu, only : SP,DP
 				real(kind=DP), intent(in) :: x
 				real(kind=DP), dimension(:), intent(in) :: xopt
 				real(kind=DP)  :: func
@@ -1492,7 +1492,7 @@ end function estimate_theta
 		real(kind=DP) :: brent
 		interface
 			function func(x,xopt)
-				use rcrlib, only : SP,DP
+				use rcrlib_gnu, only : SP,DP
 				real(kind=DP), intent(in) :: x
 				real(kind=DP), dimension(6), intent(in) :: xopt
 				real(kind=DP) :: func
@@ -1611,7 +1611,7 @@ end function estimate_theta
 		real(kind=DP) :: zbrent
 		interface
 			function func(x,xopt)
-				use rcrlib, only : sp,dp
+				use rcrlib_gnu, only : sp,dp
 				real(kind=DP), intent(in) :: x
 				real(kind=DP), dimension(:), intent(in) :: xopt
 				real(kind=DP) :: func
@@ -1737,4 +1737,4 @@ end function estimate_theta
 	end function iminloc
 
 	
-end module rcrutil
+end module rcrutil_gnu

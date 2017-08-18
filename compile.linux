@@ -3,8 +3,8 @@
 # Script for compiling RCR program on Linux (at robson.westgrid.ca)
 # IBM XL Fortran compiler, with ESSL library:
 # xlf_r -o rcr -qnosave rcrlib_ibm.f90 rcrutil.f90 rcr.f90 -lessl
-# gNU Fortran (gfortran) compiler, no libraries.  Does not work yet.
-gfortran -ffree-form -ffree-line-length-256 -o rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr.f90 
-rm *.o
+# gNU Fortran (gfortran) compiler, netlib BLAS and LAPACK libraries
+gfortran -ffree-form -ffree-line-length-256 -o rcr rcrlib_gnu.f90 -L/home/ransom/lib/lapack-3.7.1 -llapack -L/home/ransom/lib/lapack-3.7.1 -lrefblas -c
+# gNU Fortran (gfortran) compiler, OpenBLAS BLAS and LAPACK libraries
+# gfortran -o rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr.f90 -L/home/ransom/lib/lapack-3.7.1 -llapack -L/home/ransom/lib/lapack-3.7.1 -lrefblas
 rm *.mod
-rm *~

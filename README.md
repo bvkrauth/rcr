@@ -91,20 +91,19 @@ standard catalog of the release.
 
 Additional files have been made available for use in compiling on Linux systems using the open-source compiler `gfortran` and open-source version of the LAPACK and BLAS libraries.
 
-### OpenBLAS library
-To install the OpenBLAS libary, do the following:
+## BLAS & LAPACK libraries (OpenBLAS)
 
-1. Clone the library's repository from GitHub (from your home directory): `git clone https://github.com/xianyi/OpenBLAS.git`
+To install the open-source BLAS and LAPACK libraries, do the following:
 
-2. Type `make FC=gfortran CC=gcc USE_OPENMP=1 OpenBLAS/make.inc`
+1. Clone the OpenBLAS GitHub repository: `git clone https://github.com/xianyi/OpenBLAS`
 
-3. The change to the `OpenBLAS` directory and type `make FC=gfortran CC=gcc USE_OPENMP=1 PREFIX=~/lib/OpenBLAS/ install`
+2. Type `make FC=gfortran CC=gcc USE_OPENMP=1` in the directory where you cloned the repository
 
-(Note that you can specify any path to where the library will be installed.)
+3. Then change to the OpenBLAS directory and type `make FC=gfortran CC=gcc USE_OPENMP=1 PREFIX=/path/where/you/installed/it/ install`
 
-### LAPACK library
+## BLAS & LAPACK libraries (Netlib)
 
-To install the LAPACK library, do the following:
+To install the open-source BLAS and LAPACK libraries, do the following:
 
 1. Type (from your home directory): `wget http://www.netlib.org/lapack/lapack.tgz`
 
@@ -117,3 +116,8 @@ To install the LAPACK library, do the following:
 5. Edit the file `lapack-3.7.1/Makefile` and type `make`. (And wait for 5-10 minutes)
 
 6. (Optional) move the compiled libraries to a different folder, e.g. `~/lib/LAPACK/`
+
+## Test files
+
+To test the validity of the build, execute the script `test.compile` and then execute the file `randomsys1`. Verify that the numerical errors are small (on the order of 1e-10 or smaller)
+

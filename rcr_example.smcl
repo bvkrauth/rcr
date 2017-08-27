@@ -1,9 +1,9 @@
 {smcl}
 {com}{sf}{ul off}{txt}{.-}
       name:  {res}<unnamed>
-       {txt}log:  {res}C:\Users\Brian\Dropbox\Research\RCR\Stata program\rcr_example.smcl
+       {txt}log:  {res}/hpchome/econ/tmr17/rcr_example/rcr_example.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}11 May 2015, 19:12:09
+ {txt}opened on:  {res}26 Aug 2017, 23:58:16
 {txt}
 {com}. /*******************************************************************
 > * RCR_EXAMPLE.DO
@@ -16,7 +16,13 @@
 . clear
 {txt}
 {com}. set mem 10m
-{txt}(10240k)
+{txt}{bf:set memory} ignored.
+{p 4 4 2}
+Memory no longer
+needs to be set in modern Statas;
+memory adjustments are performed on the fly
+automatically.
+{p_end}
 
 {com}. set more off
 {txt}
@@ -37,21 +43,22 @@
 {txt}{hline 13}{char +}{hline 30}           Adj R-squared = {res} 0.0916
     {txt}   Total {char |} {res} 3167881.21  5838  542.631245           {txt}Root MSE      = {res} 22.202
 
-{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{col 1}         SAT{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
-{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{space 1}Small_Class {c |}{col 14}{res}{space 2} 5.201503{col 26}{space 2} .6425121{col 37}{space 1}    8.10{col 46}{space 3}0.000{col 54}{space 4} 3.941941{col 67}{space 3} 6.461065
-{txt}{space 1}White_Asian {c |}{col 14}{res}{space 2} 8.388708{col 26}{space 2} 1.235376{col 37}{space 1}    6.79{col 46}{space 3}0.000{col 54}{space 4} 5.966912{col 67}{space 3}  10.8105
-{txt}{space 8}Girl {c |}{col 14}{res}{space 2} 4.382026{col 26}{space 2}  .585478{col 37}{space 1}    7.48{col 46}{space 3}0.000{col 54}{space 4} 3.234272{col 67}{space 3}  5.52978
-{txt}{space 2}Free_Lunch {c |}{col 14}{res}{space 2}-13.07747{col 26}{space 2} .7105379{col 37}{space 1}  -18.41{col 46}{space 3}0.000{col 54}{space 4}-14.47039{col 67}{space 3}-11.68455
-{txt}White_Teac~r {c |}{col 14}{res}{space 2} -1.08975{col 26}{space 2} 1.172666{col 37}{space 1}   -0.93{col 46}{space 3}0.353{col 54}{space 4} -3.38861{col 67}{space 3}  1.20911
-{txt}Teacher_Ex~e {c |}{col 14}{res}{space 2} .2650213{col 26}{space 2}  .058137{col 37}{space 1}    4.56{col 46}{space 3}0.000{col 54}{space 4} .1510512{col 67}{space 3} .3789915
-{txt}Masters_De~e {c |}{col 14}{res}{space 2}-.5996356{col 26}{space 2} .7732745{col 37}{space 1}   -0.78{col 46}{space 3}0.438{col 54}{space 4}-2.115541{col 67}{space 3} .9162693
-{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 47.09615{col 26}{space 2}  1.52709{col 37}{space 1}   30.84{col 46}{space 3}0.000{col 54}{space 4} 44.10248{col 67}{space 3} 50.08981
-{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{txt}{hline 19}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}               SAT{col 20}{c |}      Coef.{col 32}   Std. Err.{col 44}      t{col 52}   P>|t|{col 60}     [95% Con{col 73}f. Interval]
+{hline 19}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}Small_Class {c |}{col 20}{res}{space 2} 5.201503{col 32}{space 2} .6425121{col 43}{space 1}    8.10{col 52}{space 3}0.000{col 60}{space 4} 3.941941{col 73}{space 3} 6.461065
+{txt}{space 7}White_Asian {c |}{col 20}{res}{space 2} 8.388708{col 32}{space 2} 1.235376{col 43}{space 1}    6.79{col 52}{space 3}0.000{col 60}{space 4} 5.966912{col 73}{space 3}  10.8105
+{txt}{space 14}Girl {c |}{col 20}{res}{space 2} 4.382026{col 32}{space 2}  .585478{col 43}{space 1}    7.48{col 52}{space 3}0.000{col 60}{space 4} 3.234272{col 73}{space 3}  5.52978
+{txt}{space 8}Free_Lunch {c |}{col 20}{res}{space 2}-13.07747{col 32}{space 2} .7105379{col 43}{space 1}  -18.41{col 52}{space 3}0.000{col 60}{space 4}-14.47039{col 73}{space 3}-11.68455
+{txt}{space 5}White_Teacher {c |}{col 20}{res}{space 2} -1.08975{col 32}{space 2} 1.172666{col 43}{space 1}   -0.93{col 52}{space 3}0.353{col 60}{space 4} -3.38861{col 73}{space 3}  1.20911
+{txt}Teacher_Experience {c |}{col 20}{res}{space 2} .2650213{col 32}{space 2}  .058137{col 43}{space 1}    4.56{col 52}{space 3}0.000{col 60}{space 4} .1510512{col 73}{space 3} .3789915
+{txt}{space 4}Masters_Degree {c |}{col 20}{res}{space 2}-.5996356{col 32}{space 2} .7732745{col 43}{space 1}   -0.78{col 52}{space 3}0.438{col 60}{space 4}-2.115541{col 73}{space 3} .9162693
+{txt}{space 13}_cons {c |}{col 20}{res}{space 2} 47.09615{col 32}{space 2}  1.52709{col 43}{space 1}   30.84{col 52}{space 3}0.000{col 60}{space 4} 44.10248{col 73}{space 3} 50.08981
+{txt}{hline 19}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
 {res}{txt}
 {com}. /* This is RCR analysis of the same regression, with default options */
 . rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -95,6 +102,7 @@ Treatment Variable:   {res}Small_Class
 {com}. 
 . /* The LAMBDA option allows for the user to control the range of lambda values */
 . rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 2)
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -120,6 +128,7 @@ Treatment Variable:   {res}Small_Class
 . /* Note that in this particular example, the bounds on betax are (-infinity,infinity).  Since Stata
 >  * has no facility for manipulating infinity, infinity is reported as just a very large number. */
 . rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 .)
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -144,6 +153,7 @@ Treatment Variable:   {res}Small_Class
 {com}. 
 . /* By default confidence intervals are estimated conservatively.  The CITYPE option allows the choice of other methods. */
 . rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, citype("Imbens-Manski")
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -183,6 +193,7 @@ There are 79 schools in the data, so the effective number of observations is 576
 So we should multiply the covariance matrix by 5839/(5839-79) = 1.013715277777778.
 {txt}
 {com}. rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vceadj(`dofcorrection')
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -208,6 +219,7 @@ Treatment Variable:   {res}Small_Class
 . /* The LEVEL and CLUSTER options work the same as they do for most Stata commands (e.g., REG) */
 . /* IF, IN, and weights (all 4 types) are supported as well. */
 . rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, level(90)
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -230,6 +242,7 @@ Treatment Variable:   {res}Small_Class
 {col 22} Teacher_Experience Masters_Degree
 {txt}
 {com}. rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, cluster(TCHID)
+
 {res}
 {txt}RCR model{col 55}Number of obs ={res}     5839
 {txt}{col 46}Lower bound on lambda  ={res}        0
@@ -265,7 +278,7 @@ Treatment Variable:   {res}Small_Class
 {space 0}{space 0}{ralign 12:betaxInf}{space 1}{c |}{space 1}{ralign 10:{res:{sf: 126.63081}}}{space 1}{space 1}{ralign 10:{res:{sf: 1904.9575}}}{space 1}{space 1}{ralign 10:{res:{sf:{space 10}}}}{space 1}{space 1}{ralign 10:{res:{sf:{space 10}}}}{space 1}{space 1}{ralign 10:{res:{sf:{space 10}}}}{space 1}
 {space 0}{space 0}{ralign 12:lambda0}{space 1}{c |}{space 1}{ralign 10:{res:{sf:-121.54894}}}{space 1}{space 1}{ralign 10:{res:{sf:-6125.9088}}}{space 1}{space 1}{ralign 10:{res:{sf: 21076.458}}}{space 1}{space 1}{ralign 10:{res:{sf:{space 10}}}}{space 1}{space 1}{ralign 10:{res:{sf:{space 10}}}}{space 1}
 {space 0}{space 0}{ralign 12:betaxL}{space 1}{c |}{space 1}{ralign 10:{res:{sf:-1.9440658}}}{space 1}{space 1}{ralign 10:{res:{sf:-37.514102}}}{space 1}{space 1}{ralign 10:{res:{sf: 129.09626}}}{space 1}{space 1}{ralign 10:{res:{sf: 1.8460481}}}{space 1}{space 1}{ralign 10:{res:{sf:{space 10}}}}{space 1}
-{space 0}{space 0}{ralign 12:betaxH}{space 1}{c |}{space 1}{ralign 10:{res:{sf: .12294018}}}{space 1}{space 1}{ralign 10:{res:{sf: 3.6638149}}}{space 1}{space 1}{ralign 10:{res:{sf: -6.607698}}}{space 1}{space 1}{ralign 10:{res:{sf: 1.0050687}}}{space 1}{space 1}{ralign 10:{res:{sf: 1.0621295}}}{space 1}
+{space 0}{space 0}{ralign 12:betaxH}{space 1}{c |}{space 1}{ralign 10:{res:{sf: .12294018}}}{space 1}{space 1}{ralign 10:{res:{sf: 3.6638149}}}{space 1}{space 1}{ralign 10:{res:{sf:-6.6076979}}}{space 1}{space 1}{ralign 10:{res:{sf: 1.0050687}}}{space 1}{space 1}{ralign 10:{res:{sf: 1.0621295}}}{space 1}
 
 {com}. estat summarize
 
@@ -330,9 +343,9 @@ Treatment Variable:   {res}Small_Class
 . 
 . log close
       {txt}name:  {res}<unnamed>
-       {txt}log:  {res}C:\Users\Brian\Dropbox\Research\RCR\Stata program\rcr_example.smcl
+       {txt}log:  {res}/hpchome/econ/tmr17/rcr_example/rcr_example.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}11 May 2015, 19:12:19
+ {txt}closed on:  {res}26 Aug 2017, 23:58:17
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}

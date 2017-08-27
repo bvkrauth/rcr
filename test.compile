@@ -5,9 +5,9 @@
 # xlf_r -o rcr -qnosave rcrlib_ibm.f90 rcrutil.f90 rcr.f90 -lessl
 # gNU Fortran (gfortran) compiler
 # gfortran -ffree-form -ffree-line-length-256 -o randomsys1 randomsys1.f90 -L/home/ransom/lib/lapack-3.7.1 -llapack -L/home/ransom/lib/lapack-3.7.1 -lrefblas
-export LD_LIBRARY_PATH=/home/ransom/lib/OpenBLAS/lib:$LD_LIBRARY_PATH
-export LIBRARY_PATH=/home/ransom/lib/OpenBLAS/lib:$LIBRARY_PATH
-gfortran -ffree-form -ffree-line-length-256 -o randomsys1 randomsys1.f90 -L/home/ransom/lib/OpenBLAS/lib -lopenblas_haswellp-r0.3.0.dev 
+export LD_LIBRARY_PATH=/hpchome/econ/tmr17/lib/OpenBLAS/lib:$LD_LIBRARY_PATH
+export LIBRARY_PATH=/hpchome/econ/tmr17/lib/OpenBLAS/lib:$LIBRARY_PATH
+gfortran -ffree-form -ffree-line-length-256 -o randomsys1 randomsys1.f90 -L/hpchome/econ/tmr17/lib/OpenBLAS/lib -lopenblas_haswellp-r0.3.0.dev 
 # rm *.o
 # rm *.mod
 # rm *~

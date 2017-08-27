@@ -1,5 +1,5 @@
 module rcrutil_gnu
-    use rcrlib_gnu, only : SP, DP, sysv, is_finite, sort, stderr
+    use rcrlib_gnu, only : SP, DP, sysv, is_finite, sort, stderr, initialize
     implicit none
     public get_command_arguments, read_data, estimate_model, write_results, &
         infile, outfile, logfile, moment_vector, lambda_range, result_matrix

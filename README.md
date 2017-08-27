@@ -121,3 +121,8 @@ To install the open-source BLAS and LAPACK libraries, do the following:
 
 To test the validity of the build, execute the script `test.compile` and then execute the file `randomsys1`. Verify that the numerical errors are small (on the order of 1e-10 or smaller)
 
+# Other notes for Linux users
+
+- You will need a version of the GCC compiler 5.0 or above. On some machines, multiple version of the GNU C and FORTRAN compilers are stored in "modules" (e.g. `module load GCC/5.4.0`). You will need to load the appropriate module before executing the `rcr` command.
+- You will need to edit the `rcr.ado` file to contain the appropriate paths to the GCC and OpenBLAS libraries. This is handled in the macro `path_to_libs` in the code. An example of the contents of this macro is: "LD_LIBRARY_PATH=/opt/apps/rhel7/gcc-5.4.0/lib64:/lib64/:/hpchome/econ/tmr17/lib/OpenBLAS/lib/"
+- You will also need to put the *.ado and *.hlp files in the appropriate places on Stata's search path. N.B. `test_betax.ado` should be put in the `/t/` ado subfolder, while `rcr.ado` should be placed in the `/r/` subfolder.

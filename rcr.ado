@@ -30,7 +30,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	};
 	
 	/* Otherwise, process all of the arguments */
-	syntax varlist(min=3 max=27)/* First var = y(outcome) , Second var = x(treatment), Remaining vars= c(controls) */  
+	syntax varlist(min=3 max=102)/* First var = y(outcome) , Second var = x(treatment), Remaining vars= c(controls) */  
 								/* Limit on number of control variables is a function of Stata's limits on MATSIZE */
 			[if] [in] [fw aw pw iw] /* Standard estimation command arguments, handled in the standard way */
 			[, CLuster(varname) /* Standard option for cluster-corrected standard errors */
@@ -231,13 +231,15 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	quietly mat2txt, matrix(`moments') saving("`input_file'") append;/*vector of moments*/
 	quietly mat2txt, matrix(`lambf') saving("`input_file'") append; /*lambda vector*/	
 
-/***** (6) Call the RCR.EXE program *****/
-	/***** the "RCR.exe" should be stored in an ADO folder along with RCR program*************/
-	/* Find the RCR.EXE program */
-	quietly findfile "rcr.exe";
+/***** (6) Call the RCR program *****/
+	/***** the "RCR" should be stored in an ADO folder along with RCR program*************/
+	/* Find the RCR program */
+	quietly findfile "rcr";
 	local rcr_exe = r(fn);
 	/* Check to see if the output_file already exists */
 	capture confirm file "`output_file'";
+	/* Input path(s) to libraries required by RCR (this is machine-specific) */
+	local path_to_libs "LD_LIBRARY_PATH=/opt/apps/rhel7/gcc-5.4.0/lib64:/lib64/:/hpchome/econ/tmr17/lib/OpenBLAS/lib/";
 	/* Delete it if it does exist */
 	if (_rc == 0) {;
 		erase "`output_file'";	
@@ -248,9 +250,9 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	if (_rc == 0) {;
 		erase "`log_file'";	
 	};
-	/* Execute the RCR.EXE program.  */
-	winexec "`rcr_exe'" "`input_file'" "`output_file'" "`log_file'" "`detail_file'";
-	/* The following lines of code pauses the Stata program until the RCR.EXE program has ended.  */
+	/* Execute the RCR program.  */
+	shell `path_to_libs' `rcr_exe' `input_file' `output_file' `log_file' `detail_file'; /* quotes around local macros won't work in Linux shell! */
+	/* The following lines of code pauses the Stata program until the RCR program has ended.  */
 	/* Check to see if the output_file exists */
 	capture confirm file "`output_file'";
 	/* Then repeat the following until it exists */
@@ -261,7 +263,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
     	capture confirm file "`output_file'";
    	};
    	
-/***** (7) Read the text file output by the RCR.EXE program *****/ 
+/***** (7) Read the text file output by the RCR program *****/ 
 	/* Save the current state of the data, because we will be reading in a new file */
 	preserve;
 	/*First, we read in the Fortran output file to see if the Fortran program has encountered any error*/
@@ -273,7 +275,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	file read `outfile' line;
 	while r(eof)==0 {;
 		if (strpos(lower("`line'"),"error") > 0) {;
-			di as error "Error in external program RCR.EXE.  Error message is:" _newline;
+			di as error "Error in external program RCR.  Error message is:" _newline;
 			di as text "`line'" _newline;
 			di as error "Complete log file is : " _newline _newline;
 			type "`log_file'";

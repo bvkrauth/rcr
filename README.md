@@ -1,59 +1,56 @@
 # rcr
 This directory contains the source code for the RCR program, along with supporting files for compiling and testing.
 
-Description of files:
+## Description of files:
 
-## The current program, as downloaded by (Windows) users
-RCR.EXE			This is the most recently compiled copy of the executable
-RCR.ADO			These are the Stata files implementing the RCR command and its relatives.			
-RCR_ESTAT.ADO
-RCR_PREDICT.ADO
-RCRPLOT.ADO
-TEST_THETA.ADO
-RCR.HLP
-RCR_POSTESTIMATION.HLP
-RCRPLOT.HLP
-TEST_THETA.HLP
-STATA.TOC
-RCR.PKG			This Stata file contains the version number and date.
+### The current program, as downloaded by (Windows) users
+ - RCR.EXE			This is the most recently compiled copy of the executable
+ - RCR.ADO			These are the Stata files implementing the RCR command and its relatives.		 - RCR_ESTAT.ADO
+ - RCR_PREDICT.ADO
+ - RCRPLOT.ADO
+ - TEST_THETA.ADO
+ - RCR.HLP
+ - RCR_POSTESTIMATION.HLP
+ - RCRPLOT.HLP
+ - TEST_THETA.HLP
+ - STATA.TOC
+ - RCR.PKG			This Stata file contains the version number and date.
 			These must be updated by hand when the version is updated.
-RCR_EXAMPLE.DO		This is an example do-file and data set that are provided to users when the RCR package is downloaded.
-RCR_EXAMPLE.DTA
+ - RCR_EXAMPLE.DO		This is an example do-file and data set that are provided to users when the RCR package is downloaded.
+ - RCR_EXAMPLE.DTA
 
-## Files needed to compile the Fortran executable in Windows
-SETUP.BAT		Sets environment variables needed to run compile.bat
-COMPILE.BAT		Compiles the program
-RCR.F90			The source code (main program)  
-RCRUTIL.F90		The source code (utility functions)
-RCRLIB_IFC.F90		The source code (compiler-specific functions for the Intel Fortran Compiler)
+### Files needed to compile the Fortran executable in Windows
+ - SETUP.BAT		Sets environment variables needed to run compile.bat
+ - COMPILE.BAT		Compiles the program
+ - RCR.F90			The source code (main program)  
+ - RCRUTIL.F90		The source code (utility functions)
+ - RCRLIB_IFC.F90		The source code (compiler-specific functions for the Intel Fortran Compiler)
 
-## Testing and version control
-ARCHIVE.BAT		Once a new version is complete, run (for example, if it's version 0.9.45) 
+### Testing and version control
+ - ARCHIVE.BAT		Once a new version is complete, run (for example, if it's version 0.9.45) 
                         >  ARCHIVE 0.9.45
 			and this batch file will create a source code archive and update the local 
 			copy of the website (updates to the local copy still need to be uploaded by Dreamweaver).
 
-RCR_CERTIFICATION.DO	This certification script should always be run after any changes to the program.  Read the file to see how to use.
+ - RCR_CERTIFICATION.DO	This certification script should always be run after any changes to the program.  Read the file to see how to use.
 
-CHANGES_LOG.TXT		Log of all changes made to the program since version 0.9.
+ - CHANGES_LOG.TXT		Log of all changes made to the program since version 0.9.
 
 
-BUGnnn.DO		Any do-files with this kind of name demonstrate currently outstanding bugs in the program.  
+ - BUGnnn.DO		Any do-files with this kind of name demonstrate currently outstanding bugs in the program.  
 
 
 ## Miscellaneous files
-RCRLIB_AAA.F90		The source code (compiler-specific functions for user-defined compiler).  Not currently functional.
-RCRLIB_IBM.F90		The source code (compiler-specific functions for the IBM compiler).  Not currently functional.
-COMPILE.LINUX		Script for compiling program in Linux.  Not currently functional.
-CPS.DTA			Not sure if this is used.
-INSTALLATION.DO		This do-file shows how to download and update the program from the web.
-ZEROTEST.TXT		This can be used to test the executable's handling of zeros.  
+ - RCRLIB_AAA.F90		The source code (compiler-specific functions for user-defined compiler).  Not currently functional.
+ - RCRLIB_IBM.F90		The source code (compiler-specific functions for the IBM compiler).  Not currently functional.
+ - COMPILE.LINUX		Script for compiling program in Linux.  Not currently functional.
+ - CPS.DTA			Not sure if this is used.
+ - INSTALLATION.DO		This do-file shows how to download and update the program from the web.
+ - ZEROTEST.TXT		This can be used to test the executable's handling of zeros.  
 			Should be worked into a full bug report and/or certification item, but haven't done that yet.
-README.TXT		This file.
+ - README.MD		This file.
 
 There are also various log files, temporary files, and SMCL files that have been generated in testing.  These can usually be deleted.
-
-
 
 
 # A note on linking, and new installations of the compiler
@@ -61,7 +58,6 @@ There are also various log files, temporary files, and SMCL files that have been
 This program links in all of its libraries statically so that everything is in a single executable.  
 
 This means that we need some library files mkl_blas95.lib and mkl_lapack95.lib that do not exist when the Intel Fortran Compiler is installed.  They need to be generated (this only needs to be done once for a given installation of the compiler).  Instructions for doing so are copied below from the MKL User Guide.
-
 
 ## Fortran 95 Interfaces and Wrappers to LAPACK and BLAS
 
@@ -85,7 +81,6 @@ Provided the product directory is open for writing, the procedure is simple:
 
 As a result, the required library and a respective .mod file will be built and installed in the
 standard catalog of the release.
-
 
 # Compiling in Linux using open-source versions of LAPACK and BLAS
 

@@ -30,9 +30,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 program RCR
     ! The RCRLIB module contains system-specific code
-    use rcrlib, only : SP, DP
+    use rcrlib_gnu, only : SP, DP
     ! The RCRUTIL module contains everything else
-    use rcrutil, only : get_command_arguments, read_data, estimate_model, write_results, &
+    use rcrutil_gnu, only : get_command_arguments, read_data, estimate_model, write_results, &
         infile, outfile, logfile, detail_file, moment_vector, lambda_range, result_matrix
     implicit none
 

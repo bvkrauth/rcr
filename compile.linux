@@ -4,9 +4,9 @@
 # IBM XL Fortran compiler, with ESSL library:
 # xlf_r -o rcr -qnosave rcrlib_ibm.f90 rcrutil.f90 rcr.f90 -lessl
 # GNU Fortran (gfortran) compiler, OpenBLAS BLAS and LAPACK libraries
-gfortran -ffree-form -ffree-line-length-256 -o ~/ado/plus/r/rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr.f90 -L/hpchome/econ/tmr17/lib/OpenBLAS -lopenblas
+gfortran -ffree-form -ffree-line-length-256 -o ~/ado/plus/r/rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr_gnu.f90 -L/hpchome/econ/tmr17/lib/OpenBLAS -lopenblas
 # chmod 774 ~/ado/plus/r/rcr
 # gNU Fortran (gfortran) compiler, netlib BLAS and LAPACK libraries
-# gfortran -o rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr.f90 -L/home/ransom/lib/lapack-3.7.1 -llapack -L/home/ransom/lib/lapack-3.7.1 -lrefblas
-# gfortran -Wall -ffree-form -ffree-line-length-256 -o ~/ado/plus/r/rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr.f90 -L/hpchome/econ/tmr17/lib/lapack-3.7.1 -llapack -L/hpchome/econ/tmr17/lib/lapack-3.7.1 -lrefblas
+# gfortran -o rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr_gnu.f90 -L/home/ransom/lib/lapack-3.7.1 -llapack -L/home/ransom/lib/lapack-3.7.1 -lrefblas
+# gfortran -Wall -ffree-form -ffree-line-length-256 -o ~/ado/plus/r/rcr rcrlib_gnu.f90 rcrutil_gnu.f90 rcr_gnu.f90 -L/hpchome/econ/tmr17/lib/lapack-3.7.1 -llapack -L/hpchome/econ/tmr17/lib/lapack-3.7.1 -lrefblas
 rm *.mod

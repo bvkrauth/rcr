@@ -76,9 +76,9 @@ Provided the product directory is open for writing, the procedure is simple:
 
 2. Type one of the following commands:
 
-  nmake PLAT=win32 lib - for IA-32 architecture
-  nmake PLAT=win32e lib - for Intel® 64 architecture
-  nmake PLAT=win64 lib - for IA-64 architecture.
+  - nmake PLAT=win32 lib - for IA-32 architecture
+  - nmake PLAT=win32e lib - for Intel® 64 architecture
+  - nmake PLAT=win64 lib - for IA-64 architecture.
 
 As a result, the required library and a respective .mod file will be built and installed in the
 standard catalog of the release.

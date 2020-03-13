@@ -30,7 +30,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	};
 	
 	/* Otherwise, process all of the arguments */
-	syntax varlist(min=3 max=102)/* First var = y(outcome) , Second var = x(treatment), Remaining vars= c(controls) */  
+	syntax varlist(min=3)/* First var = y(outcome) , Second var = x(treatment), Remaining vars= c(controls) */
 								/* Limit on number of control variables is a function of Stata's limits on MATSIZE */
 			[if] [in] [fw aw pw iw] /* Standard estimation command arguments, handled in the standard way */
 			[, CLuster(varname) /* Standard option for cluster-corrected standard errors */
@@ -73,26 +73,24 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		error 111;
 	};
 /******** (2) Set the appropriate matsize **********/
-	/*** It is easy to calculate that with a maximum matsize of 800, we cannot have more than 27 variables using RCR program ***/
-	/*** For diffent versions of Stata, however, this maximum matsize is different***/
-	/*** We want to avoid setting a matsize which is smaller than the one that user might have specified at some point***/
-	/*** The following code checks the version of Stata used, if it a "small stata" the user cannot use more than 7 variables***/
-	/*** In other versions however, we set the matsize to the maximum between 800 or the one that the user has specified if it is***/
-	/*** bigger than 800***/
-
+	/*** The number of explanatory variables is limited by the value of matsize.  The algorithm is based on the second moment ***/
+	/*** matrix of the data.  With K variables (1 outcome, 1 explanatory, K-2 control), that matrix is ***/
+	/*** (K+1)*(K+1) because of the intercept.   So there can be no more than:  ***/
+	/***      no more than 25 = floor(sqrt(800)-3) control variables for Stata IC ***/
+	/***      no more than 101 = floor(sqrt(11000)-3) control variables for Stata SE/MP ***/
+	/*** NOTE: The second moment matrix is symmetric, so the code could be rewritten to take advantage of that.  ***/
+	/*** By my calculation this would raise the Stata IC limit to 36 control variables, and the Stata SE limit to 146.  ***/
 	local mat_max=c(max_matsize);
 	local mat_min=c(min_matsize);
-	if `mat_max'==`mat_min'{;
-		local numall: word count `varlist';
-		if `numall'> 7 {;
-			di as error "you are using a small stata version. you cannot have more than 5 control variables, or more than 7 variables";
-			exit 198;
-		};			         
+	local mat_current=c(matsize);
+	local numall: word count `varlist';
+	local mat_needed = (`numall' + 1)^2;
+	if (`mat_needed' > `mat_max') {;
+		di as error "Too many (" (`numall' - 2)	") explanatory variables. Maximum number for this Stata version is " (floor(sqrt(c(max_matsize)))-3);
+		exit 103;
 	};
-	else {; 	                           
-		local mat_current=c(matsize);
-		local matsz= max(`mat_current',min(`mat_max',800));
-		set matsize `matsz';
+	if (`mat_needed' > `mat_current') {;
+		set matsize `mat_needed';
 	};
 	
 /***** (3) Calculate the moment vector (moments) and its variance (V) ******/	
@@ -234,7 +232,12 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 /***** (6) Call the RCR program *****/
 	/***** the "RCR" should be stored in an ADO folder along with RCR program*************/
 	/* Find the RCR program */
-	quietly findfile "rcr";
+	if (c(os) == "Windows") {;
+		quietly findfile "rcr.exe";
+	};
+	if (c(os) == "Unix") {;
+		quietly findfile "rcr";
+	};
 	local rcr_exe = r(fn);
 	/* Check to see if the output_file already exists */
 	capture confirm file "`output_file'";
@@ -251,7 +254,12 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		erase "`log_file'";	
 	};
 	/* Execute the RCR program.  */
-	shell `path_to_libs' `rcr_exe' `input_file' `output_file' `log_file' `detail_file'; /* quotes around local macros won't work in Linux shell! */
+	if (c(os) == "Windows") {;
+		winexec "`rcr_exe'" "`input_file'" "`output_file'" "`log_file'" "`detail_file'";
+	};
+	if (c(os) == "Unix") {;
+		shell `path_to_libs' `rcr_exe' `input_file' `output_file' `log_file' `detail_file'; /* quotes around local macros won't work in Linux shell! */
+	};
 	/* The following lines of code pauses the Stata program until the RCR program has ended.  */
 	/* Check to see if the output_file exists */
 	capture confirm file "`output_file'";
@@ -263,7 +271,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
     	capture confirm file "`output_file'";
    	};
    	
-/***** (7) Read the text file output by the RCR program *****/ 
+/***** (7) Read the text file output by the RCR program *****/
 	/* Save the current state of the data, because we will be reading in a new file */
 	preserve;
 	/*First, we read in the Fortran output file to see if the Fortran program has encountered any error*/

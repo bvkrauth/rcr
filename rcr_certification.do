@@ -30,9 +30,16 @@ use rcr_example, clear
 quietly gen zero = 0
 quietly gen one = 1
 quietly gen two = 2
+if (c(version) >= 14) {
+	local rng = c(rng)
+	set rng kiss32
+}
 set seed 53
 forvalues i = 1 / 20 {
 	quietly gen x`i' = runiform()
+}
+if (c(version) >= 14) {
+	set rng `rng'
 }
 quietly egen ID = seq()
 quietly gen SAT1000 = SAT*1000
@@ -155,7 +162,10 @@ rcof "noisily rcr SAT Small_Class zero" == 1
 rcof "noisily rcr SAT Small_Class White_Asian zero" == 1
 rcof "noisily rcr SAT Small_Class White_Asian White_Asian" == 1
 /* More than 25 control variables */
-rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 103
+scalar max_controls = floor(sqrt(c(max_matsize)))-3
+if max_controls <= 25 {
+	rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 103
+}
 
 /***** Things that should produce a warning message but give it a try *****/
 /* Outcome and treatment are identical (collinear) */
@@ -508,17 +518,32 @@ rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience
 quietly summarize lambda
 assert reldif( r(mean)   , 39.17132731582898 ) <  1E-8
 
-/* Save plot (as a postscript file) and check to make sure it hasn't changed */
+/* Save plot (as a postscript file) and check against previous plot to make sure it hasn't changed */
+/* If previous plot doesn't exist, create one */
+capture confirm file "rcrplot1.ps"
+if (_rc != 0) {
+	quietly graph export rcrplot1.ps, as(ps) replace
+}
 tempfile rcrplot
 quietly graph export `rcrplot', as(ps) replace
+checksum "rcrplot1.ps"
+local checksum = r(checksum)
 checksum `rcrplot'
-assert r(checksum) == 3556610235
+assert r(checksum) == `checksum'
 
 /* Call RCRPLOT with arguments */
 rcrplot, xrange(-20 20) yrange(-40 40)
+/* Save plot (as a postscript file) and check against previous plot to make sure it hasn't changed */
+/* If previous plot doesn't exist, create one */
+capture confirm file "rcrplot2.ps"
+if (_rc != 0) {
+	quietly graph export rcrplot2.ps, as(ps) replace
+}
 quietly graph export `rcrplot', as(ps) replace
+checksum "rcrplot2.ps"
+local checksum = r(checksum)
 checksum `rcrplot'
-assert r(checksum) == 1962833918
+assert r(checksum) == `checksum'
 
 restore
 

@@ -20,12 +20,13 @@ log using "rcr_certification `tmp'", text replace
 *
 *
 ********************************************************************/
+adopath ++ ../stata
 clear all
 set mem 400m
 set more off
 cscript "Testing script for RCR and its postestimation commands" adofiles rcr rcr_estat rcr_predict
 
-use rcr_example, clear
+use ../stata/rcr_example, clear
 /* Generate some handy values */
 quietly gen zero = 0
 quietly gen one = 1

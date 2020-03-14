@@ -8,4 +8,7 @@
 @rem ifort /MT rcr.f90 mkl_blas95.lib mkl_intel_c.lib mkl_core.lib libguide.lib
 ifort /MT /fltconsistency -o rcr.exe rcrlib_ifc.f90 rcrutil.f90 rcr.f90 mkl_blas95.lib mkl_lapack95.lib mkl_intel_c.lib mkl_intel_thread.lib mkl_core.lib libguide.lib 
 
+copy rcr.exe ..\stata\rcr.exe
+copy rcr.exe ..\bin\rcr.exe
+
 del *.mod *.obj

@@ -13,9 +13,10 @@ discard
 set mem 400m
 set more off
 capture log close
+adopath ++ ../stata
 log using "bug012.log", replace
 
-use rcr_example, clear
+use "http://www.sfu.ca/~bkrauth/code/rcr_example.dta", clear
 
 /* I've constructed an example to be super-simple */
 

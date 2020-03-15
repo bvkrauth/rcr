@@ -1,14 +1,14 @@
 v 3
-d 'RCR': module to estimate RCR (relative correlations restrictions) model from Krauth (2015)
+d 'RCR': module to estimate RCR (relative correlations restrictions) model from Krauth (2016)
 d
 d Brian Krauth, Simon Fraser University
 d Mohsen Javdani Haji, Simon Fraser University
 d
 d The model is described in the paper 
-d "Bounding a linear causal effect using relative correlation restrictions", Journal of Econometric Methods forthcoming.
+d "Bounding a linear causal effect using relative correlation restrictions", Journal of Econometric Methods 2016.
 d
-d Version: 2.0
-d Distribution-Date:  11may2015
+d Version: 2.00.01
+d Distribution-Date:  15mar2020
 
 f rcr.ado
 f rcr.hlp
@@ -23,6 +23,5 @@ G WIN rcr.exe
 G WIN64A rcr.exe
 h rcr.exe
 f rcr_example.do
-f rcr_example.dta
 
 e

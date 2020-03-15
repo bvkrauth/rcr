@@ -14,7 +14,15 @@ set more off
 
 /* This example uses the kindergarten group from the Project STAR data set used in the paper. */
 /* The data set has already been subject to the fixed-effects transformation */
-use "rcr_example", clear
+/* Use the local version of this file if available */
+local fname "rcr_example.dta"
+capture confirm file `fname'
+/* Otherwise use the web version */
+if (_rc != 0) {
+	local fname "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
+}
+di "Using data file `fname'"
+use "`fname'", clear
 
 /* This is just an ordinary regression, similar to that in Table 2 of the paper. */
 reg SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree

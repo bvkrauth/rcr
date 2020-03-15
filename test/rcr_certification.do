@@ -26,7 +26,15 @@ set mem 400m
 set more off
 cscript "Testing script for RCR and its postestimation commands" adofiles rcr rcr_estat rcr_predict
 
-use ../stata/rcr_example, clear
+local fname "rcr_example.dta"
+capture confirm file `fname'
+/* Otherwise use the web version */
+if (_rc != 0) {
+	local fname "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
+}
+di "Using data file `fname'"
+use "`fname'", clear
+
 /* Generate some handy values */
 quietly gen zero = 0
 quietly gen one = 1

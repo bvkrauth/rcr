@@ -12,4 +12,7 @@ out.txt
 *.ps
 
 # Windows executable
-*.exe
+/rcr.exe
+/src/rcr.exe
+/bin/rcr.exe
+

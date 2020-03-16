@@ -7,7 +7,7 @@ d
 d The model is described in the paper 
 d "Bounding a linear causal effect using relative correlation restrictions", Journal of Econometric Methods 2016.
 d
-d Version: 2.01
+d Version: 2.01.01
 d Distribution-Date:  16mar2020
 
 f rcr.ado

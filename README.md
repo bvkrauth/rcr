@@ -20,7 +20,7 @@ To see how the command works, you can call `help rcr`.  You can
 also download and execute a sample file by executing
 
 ```stata
-net install rcr, from("http://www.sfu.ca/~bkrauth/code")
+net get rcr, from("http://www.sfu.ca/~bkrauth/code")
 do rcr_example
 ```
 
@@ -29,14 +29,14 @@ do rcr_example
 The current developmental version can be obtained from this site by executing the Stata command:
 
 ```stata
-net instalrcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
+net install rcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
 ```
 
 To see how the command works, you can call `help rcr`.  You can
-also download and execute a sample file by executing
+also download and execute a sample file by executinge
 
 ```stata
-net install rcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
+net get rcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
 do rcr_example
 ```
 

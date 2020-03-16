@@ -7,12 +7,38 @@ It also contains the Fortran source code, and support files for compiling and te
 
 ## Installing the package in Windows
 
-The easiest way to install the current release of the package is to execute the
+### Current general release
+
+The current general release of the package can be obtained by executing the
 Stata command:
 
-  net install rcr, from("http://www.sfu.ca/~bkrauth/code")
+```stata
+net install rcr, from("http://www.sfu.ca/~bkrauth/code")
+```
 
-I have not yet set the package up to be distributed via github.
+To see how the command works, you can call `help rcr`.  You can
+also download and execute a sample file by executing
+
+```stata
+net install rcr, from("http://www.sfu.ca/~bkrauth/code")
+do rcr_example
+```
+
+### Current developmental version
+
+The current developmental version can be obtained from this site by executing the Stata command:
+
+```stata
+net instalrcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
+```
+
+To see how the command works, you can call `help rcr`.  You can
+also download and execute a sample file by executing
+
+```stata
+net install rcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
+do rcr_example
+```
 
 ## Installing the package in Linux
 

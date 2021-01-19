@@ -72,5 +72,6 @@ test_betax = 1.25
 /* If you call test_betax without any arguments, the default is to test H0: betax = 0. */
 test_betax
 
+/* THIS IS A STUPID COMMENT */
 
 log close

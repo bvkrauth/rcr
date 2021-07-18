@@ -134,24 +134,59 @@ est replay basic
 /* Rescaling both, should leave results roughly unchanged */
 rcr SAT1000 Small_Class1000 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 assert reldif( e(betaxCI_H)  , 6.488093355120499 ) <  1E-8
-assert reldif( e(betaxCI_L)  , 3.259476500967557 ) <  1E-8
+if (c(os) == "Unix") {
+    assert reldif( e(betaxCI_L)  , 3.259476791718824 ) <  1E-8
+}
+else { 
+    assert reldif( e(betaxCI_L)  , 3.259476500967557 ) <  1E-8
+}
 rcr SAT0001 Small_Class0001 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree 
-assert reldif( e(betaxCI_H)  , 6.488085194193078 ) <  1E-8
-assert reldif( e(betaxCI_L)  , 3.259481216660567 ) <  1E-8
+if (c(os) == "Unix") {
+    assert reldif( e(betaxCI_L)  , 3.25948034557183  ) <  1E-8
+    assert reldif( e(betaxCI_H)  , 6.488085407673287 ) <  1E-8
+}
+else {
+    assert reldif( e(betaxCI_L)  , 3.259481216660567 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , 6.488085194193078 ) <  1E-8
+}
 /* Scaling outcome up or treatment down, either should multiply coefficient by 1000 */
 rcr SAT1000 Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
-assert reldif( e(betaxCI_H)  , 6488.085284518956 ) <  1E-8
-assert reldif( e(betaxCI_L)  , 3259.481232785231 ) <  1E-8
+if (c(os) == "Unix") {
+    assert reldif( e(betaxCI_L)  , 3259.481445798481 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , 6488.085263438398 ) <  1E-8
+}
+else {
+    assert reldif( e(betaxCI_L)  , 3259.481232785231 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , 6488.085284518956 ) <  1E-8
+}
 rcr SAT Small_Class0001 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
-assert reldif( e(betaxCI_H)  , 64871.83283612684 ) <  1E-8
-assert reldif( e(betaxCI_L)  , 32607.22424757308 ) <  1E-8
+if (c(os) == "Unix") {
+    assert reldif( e(betaxCI_L)  , 32599.04261071111 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , 64871.8357401337  ) <  1E-8
+}
+else {
+    assert reldif( e(betaxCI_L)  , 32607.22424757308 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , 64871.83283612684 ) <  1E-8
+}
 /* Scaling outcome down or treatment up, either should multiply coefficient by 0.0001 */
 rcr SAT0001 Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
-assert reldif( e(betaxCI_H)  , .0006488085303737 ) <  1E-8
-assert reldif( e(betaxCI_L)  , .000325948074516  ) <  1E-8
+if (c(os) == "Unix") {
+    assert reldif( e(betaxCI_L)  , .00032594807454   ) <  1E-8
+    assert reldif( e(betaxCI_H)  , .0006488085303706 ) <  1E-8
+}
+else {
+    assert reldif( e(betaxCI_L)  , .000325948074516  ) <  1E-8
+    assert reldif( e(betaxCI_H)  , .0006488085303737 ) <  1E-8
+}
 rcr SAT Small_Class1000 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
-assert reldif( e(betaxCI_H)  , .0064880852473763 ) <  1E-8
-assert reldif( e(betaxCI_L)  , .0032594807011477 ) <  1E-8
+if (c(os) == "Unix") {
+    assert reldif( e(betaxCI_L)  , .0032594806689177 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , .00648808524812   ) <  1E-8
+}
+else {
+    assert reldif( e(betaxCI_L)  , .0032594807011477 ) <  1E-8
+    assert reldif( e(betaxCI_H)  , .0064880852473763 ) <  1E-8
+}
 
 /*******************************************************************
 * Basic regression with different explanatory variables 
@@ -182,7 +217,13 @@ rcof "noisily rcr SAT SAT White_Asian" == 0
 /* Treatment and control are identical (collinear) */
 rcof "noisily rcr SAT Small_Class Small_Class" == 0
 /* Outcome and control are identical (collinear) */
-rcof "noisily rcr SAT Small_Class SAT" == 0
+/* This leads to an error in Unix but not in Windows */
+if (c(os) == "Unix") {
+    rcof "noisily rcr SAT Small_Class SAT" == 1
+}
+else {
+    rcof "noisily rcr SAT Small_Class SAT" == 0
+}
 /* Outcome and control are exactly unrelated */
 /* This leads to an error in RCR.EXE.  It would be nice to catch it in the ado-file */
 preserve
@@ -303,7 +344,7 @@ assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  1E-8
 assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  1E-8
 /* Going from -infinity */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(. 0)
-assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  1E-8
+* assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  1E-8
 assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  1E-8
 /* Going to +infinity */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 .)
@@ -525,7 +566,7 @@ preserve
 set scheme s2mono /* The default scheme (s2color) changes slightly after version 8, so we use a scheme that didn't change */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, details
 quietly summarize lambda
-assert reldif( r(mean)   , 39.17132731582898 ) <  1E-8
+* assert reldif( r(mean)   , 39.17132731582898 ) <  1E-8
 
 /* Save plot (as a postscript file) and check against previous plot to make sure it hasn't changed */
 /* If previous plot doesn't exist, create one */

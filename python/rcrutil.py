@@ -3,12 +3,15 @@ RCRUTIL.PY Function library for RCR program
 
 Details TBA.
 """
-import sys
+# Standard library imports
+import sys, warnings
+from datetime import datetime
+
+# Third party imports
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from warnings import warn
 
+# Local application imports (none)
 
 def get_command_arguments(args):
     """Retrieve command arguments"""
@@ -23,8 +26,7 @@ def get_command_arguments(args):
     write_to_logfile("Log file {0} for RCR version 1.0\n".format(logfile),
                      mode="w")
     if (len(args) > 5):
-        msg = "WARNING: Unused program arguments {0}".format(args[5:])
-        write_to_logfile(msg)
+        msg = "Unused program arguments {0}".format(args[5:])
         warn(msg)
     return infile, outfile, detail_file
 
@@ -42,16 +44,13 @@ def read_data(infile):
         n_moments, n_lambda, external_big_number = tuple(line1)
     except FileNotFoundError:
         msg = "infile {0} not found.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     except ValueError:
         msg = "Incorrect format in line 1 of infile {0}.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     except:
         msg = "Unknown problem with line 1 of infile {0}.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     else:
         msg = "Line 1: n_moments = {0}, n_lambda = {1}, external_big_number = {2}.\n".format(n_moments, n_lambda, external_big_number)
         write_to_logfile(msg)
@@ -62,12 +61,10 @@ def read_data(infile):
                                     header=None).values[0, ].astype(np.float64)
     except ValueError:
         msg = "Incorrect format in line 2 of infile {0}.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     except:
         msg = "Unknown problem with line 2 of infile {0}.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     else:
         msg = "Line 2: moment_vector = a vector of length {0}.\n".format(len(moment_vector))
         write_to_logfile(msg)
@@ -78,12 +75,10 @@ def read_data(infile):
                                    header=None).values[0, ].astype(np.float64)
     except ValueError:
         msg = "Incorrect format in line 3 of infile {0}.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     except:
         msg = "Unknown problem with line 3 of infile {0}.\n".format(infile)
-        write_to_logfile("FATAL ERROR: " + msg)
-        return sys.exit()
+        die(msg)
     else:
         write_to_logfile("Line 3: lambda_range = {0}.\n".format(lambda_range))
         write_to_logfile("For calculations, lambda_range,...\n")
@@ -119,8 +114,8 @@ def read_data(infile):
     # warning but don't stop program.
     # TODO: I'm not satisfied with this.
     if (external_big_number > sys.float_info.max):
-        write_to_logfile("Warning: largest real number in executable ({0}) is less than largest in Stata {1}".format(sys.float_info.max, external_big_number))
-        warn("Largest real number in executable ({0}) is less than largest in Stata {1}".format(sys.float_info.max, external_big_number))
+        msg = "Largest real number in executable ({0}) is less than largest in Stata {1}".format(sys.float_info.max, external_big_number)
+        warn(msg)
     return n_moments, n_lambda, external_big_number, moment_vector, lambda_range
 
 
@@ -145,5 +140,16 @@ def write_to_logfile(str, mode="a"):
         lf.write(str)
         lf.close()
     except:
-        warn("Cannot write to logfile {0}.".format(logfile))
+        msg = "Cannot write to logfile {0}.".format(logfile)
+        warnings.warn(msg)
         pass
+
+
+def warn(msg):
+    write_to_logfile("WARNING: " + msg)
+    warnings.warn(msg)
+
+
+def die(msg):
+    write_to_logfile("FATAL ERROR: " + msg)
+    return sys.exit(msg)

@@ -27,7 +27,6 @@ Usage:
 """
 # Standard library imports
 import sys
-# from warnings import warn
 # from datetime import datetime
 
 # Third party imports
@@ -37,7 +36,7 @@ from numpy.linalg import inv
 
 # Local application imports
 from rcrutil import get_command_arguments, read_data, \
-                    write_results, write_to_logfile
+                    write_results, write_to_logfile, warn, die
 
 
 def estimate_model(moment_vector, lambda_range):
@@ -145,8 +144,8 @@ def estimate_theta_segments(moment_vector, thetastar):
             # nothing to guarantee that these are still the two values in
             # thetavec that are the closest to thetastar.
         else:
-            msg = "Warning: thetastar = ({0}) > thetamax = ({1})."
-            write_to_logfile(msg.format(thetastar, thetamax))
+            msg = "thetastar = ({0}) > thetamax = ({1}).".format(thetastar, thetamax)
+            warn(msg)
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
     # Calculate lambda for every theta in thetavec
@@ -369,8 +368,8 @@ def bracket_theta_star(moment_vector):
             else:
                 break
     if (j == 0):
-        msg = "Warning: Unable to find a good bracket for thetastar"
-        write_to_logfile(msg)
+        msg = "Unable to find a good bracket for thetastar"
+        warn(msg)
     return bracket
 
 
@@ -400,7 +399,7 @@ def estimate_theta(moment_vector,
         estimate_theta[0, 0] = -np.inf
         estimate_theta[1, 0] = np.inf
         estimate_theta[:, 1:] = np.nan
-        sys.exit
+        return estimate_theta
     # IMPORTANT_THETAS is a list of theta values for which lambda(theta) needs
     # to be calculated. We don't know in advance how many important values
     # there will be, so we make IMPORTANT_THETAS way too big, and initialize
@@ -590,9 +589,9 @@ def estimate_theta(moment_vector,
                     break
                 # Otherwise we will try again with a smaller h
                 if (n == nmax):
-                    msg1 = "Warning: Inaccurate SE for thetaL/H."
+                    msg1 = "Inaccurate SE for thetaL/H."
                     msg2 = "Try normalizing variables to mean zero."
-                    write_to_logfile(msg1 + " " + msg2)
+                    warn(msg1 + " " + msg2)
             # Finally, we apply the implicit function theorem to calculate the
             # gradient that we actually need:
             #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
@@ -715,8 +714,7 @@ def simplify_moments(moment_vector):
         simplify_moments[5] = ((XY.T @ inv(XX) @ XZ) -
                                (moment_vector[k - 2])*(moment_vector[k - 3]))
     except:
-        write_to_logfile("FATAL ERROR: X'X matrix is singular")
-        return sys.exit()
+        die("FATAL ERROR: X'X matrix is singular")
     # When there is only one control variable, yhat and zhat are perfectly
     # correlated (positively or negatively) With rounding error, this can lead
     # to a correlation that is > 1 in absolute value.  This can create
@@ -744,8 +742,7 @@ def check_moments(moment_vector):
         assert sm[5] >= 0  # "Error - invalid data in moment_vector: var(zhat) < 0")
         assert np.abs(sm[5]) <= np.sqrt(sm[3] * sm[4])  # "Error - invalid moment_vector: cov(yhat,zhat) > sqrt(var(yhat)*var(zhat))")
     except:
-        write_to_logfile("Invalid data in moment vector.")
-        return sys.exit()
+        die("Invalid data in moment vector.")
     # Next make sure that the identifying conditions are satisfied.
     # TODO: Maybe these could be addressed with warnings rather than error
     # messages?
@@ -755,8 +752,7 @@ def check_moments(moment_vector):
         assert sm[3] > 0  # "Error - model not identified: var(yhat)=0")
         assert sm[3] < sm[0]  # "Error - model not identified: y is an exact linear function of X")
     except:
-        write_to_logfile("Model not identified.")
-        return sys.exit()
+        die("Model not identified.")
     # TODO: We may also want to check for var(zhat)=0.
     # The model is identified in this case, but we may need to take special
     # steps to get the calculations right.
@@ -915,9 +911,9 @@ def estimate_parameter(func, moment_vector):
             if (errmax < 0.01):
                 break
             if (n == nmax):
-                msg1 = "Warning: Inaccurate SE for // fname //."
+                msg1 = "Inaccurate SE for // fname //."
                 msg2 = "Try normalizing variables to mean zero."
-                write_to_logfile(msg1 + msg2)
+                warn(msg1 + msg2)
     else:
         estimate_parameter[1:] = 0.0   # change to internal_nan
     return estimate_parameter

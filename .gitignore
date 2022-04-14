@@ -16,3 +16,5 @@ out.txt
 /src/rcr.exe
 /bin/rcr.exe
 
+# Compiled python files
+/python/__pycache__

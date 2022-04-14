@@ -6,7 +6,7 @@ Author:       Brian Krauth
               Simon Fraser University
 Usage:
 
-       RCR.exe [infile outfile logfile]
+       rcr.py [infile outfile logfile]
 
        where
 
@@ -25,13 +25,20 @@ Usage:
        LOGFILE.
 
 """
+# Standard library imports
 import sys
+# from warnings import warn
+# from datetime import datetime
+
+# Third party imports
 import numpy as np
-import pandas as pd
-from warnings import warn
-from datetime import datetime
 from numpy.linalg import inv
-from rcrutil import get_command_arguments, read_data, write_results, write_to_logfile
+# import pandas as pd
+
+# Local application imports
+from rcrutil import get_command_arguments, read_data, \
+                    write_results, write_to_logfile
+
 
 def estimate_model(moment_vector, lambda_range):
     """Estimate the RCR model.
@@ -91,7 +98,7 @@ def estimate_model(moment_vector, lambda_range):
     #         THETA_SEGMENTS will be.
     theta_segments = estimate_theta_segments(moment_vector,
                                              result_matrix[1, 0])
-    # STEP 2: For each row of lambda_range (i.e., each pair of lambda values)...
+    # STEP 2: For each row of lambda_range (i.e., each pair of lambda values):
     # do i=1,size(lambda_range,1)
     # j is the row in result_matrix corresponding to lambda_range(i,:)
     # j = 2+2*i
@@ -103,9 +110,10 @@ def estimate_model(moment_vector, lambda_range):
                                            theta_segments)
     return result_matrix
 
+
 def estimate_theta_segments(moment_vector, thetastar):
     """Used by estimate_model to find local minima/maxima"""
-    k = 30000 # For some reason a bigger number produces an FP overflow (in the fortran program)
+    k = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
     # THETAMAX is the largest value of theta for which we can calculate both
     # lambda(theta) and lambda(-theta) without generating a floating point
@@ -115,14 +123,14 @@ def estimate_theta_segments(moment_vector, thetastar):
     # So I've put in a hard limit as well
     thetamax = min(1.0e100, thetamax)
     # Create a starting set of theta values at which to calculate lambda
-    thetavec  = np.sort(np.append(np.linspace(-50.0, 50.0, k-2),
-                                  (thetamax, -thetamax)))
+    thetavec = np.sort(np.append(np.linspace(-50.0, 50.0, k - 2),
+                                 (thetamax, -thetamax)))
     if (np.isfinite(thetastar)):
         # Figure out where thetastar lies in thetavec
         i = np.sum(thetavec < thetastar)
         # If i=0 or i=k, then thetastar is finite but outside of
         # [-thetamax,thetamax]. This is unlikely, but we should check.
-        if ( ( (i > 0) & (i < k))):
+        if ((i > 0) & (i < k)):
             # Adjust i to ensure that -thetamax and thetamax are still
             # included in thetavec
             i = min(max(i, 2), k-2)
@@ -137,14 +145,15 @@ def estimate_theta_segments(moment_vector, thetastar):
             # nothing to guarantee that these are still the two values in
             # thetavec that are the closest to thetastar.
         else:
-            write_to_logfile("Warning: absolute value of thetastar ({0}) is larger than thetamax ({1})".format(thetastar,thetamax))
+            msg = "Warning: thetastar = ({0}) > thetamax = ({1})."
+            write_to_logfile(msg.format(thetastar, thetamax))
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
     # Calculate lambda for every theta in thetavec
     lambdavec = lambdafast(thetavec, simplify_moments(moment_vector))
     # If a detail_file has been specified, output thetavec and lambdavec to
     # that file
-    #if (len_trim(detail_file) > 0) then
+    # if (len_trim(detail_file) > 0) then
     #    ! Get a new unit number
     #    u = get_next_unit()
     #    ! See if the file exists already
@@ -165,23 +174,26 @@ def estimate_theta_segments(moment_vector, thetastar):
     #        ! Close the file
     #        close (unit=u,iostat=ios)
     #    else
-    #        ! If the file can't be opened correctly, then put a warning message in the logfile
-    #        call write_to_logfile("WARNING: Unable to write detailed lambda(theta) function to detail file " // trim(detail_file))
+    # If the file can't be opened correctly, then put a warning message in
+    # the logfile
+    # call write_to_logfile("WARNING: Unable to write detailed lambda(theta) function to detail file " // trim(detail_file))
     #    end if
-    #end if
+    # end if
     # LOCALMIN = True if the corresponding element of THETAVEC appears to be
     # a local minimum
-    localmin = (lambdavec[1:k-1] < lambdavec[0:k-2]) & (lambdavec[1:k-1] < lambdavec[2:k])
-    localmin = np.append(np.insert(localmin,[0], [False]), False)
+    localmin = ((lambdavec[1:k-1] < lambdavec[0:k-2]) &
+                (lambdavec[1:k-1] < lambdavec[2:k]))
+    localmin = np.append(np.insert(localmin, [0], [False]), False)
     # LOCALMAX = True if the corresponding element of THETAVEC appears to be
     # a local maximum
-    localmax = (lambdavec[1:k-1] > lambdavec[0:k-2]) & (lambdavec[1:k-1] > lambdavec[2:k])
-    localmax = np.append(np.insert(localmax,[0], [False]), False)
+    localmax = ((lambdavec[1:k-1] > lambdavec[0:k-2]) &
+                (lambdavec[1:k-1] > lambdavec[2:k]))
+    localmax = np.append(np.insert(localmax, [0], [False]), False)
     if (np.isfinite(thetastar)):
         # Figure out where THETASTAR lies in THETAVEC.  We need to do this
         # calculation again because we sorted THETAVEC
         i = np.sum(thetavec < thetastar)
-        if ( (i > 0) & (i < k)):
+        if ((i > 0) & (i < k)):
             # The two values bracketing THETASTAR are never local optima
             localmin[i-1:i+1] = False
             localmax[i-1:i+1] = False
@@ -189,14 +201,14 @@ def estimate_theta_segments(moment_vector, thetastar):
     # an iterative optimization algorithm to improve the precision.
     # do j=1,size(localmin)
     for j in range(1, len(localmin)):
-        if localmin[j-1] == True:
+        if localmin[j-1]:
             thetavec[j-1] = brent(thetavec[j-2],
                                   thetavec[j-1],
                                   thetavec[j],
                                   lambda_for_brent,
                                   1.0e-10,
                                   simplify_moments(moment_vector))
-        elif localmax[j-1] == True:
+        elif localmax[j-1]:
             thetavec[j-1] = brent(thetavec[j-2],
                                   thetavec[j-1],
                                   thetavec[j],
@@ -204,33 +216,37 @@ def estimate_theta_segments(moment_vector, thetastar):
                                   1.0e-10,
                                   simplify_moments(moment_vector))
     # Now we are ready to create THETA_SEGMENTS.
-    if (np.isfinite(thetastar) & (i > 0) & (i < k) ):
+    if (np.isfinite(thetastar) & (i > 0) & (i < k)):
         # THETA_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
         # values that bracket thetastar, and any local optima
-        theta_segments =  np.append(np.concatenate([thetavec[i-1:i+1],
-                                                    thetavec[localmin],
-                                                    thetavec[localmax]]),
-                                    (-thetamax,thetamax))
+        theta_segments = np.append(np.concatenate([thetavec[i-1:i+1],
+                                                   thetavec[localmin],
+                                                   thetavec[localmax]]),
+                                   (-thetamax, thetamax))
     else:
-        # If thetastar is not finite, then we have two less elements in THETA_SEGMENTS
-        theta_segments =  np.concatenate([thetavec[i-1:i+1],
-                                          thetavec[localmin],
-                                          thetavec[localmax]])
+        # If thetastar is not finite, then we have two less elements in
+        # THETA_SEGMENTS
+        theta_segments = np.concatenate([thetavec[i-1:i+1],
+                                         thetavec[localmin],
+                                         thetavec[localmax]])
     # Sort the result (definitely necessary)
     theta_segments = np.sort(theta_segments)
     return theta_segments
 
+
 def lambda_for_brent(theta, simplifiedMoments):
     return lambdafast(theta, simplifiedMoments)
+
 
 def negative_lambda_for_brent(theta, simplifiedMoments):
     return -lambda_for_brent(theta, simplifiedMoments)
 
+
 def brent(ax, bx, cx, func, tol, xopt):
     """Optimize by Brent algorithm"""
-    itmax=1000
-    cgold=0.3819660
-    zeps=1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
+    itmax = 1000
+    cgold = 0.3819660
+    zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
     a = min(ax, cx)
     b = max(ax, cx)
     v = bx
@@ -240,11 +256,17 @@ def brent(ax, bx, cx, func, tol, xopt):
     fx = func(x, xopt)
     fv = fx
     fw = fx
+    # NOTE: I've added the extraneous line below so that code-checking
+    # tools do not flag the "e = d" statement below as referencing
+    # a nonexistent variable. In practice, this statement will never
+    # be reached in the first loop iteration, after which point d will be
+    # defined.
+    d = e
     for iter in range(1, itmax + 1):
         xm = 0.5 * (a + b)
         tol1 = tol * abs(x) + zeps
         tol2 = 2.0 * tol1
-        if ( abs(x - xm) <= (tol2 - 0.5 * (b - a))):
+        if (abs(x - xm) <= (tol2 - 0.5 * (b - a))):
             brent = x
             break
         if (abs(e) > tol1):
@@ -256,8 +278,10 @@ def brent(ax, bx, cx, func, tol, xopt):
                 p = -p
             q = abs(q)
             etemp = e
-            e = d
-            if (abs(p) >= abs(0.5 * q * etemp)) | (p <= q * (a - x)) | ( p >= q * (b - x) ):
+            e = d     # See NOTE above
+            if (abs(p) >= abs(0.5 * q * etemp)) | \
+               (p <= q * (a - x)) | \
+               (p >= q * (b - x)):
                 e = (a - x) if (x >= xm) else (b - x)
                 d = cgold * e
             else:
@@ -286,12 +310,12 @@ def brent(ax, bx, cx, func, tol, xopt):
                 a = u
             else:
                 b = u
-            if ( fu <= fw) | ( w == x):
+            if (fu <= fw) | (w == x):
                 v = w
                 fv = fw
                 w = u
                 fw = fu
-            elif (fu <= fv ) | ( v == x ) | ( v == w):
+            elif (fu <= fv) | (v == x) | (v == w):
                 v = u
                 fv = fu
     if (iter == itmax):
@@ -299,41 +323,56 @@ def brent(ax, bx, cx, func, tol, xopt):
         write_to_logfile("brent: exceed maximum iterations.\n")
     return brent
 
+
 def bracket_theta_star(moment_vector):
     """Find theta valus close to thetastar"""
-    # Get the value of THETASTAR.  If we are in this function it should be finite.
+    # Get the value of THETASTAR.  If we are in this function it should be
+    # finite.
     theta_star = thetastar(moment_vector)
-    # Get the limit of lambda(theta) as theta approaches THETASTAR,from below and from above
-    # These limits are generally not finite.
+    # Get the limit of lambda(theta) as theta approaches THETASTAR,from below
+    # and from above. These limits are generally not finite.
     sm = simplify_moments(moment_vector)
     # We may want to use np.inf here
-    true_limit = np.array((1.0, -1.0)) * np.sign(sm[2] - sm[5] * sm[1]/sm[4]) * sys.float_info.max
+    # NOTE: the np.sign seems extraneous here.
+    true_limit = (np.array((1.0, -1.0)) *
+                  np.sign(sm[2] - sm[5] * sm[1]/sm[4]) *
+                  sys.float_info.max)
     # Pick a default value
     bracket = theta_star + np.array((-1.0, 1.0))*max(abs(theta_star), 1.0)*0.1
     j = 0
-    for i in range(1,101):
-        # For the candidate bracket, consider THETASTAR plus or minus some small number epsilon
-        # (epsilon gets smaller each iteration)
-        candidate = theta_star + np.array((-1.0, 1.0))*max(abs(theta_star), 1.0)*0.1**i
-        # In order to be a good bracket, candidate must satisfy some conditions.
-        #    1. The bracket must be wide enough that the system can tell that CANDIDATE(1) < THETASTAR < CANDIDATE(2)
-        #    2. The bracket must be narrow enough that lambda(candidate) is the same sign as true_limit.
-        #    3. The bracket must be wide enough that lambda(candidate) is finite and nonzero.
-        #       If candidate is very close to thetastar, then the calculated lambda(candidate)
-        #       can be *either* NaN or zero.  The reason for this is that lambda(candidate) is
-        #       a ratio of two things that are going to zero.  Approximation error will eventually
-        #       make both the numerator and denominator indistingushable from zero (NaN), but sometimes
-        #       the numerator will reach indistinguishable-from-zero faster (giving zero for the ratio).
+    for i in range(1, 101):
+        # For the candidate bracket, consider THETASTAR plus or minus some
+        # small number epsilon (epsilon gets smaller each iteration)
+        candidate = (theta_star +
+                     np.array((-1.0, 1.0)) * max(abs(theta_star), 1.0)*0.1**i)
+        # To be a good bracket, candidate must satisfy some conditions:
+        #    1. The bracket must be wide enough that the system can tell that
+        #       CANDIDATE(1) < THETASTAR < CANDIDATE(2)
+        #    2. The bracket must be narrow enough that lambda(candidate) is
+        #       the same sign as true_limit.
+        #    3. The bracket must be wide enough that lambda(candidate) is
+        #       finite and nonzero. If candidate is very close to thetastar,
+        #       then the calculated lambda(candidate) can be *either* NaN or
+        #       zero.  The reason for this is that lambda(candidate) is a
+        #       ratio of two things that are going to zero.  Approximation
+        #       error will eventually make both the numerator and denominator
+        #       indistingushable from zero (NaN), but sometimes the numerator
+        #       will reach indistinguishable-from-zero faster (giving zero
+        #       for the ratio).
         if ((candidate[0] < theta_star) & (candidate[1] > theta_star)):
             tmp2 = lambdafast(candidate, sm)
-            if (np.isfinite(tmp2).all() & (tmp2[0]*np.sign(true_limit[0]) > 0.0) & (tmp2[1]*np.sign(true_limit[1]) > 0.0)):
-                    j = i
-                    bracket = candidate
+            if (np.isfinite(tmp2).all() &
+               (tmp2[0]*np.sign(true_limit[0]) > 0.0) &
+               (tmp2[1]*np.sign(true_limit[1]) > 0.0)):
+                j = i
+                bracket = candidate
             else:
                 break
     if (j == 0):
-        write_to_logfile("Warning: Unable to find a good bracket for thetastar")
+        msg = "Warning: Unable to find a good bracket for thetastar"
+        write_to_logfile(msg)
     return bracket
+
 
 def estimate_theta(moment_vector,
                    lambda_range,
@@ -357,15 +396,15 @@ def estimate_theta(moment_vector,
     errt = np.zeros(ntab-1)
     # Check to make sure that lambdastar is not in lambda_range.  If so,
     # theta is completely unidentified.
-    if ( lambda_range[0] <= lambdastar) & (lambdastar <= lambda_range[1]):
+    if (lambda_range[0] <= lambdastar) & (lambdastar <= lambda_range[1]):
         estimate_theta[0, 0] = -np.inf
         estimate_theta[1, 0] = np.inf
         estimate_theta[:, 1:] = np.nan
         sys.exit
     # IMPORTANT_THETAS is a list of theta values for which lambda(theta) needs
-    # to be calculated. We don't know in advance how many important values there
-    # will be, so we make IMPORTANT_THETAS way too big, and initialize it to
-    # all zeros (this choice is arbitrary).
+    # to be calculated. We don't know in advance how many important values
+    # there will be, so we make IMPORTANT_THETAS way too big, and initialize
+    # it to all zeros (this choice is arbitrary).
     # Get simplified moments
     simplified_moments = simplify_moments(moment_vector)
     # k is the number of actual important theta values in IMPORTANT_THETAS
@@ -377,32 +416,35 @@ def estimate_theta(moment_vector,
         # check
         current_theta_range = theta_segments[i-1:i+1]
         # Skip ahead to the next pair if thetastar is in the current range
-        if (~np.isfinite(thetastar)) | (current_theta_range[0] >= thetastar) | (current_theta_range[1] <= thetastar):
+        if ((~np.isfinite(thetastar)) |
+           (current_theta_range[0] >= thetastar) |
+           (current_theta_range[1] <= thetastar)):
             # Otherwise, calculate the range of lambdas associated with that
             # range of thetas
             current_lambda_range = lambdafast(current_theta_range,
                                               simplified_moments)
             # For each of the values in lambda_range
-            for j in range(1,3):
+            for j in range(1, 3):
                 # See if that value satisfies lambda(theta)-lambda(j)=0 for
                 # some theta in current_theta_range
-                if ( lambda_range[j-1] > min(current_lambda_range)) & (lambda_range[j-1] < max(current_lambda_range)):
+                if (lambda_range[j-1] > min(current_lambda_range)) & \
+                   (lambda_range[j-1] < max(current_lambda_range)):
                     # If so, find theta such that lambda(theta)-lambda(j)=0
                     # and put it inour list of IMPORTANT_THETAS.  Of course,
                     # we can't quite find the exact theta.
-                    tmp =  zbrent(lambda_minus_lambda,
-                                  current_theta_range[0],
-                                  current_theta_range[1],
-                                  1.0e-200,
-                                  np.insert(simplified_moments,
-                                            0,
-                                            lambda_range[j-1]))
+                    tmp = zbrent(lambda_minus_lambda,
+                                 current_theta_range[0],
+                                 current_theta_range[1],
+                                 1.0e-200,
+                                 np.insert(simplified_moments,
+                                           0,
+                                           lambda_range[j-1]))
                     important_thetas = np.append(important_thetas, tmp)
                     k = k + 1
     # Add THETA_SEGMENTS to the list of IMPORTANT_THETAS
     important_thetas = np.append(important_thetas, theta_segments)
     # Add the OLS theta to the list of IMPORTANT_THETAS?
-    # important_thetas(size(important_thetas)) = simplified_moments(3)/simplified_moments(2)
+    # simplified_moments(3)/simplified_moments(2)
     # Calculate lambda(theta) for every theta in IMPORTANT_THETAS
     lambda_segments = lambdafast(important_thetas, simplified_moments)
     # INRANGE = True if a particular value of theta satisfies the condition
@@ -410,7 +452,8 @@ def estimate_theta(moment_vector,
     # Notice that we have put a little error tolerance in here, since
     # zbrent won't find the exact root.
     # TODO: Make sure the tolerance is big enough for the error in zbrent.
-    inrange = ((lambda_segments >= lambda_range[0]-0.001) & (lambda_segments <= lambda_range[1]+0.001))
+    inrange = ((lambda_segments >= lambda_range[0]-0.001) &
+               (lambda_segments <= lambda_range[1]+0.001))
     if (k > 1):
         inrange[0:k-1] = True
     # If the lowest value in IMPORTANT_THETAS is in range, then there is no
@@ -431,25 +474,27 @@ def estimate_theta(moment_vector,
         estimate_theta[1, 0] = max(important_thetas[inrange])
     # Now we find the gradient
     # Take the gradient at both theta_L and theta_H
-    for j in range(1,3):
-        theta = estimate_theta[j-1,0]
+    for j in range(1, 3):
+        theta = estimate_theta[j-1, 0]
         # The gradient can only be calculated if theta is finite!
         if np.isfinite(theta):
-            # Gradients are estimated using a simple finite central difference, i.e.
+            # Gradients are estimated using a simple finite central difference:
             #            df/dx = (f(x+e)-f(x-e))/2e
-            # where e is some small step size.  The tricky part is getting the right
-            # step size.  The algorithm used here is an adaptation of dfridr in
-            # Numerical Recipes.  However, that algorithm needs an input initial step
-            # size h.
+            # where e is some small step size.  The tricky part is getting the
+            # right step size.  The algorithm used here is an adaptation of
+            # dfridr in Numerical Recipes.  However, that algorithm needs an
+            # input initial step size h.
             #
-            # http://www.fizyka.umk.pl/nrbook/c5-7.pdf: "As a function of input h, it is typical for the
-            # accuracy to get better as h is made larger, until a sudden point is reached where nonsensical
-            # extrapolation produces early return with a large error. You should therefore choose
-            # a fairly large value for h, but monitor the returned value err, decreasing h if it is
-            # not small. For functions whose characteristic x scale is of order unity, we typically
-            # take h to be a few tenths."
-            # So we try out starting values (h) until we get one that gives an acceptable
-            # estimated error.
+            # http://www.fizyka.umk.pl/nrbook/c5-7.pdf: "As a function of input
+            # h, it is typical for the accuracy to get better as h is made
+            # larger, until a sudden point is reached where nonsensical
+            # extrapolation produces early return with a large error. You
+            # should therefore choose a fairly large value for h, but monitor
+            # the returned value err, decreasing h if it is not small. For
+            # functions whose characteristic x scale is of order unity, we
+            # typically take h to be a few tenths."
+            # So we try out starting values (h) until we get one that gives an
+            # acceptable estimated error.
             for n in range(1, nmax+1):
                 # Our candidate initial stepsize is 0.1, 0.001, ...
                 h = 0.1 ** n
@@ -462,7 +507,8 @@ def estimate_theta(moment_vector,
                 hh = h
                 # Calculate an approximate derivative using stepsize hh
                 a[0, 0] = (lambdafast(theta + hh, simplified_moments) -
-                           lambdafast(theta - hh, simplified_moments)) / (2.0 * hh)
+                           lambdafast(theta - hh, simplified_moments)) / \
+                          (2.0 * hh)
                 # Set the error to very large
                 err = big
                 # Generate a geometric series
@@ -470,24 +516,29 @@ def estimate_theta(moment_vector,
                 # Now we try progressively smaller stepsizes
                 for k in range(2, ntab + 1):
                     # The new stepsize hh is the old stepsize divided by 1.4
-                    hh=hh/con
+                    hh = hh / con
                     # Calculate an approximate derivative with the new
                     # stepsize
-                    a[0,k-1] = (lambdafast(theta + hh, simplified_moments) - 
-                                lambdafast(theta - hh, simplified_moments)) / (2.0 * hh)
+                    a[0, k-1] = ((lambdafast(theta + hh, simplified_moments) -
+                                  lambdafast(theta - hh, simplified_moments)) /
+                                 (2.0 * hh))
                     # Then use Neville's method to estimate the error
                     for m in range(2, k + 1):
-                        a[m - 1, k - 1] = (a[m - 2, k - 1] *
-                                           fac[m - 2] - a[m - 2,k - 2]) / (fac[m - 2] - 1.0)
-                    errt[0:k - 2] = np.max((abs(a[1:k, k - 1] - a[0:k - 1, k - 1]),
-                                            abs(a[1:k, k - 1] - a[0:k - 1, k - 2])))
-                    ierrmin=np.argmin(errt[0:k - 1])
+                        a[m - 1, k - 1] = ((a[m - 2, k - 1] *
+                                            fac[m - 2] -
+                                            a[m - 2, k - 2]) /
+                                           (fac[m - 2] - 1.0))
+                    errt[0:k - 2] = np.max((abs(a[1:k, k - 1] -
+                                                a[0:k - 1, k - 1]),
+                                            abs(a[1:k, k - 1] -
+                                                a[0:k - 1, k - 2])))
+                    ierrmin = np.argmin(errt[0:k - 1])
                     # If the approximation error is lower than any previous,
                     # use that value
                     if (errt[ierrmin] <= err):
                         err = errt[ierrmin]
                         dfridr = a[1 + ierrmin, k - 1]
-                    if abs(a[k - 1, k - 1] - a[k - 2,k - 2]) >= (safe * err):
+                    if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= (safe * err):
                         break
                 # errmax is the biggest approximation error so far for the
                 # current value of h
@@ -498,24 +549,32 @@ def estimate_theta(moment_vector,
                 for i in range(1, len(moment_vector) + 1):
                     hh = h
                     deps[i-1] = hh
-                    a[0,0] = (lambdafun(moment_vector + deps, theta) -
-                              lambdafun(moment_vector - deps, theta)) / (2.0 * hh)
+                    a[0, 0] = ((lambdafun(moment_vector + deps, theta) -
+                                lambdafun(moment_vector - deps, theta)) /
+                               (2.0 * hh))
                     err = big
                     fac[0:ntab - 1] = geop(con2, con2, ntab - 1)
                     for k in range(2, ntab + 1):
                         hh = hh / con
                         deps[i-1] = hh
-                        a[0, k - 1] = (lambdafun(moment_vector + deps, theta) -
-                                       lambdafun(moment_vector - deps, theta)) / (2.0 * hh)
+                        a[0, k - 1] = (lambdafun(moment_vector + deps,
+                                                 theta) -
+                                       lambdafun(moment_vector - deps,
+                                                 theta)) / (2.0 * hh)
                         for m in range(2, k + 1):
-                            a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] - a[m - 2, k - 2]) / (fac[m - 2] - 1.0)
-                        errt[0:k - 1] = np.max((abs(a[1:k, k - 1] - a[0:k - 1, k - 1]),
-                                                abs(a[1:k, k - 1] - a[0:k - 1, k - 2])))
+                            a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
+                                               a[m - 2, k - 2]) / \
+                                               (fac[m - 2] - 1.0)
+                        errt[0:k - 1] = np.max((abs(a[1:k, k - 1] -
+                                                    a[0:k - 1, k - 1]),
+                                                abs(a[1:k, k - 1] -
+                                                    a[0:k - 1, k - 2])))
                         ierrmin = np.argmin(errt[0:k - 1])
                         if (errt[ierrmin] <= err):
                             err = errt[ierrmin]
                             dfridr = a[1 + ierrmin, k - 1]
-                        if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= (safe * err):
+                        if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= \
+                           (safe * err):
                             break
                     # errmax is the biggest approximation error so far for the
                     # current value of h
@@ -531,31 +590,34 @@ def estimate_theta(moment_vector,
                     break
                 # Otherwise we will try again with a smaller h
                 if (n == nmax):
-                    write_to_logfile("Warning: Inaccurate SE for thetaL/H. Try normalizing variables to mean zero.")
+                    msg1 = "Warning: Inaccurate SE for thetaL/H."
+                    msg2 = "Try normalizing variables to mean zero."
+                    write_to_logfile(msg1 + " " + msg2)
             # Finally, we apply the implicit function theorem to calculate the
             # gradient that we actually need:
             #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
-            estimate_theta[j-1,1:] = -dmoments/dtheta
+            estimate_theta[j-1, 1:] = -dmoments / dtheta
         else:
             # If theta is infinite, then the gradient is NaN.
             estimate_theta[j - 1, 1:] = np.nan
     return estimate_theta
 
+
 def zbrent(func, x1, x2, tol, xopt):
     """Find a root using the Brent algorithm"""
     itmax = 1000
-    eps = np.finfo(float).eps # in fortran was epsilon(x1)
+    eps = np.finfo(float).eps   # in fortran was epsilon(x1)
     a = x1
     b = x2
     fa = func(a, xopt)
     fb = func(b, xopt)
-    if (( (fa > 0.0) & (fb > 0.0)) | ( (fa < 0.0) & (fb < 0.0) ) ):
+    if (((fa > 0.0) & (fb > 0.0)) | ((fa < 0.0) & (fb < 0.0))):
         write_to_logfile("Error in zbrent: Root is not bracketed")
         # call die("root must be bracketed for zbrent") # UPDATE
     c = b
     fc = fb
     for iter in range(1, itmax + 1):
-        if (( (fb > 0.0) & (fc > 0.0)) | ( (fb < 0.0) & (fc < 0.0) ) ):
+        if (((fb > 0.0) & (fc > 0.0)) | ((fb < 0.0) & (fc < 0.0))):
             c = a
             fc = fa
             d = b - a
@@ -586,7 +648,7 @@ def zbrent(func, x1, x2, tol, xopt):
             if (p > 0.0):
                 q = -q
             p = abs(p)
-            if (2.0 * p < min(3.0 * xm * q -abs(tol1 * q), abs(e * q))):
+            if (2.0 * p < min(3.0 * xm * q - abs(tol1 * q), abs(e * q))):
                 e = d
                 d = p / q
             else:
@@ -604,11 +666,13 @@ def zbrent(func, x1, x2, tol, xopt):
         write_to_logfile("zbrent: exceeded maximum iterations")
     return zbrent
 
+
 def lambda_minus_lambda(theta, simplified_moments_and_lambda):
     """Calculate lamba(thetaval)-lambdaval given thetaval and lambdaval"""
-    lambda_minus_lambda = lambdafast(theta,
-                                     simplified_moments_and_lambda[1:]) - simplified_moments_and_lambda[0]
-    return lambda_minus_lambda
+    lambda1 = lambdafast(theta, simplified_moments_and_lambda[1:])
+    lambda0 = simplified_moments_and_lambda[0]
+    return lambda1 - lambda0
+
 
 def simplify_moments(moment_vector):
     """Convert moment_vector into the six moments needed for the model"""
@@ -619,33 +683,37 @@ def simplify_moments(moment_vector):
     xtmp = np.zeros((k, k))
     # The array XTMP will contain the full cross-product matrix E(WW')
     # where W = [1 X Y Z]
-    l = 0
-    for i in range(l, k):
+    h = 0
+    for i in range(h, k):
         for j in range(i, k):
-            xtmp[i, j] = mvtmp[l]
-            xtmp[j, i] = mvtmp[l]
-            l = l + 1
+            xtmp[i, j] = mvtmp[h]
+            xtmp[j, i] = mvtmp[h]
+            h = h + 1
     # The array XX will contain the symmetric matrix E(XX')
     XX = xtmp[0:(k - 2), 0:(k - 2)]
     # The array XY will contain the vector E(XY)
     XY = xtmp[(k - 2), 0:(k - 2)]
     # The array XZ will contain the vector E(XZ)
-    XZ = xtmp[(k - 1),0:(k - 2)]
+    XZ = xtmp[(k - 1), 0:(k - 2)]
     # Now we fill in simplify_moments with the various moments.
     simplify_moments = np.zeros(6)
     # varY
-    simplify_moments[0] = moment_vector[m - 3] - (moment_vector[k - 3]) ** 2
+    simplify_moments[0] = (moment_vector[m - 3] -
+                           (moment_vector[k - 3]) ** 2)
     # varZ
-    simplify_moments[1] = moment_vector[m - 1] - (moment_vector[k - 2])** 2
+    simplify_moments[1] = (moment_vector[m - 1] -
+                           (moment_vector[k - 2]) ** 2)
     # covYZ
-    simplify_moments[2] = moment_vector[m - 2] - moment_vector[k - 2]*moment_vector[k - 3]
+    simplify_moments[2] = (moment_vector[m - 2] -
+                           moment_vector[k - 2]*moment_vector[k - 3])
     try:
         # varYhat
         simplify_moments[3] = XY.T @ inv(XX) @ XY - (moment_vector[k - 3]) ** 2
         # varZhat
         simplify_moments[4] = XZ.T @ inv(XX) @ XZ - (moment_vector[k - 2]) ** 2
         # covYZhat
-        simplify_moments[5] = XY.T @ inv(XX) @ XZ - (moment_vector[k - 2])*(moment_vector[k - 3])
+        simplify_moments[5] = ((XY.T @ inv(XX) @ XZ) -
+                               (moment_vector[k - 2])*(moment_vector[k - 3]))
     except:
         write_to_logfile("FATAL ERROR: X'X matrix is singular")
         return sys.exit()
@@ -653,39 +721,46 @@ def simplify_moments(moment_vector):
     # correlated (positively or negatively) With rounding error, this can lead
     # to a correlation that is > 1 in absolute value.  This can create
     # problems, so we force the correlation to be exactly 1.
-    # TODO: This also could happen if there is more than one control variable but only one happens
-    # to have a nonzero coefficient.  I don't know how to handle that case.
+    # TODO: This also could happen if there is more than one control variable
+    # but only one happens to have a nonzero coefficient.  I don't know how to
+    # handle that case.
     if k == 4:
-        simplify_moments[5] = np.sqrt(simplify_moments[3] * simplify_moments[4]) * np.sign(simplify_moments[5])
+        simplify_moments[5] = (np.sign(simplify_moments[5]) *
+                               np.sqrt(simplify_moments[3] *
+                                       simplify_moments[4]))
     return simplify_moments
+
 
 def check_moments(moment_vector):
     """Check to ensure moment_vector is valid"""
     sm = simplify_moments(moment_vector)
     # First make sure that moment_vector describes a valid covariance matrix
     try:
-        assert sm[0] >= 0.0 # "Error - invalid data in moment_vector: var(y) < 0")
-        assert sm[1] >= 0.0 # "Error - invalid data in moment_vector: var(z) < 0")
-        assert np.abs(sm[2]) <= np.sqrt(sm[0] * sm[1]) # "Error - invalid data in moment_vector: cov(y,z) > sqrt(var(y)*var(z))")
-        assert sm[3] >= 0 # call validate(sm(4) .ge. 0.0_dp,"Error - invalid data in moment_vector: var(yhat) < 0")
-        assert sm[3] <= sm[0] # call validate(sm(4) .le. sm(1),"Error - invalid data in moment_vector: var(yhat) > var(y)")
-        assert sm[5] >= 0 # call validate(sm(5) .ge. 0.0_dp,"Error - invalid data in moment_vector: var(zhat) < 0")
-        assert np.abs(sm[5]) <= np.sqrt(sm[3] * sm[4]) # call validate(abs(sm(6)) .le. sqrt(sm(4)*sm(5)),"Error - invalid moment_vector: cov(yhat,zhat) > sqrt(var(yhat)*var(zhat))")
+        assert sm[0] >= 0.0  # "Error - invalid data in moment_vector: var(y) < 0")
+        assert sm[1] >= 0.0  # "Error - invalid data in moment_vector: var(z) < 0")
+        assert np.abs(sm[2]) <= np.sqrt(sm[0] * sm[1])  # "Error - invalid data in moment_vector: cov(y,z) > sqrt(var(y)*var(z))")
+        assert sm[3] >= 0  # "Error - invalid data in moment_vector: var(yhat) < 0")
+        assert sm[3] <= sm[0]  # "Error - invalid data in moment_vector: var(yhat) > var(y)")
+        assert sm[5] >= 0  # "Error - invalid data in moment_vector: var(zhat) < 0")
+        assert np.abs(sm[5]) <= np.sqrt(sm[3] * sm[4])  # "Error - invalid moment_vector: cov(yhat,zhat) > sqrt(var(yhat)*var(zhat))")
     except:
         write_to_logfile("Invalid data in moment vector.")
         return sys.exit()
     # Next make sure that the identifying conditions are satisfied.
-    # TODO: Maybe these could be addressed with warnings rather than error messages?
+    # TODO: Maybe these could be addressed with warnings rather than error
+    # messages?
     try:
-        assert sm[0] > 0.0 # call validate(sm(1) > 0.0_dp,"Error - model not identified: var(y)=0")
-        assert sm[1] > 0.0 # call validate(sm(2) > 0.0_dp,"Error - model not identified: var(z)=0")
-        assert sm[3] > 0 # call validate(sm(4) > 0, "Error - model not identified: var(yhat)=0")
-        assert sm[3] < sm[0] # call validate(sm(4) < sm(1),"Error - model not identified: y is an exact linear function of X")
+        assert sm[0] > 0.0  # "Error - model not identified: var(y)=0")
+        assert sm[1] > 0.0  # "Error - model not identified: var(z)=0")
+        assert sm[3] > 0  # "Error - model not identified: var(yhat)=0")
+        assert sm[3] < sm[0]  # "Error - model not identified: y is an exact linear function of X")
     except:
         write_to_logfile("Model not identified.")
         return sys.exit()
-    # TODO: We may also want to check for var(zhat)=0.  The model is identified in this case, but
-    #       we may need to take special steps to get the calculations right.
+    # TODO: We may also want to check for var(zhat)=0.
+    # The model is identified in this case, but we may need to take special
+    # steps to get the calculations right.
+
 
 def lambdastar(moment_vector):
     """Calculate lambdastar"""
@@ -698,6 +773,7 @@ def lambdastar(moment_vector):
     lambdastar = np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
     return lambdastar
 
+
 def thetastar(moment_vector):
     """Calculate thetastar"""
     sm = simplify_moments(moment_vector)
@@ -709,6 +785,7 @@ def thetastar(moment_vector):
     thetastar = sm[5] / sm[4]
     return thetastar
 
+
 def lambdafast(theta, simplifiedMoments):
     """Calculate lambda for the given array of thetas"""
     y = simplifiedMoments[0]
@@ -718,17 +795,25 @@ def lambdafast(theta, simplifiedMoments):
     zhat = simplifiedMoments[4]
     yzhat = simplifiedMoments[5]
     # Potential FPE
-    lambdafast = (yhat - 2.0 * theta * yzhat + theta ** 2 * zhat)
-    lambdafast = np.asarray(lambdafast / (y - yhat - (2.0) * theta * (yz-yzhat) + theta ** 2 *(z - zhat)))
+    lf_num = (yhat -
+              2.0 * theta * yzhat +
+              theta ** 2 * zhat)
+    lf_denom = (y - yhat -
+                (2.0) * theta * (yz - yzhat) +
+                theta ** 2 * (z - zhat))
+    lambdafast = np.asarray(lf_num / lf_denom)
     lambdafast[lambdafast < 0.0] = np.nan
-    lambdafast = (yz - yzhat - theta * (z - zhat)) / (yzhat - theta * zhat) * np.sqrt(lambdafast)
+    lambdafast = (yz - yzhat - theta * (z - zhat)) / \
+                 (yzhat - theta * zhat) * np.sqrt(lambdafast)
     return lambdafast
+
 
 def lambdafun(moment_vector, theta):
     """Calculate lambda for the given theta"""
     # Potential FPE
     lambdafun = lambdafast(theta, simplify_moments(moment_vector))
     return lambdafun
+
 
 def lambda0(moment_vector):
     """"Calculate lambda(theta) for theta = 0"""
@@ -743,6 +828,7 @@ def lambda0(moment_vector):
     lambda0 = lambdafun(moment_vector, 0.0)
     return lambda0
 
+
 def geop(first, factor, n):
     """Create a geometric series"""
     geop = np.zeros(n)
@@ -751,6 +837,7 @@ def geop(first, factor, n):
     for k in range(1, n-1):
         geop[k] = geop[k - 1] * factor
     return geop
+
 
 def estimate_parameter(func, moment_vector):
     """Estimate a parameter and its gradient"""
@@ -787,7 +874,7 @@ def estimate_parameter(func, moment_vector):
                 # Calculate the first approximation
                 a[0, 0] = (func(moment_vector + deps) -
                            func(moment_vector - deps)) / (2.0*hh)
-                dfridr = a[0, 0] # WORKAROUND
+                dfridr = a[0, 0]   # WORKAROUND
                 # The error is assumed to be a big number
                 err = big
                 # Generate a geometric series
@@ -801,31 +888,40 @@ def estimate_parameter(func, moment_vector):
                     # Calculate the approximate derivative for that step size
                     a[0, j - 1] = (func(moment_vector + deps) -
                                    func(moment_vector - deps)) / (2.0*hh)
-                    # Next we estimate the approximation error for the current step size
+                    # Next we estimate the approximation error for the current
+                    # step size
                     for k in range(2, j + 1):
                         a[k - 1, j - 1] = (a[k - 2, j - 1] *
                                            fac[k - 2] -
-                                           a[k - 2, j - 2]) / (fac[k - 2] - 1.0)
-                    errt[0:j - 1] = np.maximum(np.abs(a[1:j, j - 1] - a[0:j - 1, j - 1]),
-                                               np.abs(a[1:j, j - 1] - a[0:j - 1, j - 2]))
+                                           a[k - 2, j - 2]) / \
+                                          (fac[k - 2] - 1.0)
+                    errt[0:j - 1] = np.maximum(np.abs(a[1:j, j - 1] -
+                                                      a[0:j - 1, j - 1]),
+                                               np.abs(a[1:j, j - 1] -
+                                                      a[0:j - 1, j - 2]))
                     ierrmin = np.argmin(errt[0:j - 1])
                     # If the error is smaller than the lowest previous error,
                     # use that hh
                     if (errt[ierrmin] <= err):
                         err = errt[ierrmin]
                         dfridr = a[1 + ierrmin, j - 1]
-                    # If the error is much larger than the lowest previous error, stop
-                    if np.abs(a[j - 1, j - 1] - a[j - 2, j - 2]) >= (safe * err):
+                    # If the error is much larger than the lowest previous
+                    # error, stop
+                    if np.abs(a[j - 1, j - 1] - a[j - 2, j - 2]) >= \
+                       (safe * err):
                         break
                 errmax = np.maximum(errmax, err)
                 estimate_parameter[i] = dfridr
             if (errmax < 0.01):
                 break
             if (n == nmax):
-                write_to_logfile("Warning: Inaccurate SE for // fname //. Try normalizing variables to mean zero.")
+                msg1 = "Warning: Inaccurate SE for // fname //."
+                msg2 = "Try normalizing variables to mean zero."
+                write_to_logfile(msg1 + msg2)
     else:
-        estimate_parameter[1:] = 0.0 # change to internal_nan
+        estimate_parameter[1:] = 0.0   # change to internal_nan
     return estimate_parameter
+
 
 #############################################################################
 # Begin run code
@@ -835,7 +931,8 @@ def estimate_parameter(func, moment_vector):
 infile, outfile, detail_file = get_command_arguments(sys.argv)
 
 # Read in the data from INFILE
-# (side effect: allocation/creation of moment_vector, lambda_range, result_matrix)
+# Side effect: allocation/creation of moment_vector, lambda_range, and
+# result_matrix
 (n_moments, n_lambda, external_big_number, moment_vector,
     lambda_range) = read_data(infile)
 
@@ -846,7 +943,7 @@ result_matrix = estimate_model(moment_vector, lambda_range)
 # Write out the data to OUTFILE
 # Issue: Python breaks lines above a certain length, we don't want to do that
 write_results(result_matrix, outfile)
- 
+
 #############################################################################
 # End run code
 #############################################################################

@@ -74,10 +74,18 @@ def estimate_model(moment_vector, lambda_range):
 
     """
     write_to_logfile("Estimating model.\n")
-    result_matrix = np.zeros((len(lambda_range) + 3,
-                              len(moment_vector) + 1))
+    result_matrix = np.full((len(lambda_range) + 3,
+                             len(moment_vector) + 1),
+                            float('nan'))
     # Check to make sure the moments are consistent
-    check_moments(moment_vector)
+    valid, identified = check_moments(moment_vector)
+    # If moments are invalid, just stop there
+    if not valid:
+        return result_matrix
+    # If model is not identified, just stop there
+    # TODO: some model elements may still be identified here
+    elif not identified:
+        return result_matrix
     # We have closed forms for the global parameters lambdastar, thetastar,
     # and lambda(0), so we just estimate them directly.
     result_matrix[0, ] = estimate_parameter(lambdastar, moment_vector)
@@ -85,7 +93,7 @@ def estimate_model(moment_vector, lambda_range):
     result_matrix[2, ] = estimate_parameter(lambda0, moment_vector)
     # Here we get to the main estimation problem.  We need to find the range
     # of theta values consistent with the lambda(theta) function falling in
-    # lambda_range.  We have a closed formsolution for lambda(theta), but
+    # lambda_range.  We have a closed form solution for lambda(theta), but
     # finding its inverse is an iterative problem.
     #
     # STEP 1: Estimate THETA_SEGMENTS, which is a global real vector
@@ -111,7 +119,7 @@ def estimate_model(moment_vector, lambda_range):
 
 
 def estimate_theta_segments(moment_vector, thetastar):
-    """Used by estimate_model to find local minima/maxima"""
+    """Divide real line into segments over which lambda(theta) is monotonic"""
     k = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
     # THETAMAX is the largest value of theta for which we can calculate both
@@ -143,8 +151,10 @@ def estimate_theta_segments(moment_vector, thetastar):
             # guaranteed to give finite and nonzero lambda.  But there's
             # nothing to guarantee that these are still the two values in
             # thetavec that are the closest to thetastar.
+            assert thetavec[i-2] < thetavec[i-1]
+            assert thetavec[i] < thetavec[i+1]
         else:
-            msg = "thetastar = ({0}) > thetamax = ({1}).".format(thetastar, thetamax)
+            msg = "thetastar (={0}) > thetamax (={1}).".format(thetastar, thetamax)
             warn(msg)
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
@@ -660,6 +670,7 @@ def simplify_moments(moment_vector):
     # Get sizes
     m = len(moment_vector)
     k = int(1 + np.floor((np.sqrt(1 + 8 * m) - 1) / 2))
+    assert 2*(m + 1) == k ** 2 + k
     mvtmp = np.append(1.0, moment_vector)
     xtmp = np.zeros((k, k))
     # The array XTMP will contain the full cross-product matrix E(WW')
@@ -715,29 +726,49 @@ def check_moments(moment_vector):
     """Check to ensure moment_vector is valid"""
     sm = simplify_moments(moment_vector)
     # First make sure that moment_vector describes a valid covariance matrix
-    try:
-        assert sm[0] >= 0.0  # "Error - invalid data in moment_vector: var(y) < 0")
-        assert sm[1] >= 0.0  # "Error - invalid data in moment_vector: var(z) < 0")
-        assert np.abs(sm[2]) <= np.sqrt(sm[0] * sm[1])  # "Error - invalid data in moment_vector: cov(y,z) > sqrt(var(y)*var(z))")
-        assert sm[3] >= 0  # "Error - invalid data in moment_vector: var(yhat) < 0")
-        assert sm[3] <= sm[0]  # "Error - invalid data in moment_vector: var(yhat) > var(y)")
-        assert sm[5] >= 0  # "Error - invalid data in moment_vector: var(zhat) < 0")
-        assert np.abs(sm[5]) <= np.sqrt(sm[3] * sm[4])  # "Error - invalid moment_vector: cov(yhat,zhat) > sqrt(var(yhat)*var(zhat))")
-    except:
-        die("Invalid data in moment vector.")
+    valid = True
+    if sm[0] < 0.0:
+        valid = False
+        warn("Invalid data: var(y) = {0} < 0".format(sm[0]))
+    if sm[1] < 0.0:
+        valid = False
+        warn("Invalid data: var(z) = {0} < 0".format(sm[1]))
+    if sm[3] < 0.0:
+        valid = False
+        warn("Invalid data: var(yhat) = {0} < 0".format(sm[3]))
+    if sm[5] < 0.0:
+        valid = False
+        warn("Invalid data: var(zhat) = {0} < 0".format(sm[5]))
+    if np.abs(sm[2]) > np.sqrt(sm[0] * sm[1]):
+        valid = False
+        covyz = np.abs(sm[2])
+        sdyz = np.sqrt(sm[0] * sm[1])
+        warn("Invalid data: |cov(y,z)| = {0} > {1} sqrt(var(y)*var(z))".format(covyz, sdyz))
+    if np.abs(sm[5]) > np.sqrt(sm[3] * sm[4]):
+        valid = False
+        covyz = np.abs(sm[5])
+        sdyz = np.sqrt(sm[3] * sm[4])
+        warn("Invalid data: cov(yhat,zhat) = {0} > {1} sqrt(var(yhat)*var(zhat))".format(covyz,sdyz))
     # Next make sure that the identifying conditions are satisfied.
     # TODO: Maybe these could be addressed with warnings rather than error
     # messages?
-    try:
-        assert sm[0] > 0.0  # "Error - model not identified: var(y)=0")
-        assert sm[1] > 0.0  # "Error - model not identified: var(z)=0")
-        assert sm[3] > 0  # "Error - model not identified: var(yhat)=0")
-        assert sm[3] < sm[0]  # "Error - model not identified: y is an exact linear function of X")
-    except:
-        die("Model not identified.")
+    identified = valid
+    if sm[0] == 0.0:
+        identified = False
+        warn("Model not identified: var(y) = 0")
+    if sm[1] == 0.0:
+        identified = False
+        warn("Model not identified: var(z) = 0")
+    if sm[3] == 0.0:
+        identified = False
+        warn("Model not identified: var(yhat) = 0")
+    if sm[3] == sm[0]:
+        identified = False
+        warn("Model not identified: y is an exact linear function of X")
     # TODO: We may also want to check for var(zhat)=0.
     # The model is identified in this case, but we may need to take special
     # steps to get the calculations right.
+    return valid, identified
 
 
 def lambdastar(moment_vector):

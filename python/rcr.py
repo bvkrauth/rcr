@@ -88,9 +88,9 @@ def estimate_model(moment_vector, lambda_range):
         return result_matrix
     # We have closed forms for the global parameters lambdastar, thetastar,
     # and lambda(0), so we just estimate them directly.
-    result_matrix[0, ] = estimate_parameter(lambdastar, moment_vector)
-    result_matrix[1, ] = estimate_parameter(thetastar, moment_vector)
-    result_matrix[2, ] = estimate_parameter(lambda0, moment_vector)
+    result_matrix[0, ] = estimate_parameter(lambdastar_fun, moment_vector)
+    result_matrix[1, ] = estimate_parameter(thetastar_fun, moment_vector)
+    result_matrix[2, ] = estimate_parameter(lambda0_fun, moment_vector)
     # Here we get to the main estimation problem.  We need to find the range
     # of theta values consistent with the lambda(theta) function falling in
     # lambda_range.  We have a closed form solution for lambda(theta), but
@@ -103,8 +103,7 @@ def estimate_model(moment_vector, lambda_range):
     #         between these points. Note that we don't know a priori how many
     #         critical points there will be, and so we don't know how big
     #         THETA_SEGMENTS will be.
-    theta_segments = estimate_theta_segments(moment_vector,
-                                             result_matrix[1, 0])
+    theta_segments = estimate_theta_segments(moment_vector)
     # STEP 2: For each row of lambda_range (i.e., each pair of lambda values):
     # do i=1,size(lambda_range,1)
     # j is the row in result_matrix corresponding to lambda_range(i,:)
@@ -112,16 +111,15 @@ def estimate_model(moment_vector, lambda_range):
     #  Estimate the corresponding theta range, and put it in result_matrix
     result_matrix[3:5, :] = estimate_theta(moment_vector,
                                            lambda_range,
-                                           result_matrix[0, 0],
-                                           result_matrix[1, 0],
                                            theta_segments)
     return result_matrix
 
 
-def estimate_theta_segments(moment_vector, thetastar):
+def estimate_theta_segments(moment_vector):
     """Divide real line into segments over which lambda(theta) is monotonic"""
     k = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
+    thetastar = thetastar_fun(moment_vector)
     # THETAMAX is the largest value of theta for which we can calculate both
     # lambda(theta) and lambda(-theta) without generating a floating point
     # exception.
@@ -319,7 +317,7 @@ def bracket_theta_star(moment_vector):
     """Find theta valus close to thetastar"""
     # Get the value of THETASTAR.  If we are in this function it should be
     # finite.
-    theta_star = thetastar(moment_vector)
+    theta_star = thetastar_fun(moment_vector)
     # Get the limit of lambda(theta) as theta approaches THETASTAR,from below
     # and from above. These limits are generally not finite.
     sm = simplify_moments(moment_vector)
@@ -367,8 +365,6 @@ def bracket_theta_star(moment_vector):
 
 def estimate_theta(moment_vector,
                    lambda_range,
-                   lambdastar,
-                   thetastar,
                    theta_segments):
     """Estimate theta"""
     ntab = 10
@@ -385,12 +381,15 @@ def estimate_theta(moment_vector,
     a = np.zeros((ntab, ntab))
     fac = np.zeros(ntab-1)
     errt = np.zeros(ntab-1)
+    # Get lambdastar and thetastar
+    lambdastar = lambdastar_fun(moment_vector)
+    thetastar = thetastar_fun(moment_vector)
     # Check to make sure that lambdastar is not in lambda_range.  If so,
     # theta is completely unidentified.
     if (lambda_range[0] <= lambdastar) & (lambdastar <= lambda_range[1]):
         estimate_theta[0, 0] = -np.inf
         estimate_theta[1, 0] = np.inf
-        estimate_theta[:, 1:] = np.nan
+        estimate_theta[:, 1:] = 0.0
         return estimate_theta
     # IMPORTANT_THETAS is a list of theta values for which lambda(theta) needs
     # to be calculated. We don't know in advance how many important values
@@ -589,8 +588,8 @@ def estimate_theta(moment_vector,
             #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
             estimate_theta[j-1, 1:] = -dmoments / dtheta
         else:
-            # If theta is infinite, then the gradient is NaN.
-            estimate_theta[j - 1, 1:] = np.nan
+            # If theta is infinite, then the gradient is zero.
+            estimate_theta[j - 1, 1:] = 0.0
     return estimate_theta
 
 
@@ -771,7 +770,7 @@ def check_moments(moment_vector):
     return valid, identified
 
 
-def lambdastar(moment_vector):
+def lambdastar_fun(moment_vector):
     """Calculate lambdastar"""
     sm = simplify_moments(moment_vector)
     # lambdastar is defined as sqrt( var(z)/var(zhat) - 1)
@@ -783,7 +782,7 @@ def lambdastar(moment_vector):
     return lambdastar
 
 
-def thetastar(moment_vector):
+def thetastar_fun(moment_vector):
     """Calculate thetastar"""
     sm = simplify_moments(moment_vector)
     # thetastar is defined as
@@ -824,7 +823,7 @@ def lambdafun(moment_vector, theta):
     return lambdafun
 
 
-def lambda0(moment_vector):
+def lambda0_fun(moment_vector):
     """"Calculate lambda(theta) for theta = 0"""
     # lambda0 is defined as:
     # (cov(y,z)/cov(yhat,zhat)-1) / sqrt(var(y)/var(yhat)-1)

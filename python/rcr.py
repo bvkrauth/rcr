@@ -117,7 +117,7 @@ def estimate_model(moment_vector, lambda_range):
 
 def estimate_theta_segments(moment_vector):
     """Divide real line into segments over which lambda(theta) is monotonic"""
-    k = 30000   # A bigger number produces an FP overflow in fortran
+    imax = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
     thetastar = thetastar_fun(moment_vector)
     # THETAMAX is the largest value of theta for which we can calculate both
@@ -128,17 +128,17 @@ def estimate_theta_segments(moment_vector):
     # So I've put in a hard limit as well
     thetamax = min(1.0e100, thetamax)
     # Create a starting set of theta values at which to calculate lambda
-    thetavec = np.sort(np.append(np.linspace(-50.0, 50.0, k - 2),
+    thetavec = np.sort(np.append(np.linspace(-50.0, 50.0, imax - 2),
                                  (thetamax, -thetamax)))
     if (np.isfinite(thetastar)):
         # Figure out where thetastar lies in thetavec
         i = np.sum(thetavec < thetastar)
         # If i=0 or i=k, then thetastar is finite but outside of
         # [-thetamax,thetamax]. This is unlikely, but we should check.
-        if ((i > 0) & (i < k)):
+        if ((i > 0) & (i < imax)):
             # Adjust i to ensure that -thetamax and thetamax are still
             # included in thetavec
-            i = min(max(i, 2), k-2)
+            i = min(max(i, 2), imax - 2)
             # Replace the two elements of thetavec that bracket thetastar
             # with two more carefully-chosen numbers.  See BRACKET_THETA_STAR
             # for details
@@ -170,19 +170,21 @@ def estimate_theta_segments(moment_vector):
             warn("Unable to write to detail file {0}.".format(detail_file))
     # LOCALMIN = True if the corresponding element of THETAVEC appears to be
     # a local minimum
-    localmin = ((lambdavec[1:k-1] < lambdavec[0:k-2]) &
-                (lambdavec[1:k-1] < lambdavec[2:k]))
+    localmin = ((lambdavec[1:imax-1] < lambdavec[0:imax-2]) &
+                (lambdavec[1:imax-1] < lambdavec[2:imax]))
+    # The end points are not local minima
     localmin = np.append(np.insert(localmin, [0], [False]), False)
     # LOCALMAX = True if the corresponding element of THETAVEC appears to be
     # a local maximum
-    localmax = ((lambdavec[1:k-1] > lambdavec[0:k-2]) &
-                (lambdavec[1:k-1] > lambdavec[2:k]))
+    localmax = ((lambdavec[1:imax-1] > lambdavec[0:imax-2]) &
+                (lambdavec[1:imax-1] > lambdavec[2:imax]))
+    # The end points are not local max`ima
     localmax = np.append(np.insert(localmax, [0], [False]), False)
+    # Figure out where THETASTAR lies in THETAVEC.  We need to do this
+    # calculation again because we sorted THETAVEC
     if (np.isfinite(thetastar)):
-        # Figure out where THETASTAR lies in THETAVEC.  We need to do this
-        # calculation again because we sorted THETAVEC
         i = np.sum(thetavec < thetastar)
-        if ((i > 0) & (i < k)):
+        if ((i > 0) & (i < imax)):
             # The two values bracketing THETASTAR are never local optima
             localmin[i-1:i+1] = False
             localmax[i-1:i+1] = False
@@ -194,18 +196,18 @@ def estimate_theta_segments(moment_vector):
             thetavec[j-1] = brent(thetavec[j-2],
                                   thetavec[j-1],
                                   thetavec[j],
-                                  lambda_for_brent,
+                                  lambdafast,
                                   1.0e-10,
                                   simplify_moments(moment_vector))
         elif localmax[j-1]:
             thetavec[j-1] = brent(thetavec[j-2],
                                   thetavec[j-1],
                                   thetavec[j],
-                                  negative_lambda_for_brent,
+                                  negative_lambdafast,
                                   1.0e-10,
                                   simplify_moments(moment_vector))
     # Now we are ready to create THETA_SEGMENTS.
-    if (np.isfinite(thetastar) & (i > 0) & (i < k)):
+    if (np.isfinite(thetastar) & (i > 0) & (i < imax)):
         # THETA_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
         # values that bracket thetastar, and any local optima
         theta_segments = np.append(np.concatenate([thetavec[i-1:i+1],
@@ -223,12 +225,8 @@ def estimate_theta_segments(moment_vector):
     return theta_segments
 
 
-def lambda_for_brent(theta, simplifiedMoments):
-    return lambdafast(theta, simplifiedMoments)
-
-
-def negative_lambda_for_brent(theta, simplifiedMoments):
-    return -lambda_for_brent(theta, simplifiedMoments)
+def negative_lambdafast(theta, simplifiedMoments):
+    return -lambdafast(theta, simplifiedMoments)
 
 
 def brent(ax, bx, cx, func, tol, xopt):

@@ -152,32 +152,14 @@ def estimate_theta_segments(moment_vector, thetastar):
     lambdavec = lambdafast(thetavec, simplify_moments(moment_vector))
     # If a detail_file has been specified, output thetavec and lambdavec to
     # that file
-    # if (len_trim(detail_file) > 0) then
-    #    ! Get a new unit number
-    #    u = get_next_unit()
-    #    ! See if the file exists already
-    #    inquire(file=detail_file,exist=file_found)
-    #    ! Open the file
-    #    if (file_found) then
-    #        open(unit=u,file=detail_file,iostat=ios,action="write",position="rewind",status="old")
-    #    else
-    #        open(unit=u,file=detail_file,iostat=ios,action="write",status="new")
-    #    end if
-    #    ! Assuming the file could be opened correctly,...
-    #    if (ios == 0) then
-    #        write (unit=u,fmt=*) "theta , lambda"
-    #        ! Write out thetavec
-    #        do i=1,size(thetavec)
-    #            write (unit=u,fmt=*) thetavec(i) , "," , lambdavec(i)
-    #        end do
-    #        ! Close the file
-    #        close (unit=u,iostat=ios)
-    #    else
-    # If the file can't be opened correctly, then put a warning message in
-    # the logfile
-    # call write_to_logfile("WARNING: Unable to write detailed lambda(theta) function to detail file " // trim(detail_file))
-    #    end if
-    # end if
+    if (len(detail_file) > 0):
+        try:
+            with open(detail_file, mode="w") as df:
+                df.write("theta, lambda \n")
+                for i in range(0, len(thetavec)):
+                    df.write("{0}, {1} \n".format(thetavec[i], lambdavec[i]))
+        except:
+            warn("Unable to write to detail file {0}.".format(detail_file))
     # LOCALMIN = True if the corresponding element of THETAVEC appears to be
     # a local minimum
     localmin = ((lambdavec[1:k-1] < lambdavec[0:k-2]) &

@@ -135,7 +135,7 @@ def estimate_theta_segments(moment_vector):
         i = np.sum(thetavec < thetastar)
         # If i=0 or i=k, then thetastar is finite but outside of
         # [-thetamax,thetamax]. This is unlikely, but we should check.
-        if ((i > 0) & (i < imax)):
+        if ((i > 0) and (i < imax)):
             # Adjust i to ensure that -thetamax and thetamax are still
             # included in thetavec
             i = min(max(i, 2), imax - 2)
@@ -184,7 +184,7 @@ def estimate_theta_segments(moment_vector):
     # calculation again because we sorted THETAVEC
     if (np.isfinite(thetastar)):
         i = np.sum(thetavec < thetastar)
-        if ((i > 0) & (i < imax)):
+        if ((i > 0) and (i < imax)):
             # The two values bracketing THETASTAR are never local optima
             localmin[i-1:i+1] = False
             localmax[i-1:i+1] = False
@@ -207,7 +207,7 @@ def estimate_theta_segments(moment_vector):
                                   1.0e-10,
                                   simplify_moments(moment_vector))
     # Now we are ready to create THETA_SEGMENTS.
-    if (np.isfinite(thetastar) & (i > 0) & (i < imax)):
+    if (np.isfinite(thetastar) and (i > 0) and (i < imax)):
         # THETA_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
         # values that bracket thetastar, and any local optima
         theta_segments = np.append(np.concatenate([thetavec[i-1:i+1],
@@ -266,15 +266,15 @@ def brent(ax, bx, cx, func, tol, xopt):
             q = abs(q)
             etemp = e
             e = d     # See NOTE above
-            if (abs(p) >= abs(0.5 * q * etemp)) | \
-               (p <= q * (a - x)) | \
+            if (abs(p) >= abs(0.5 * q * etemp)) or \
+               (p <= q * (a - x)) or \
                (p >= q * (b - x)):
                 e = (a - x) if (x >= xm) else (b - x)
                 d = cgold * e
             else:
                 d = p / q
                 u = x + d
-                if (u - a < tol2) | (b - u < tol2):
+                if (u - a < tol2) or (b - u < tol2):
                     d = tol1 * np.sign(xm - x)
         else:
             e = (a - x) if (x >= xm) else (b - x)
@@ -297,12 +297,12 @@ def brent(ax, bx, cx, func, tol, xopt):
                 a = u
             else:
                 b = u
-            if (fu <= fw) | (w == x):
+            if (fu <= fw) or (w == x):
                 v = w
                 fv = fw
                 w = u
                 fw = fu
-            elif (fu <= fv) | (v == x) | (v == w):
+            elif (fu <= fv) or (v == x) or (v == w):
                 v = u
                 fv = fu
     if (iter == itmax):
@@ -346,10 +346,10 @@ def bracket_theta_star(moment_vector):
         #       indistingushable from zero (NaN), but sometimes the numerator
         #       will reach indistinguishable-from-zero faster (giving zero
         #       for the ratio).
-        if ((candidate[0] < theta_star) & (candidate[1] > theta_star)):
+        if ((candidate[0] < theta_star) and (candidate[1] > theta_star)):
             tmp2 = lambdafast(candidate, sm)
-            if (np.isfinite(tmp2).all() &
-               (tmp2[0]*np.sign(true_limit[0]) > 0.0) &
+            if (np.isfinite(tmp2).all() and
+               (tmp2[0]*np.sign(true_limit[0]) > 0.0) and
                (tmp2[1]*np.sign(true_limit[1]) > 0.0)):
                 j = i
                 bracket = candidate
@@ -384,7 +384,7 @@ def estimate_theta(moment_vector,
     thetastar = thetastar_fun(moment_vector)
     # Check to make sure that lambdastar is not in lambda_range.  If so,
     # theta is completely unidentified.
-    if (lambda_range[0] <= lambdastar) & (lambdastar <= lambda_range[1]):
+    if (lambda_range[0] <= lambdastar) and (lambdastar <= lambda_range[1]):
         estimate_theta[0, 0] = -np.inf
         estimate_theta[1, 0] = np.inf
         estimate_theta[:, 1:] = 0.0
@@ -404,8 +404,8 @@ def estimate_theta(moment_vector,
         # check
         current_theta_range = theta_segments[i-1:i+1]
         # Skip ahead to the next pair if thetastar is in the current range
-        if ((~np.isfinite(thetastar)) |
-           (current_theta_range[0] >= thetastar) |
+        if ((not np.isfinite(thetastar)) or
+           (current_theta_range[0] >= thetastar) or
            (current_theta_range[1] <= thetastar)):
             # Otherwise, calculate the range of lambdas associated with that
             # range of thetas
@@ -415,7 +415,7 @@ def estimate_theta(moment_vector,
             for j in range(1, 3):
                 # See if that value satisfies lambda(theta)-lambda(j)=0 for
                 # some theta in current_theta_range
-                if (lambda_range[j-1] > min(current_lambda_range)) & \
+                if (lambda_range[j-1] > min(current_lambda_range)) and \
                    (lambda_range[j-1] < max(current_lambda_range)):
                     # If so, find theta such that lambda(theta)-lambda(j)=0
                     # and put it inour list of IMPORTANT_THETAS.  Of course,
@@ -599,13 +599,13 @@ def zbrent(func, x1, x2, tol, xopt):
     b = x2
     fa = func(a, xopt)
     fb = func(b, xopt)
-    if (((fa > 0.0) & (fb > 0.0)) | ((fa < 0.0) & (fb < 0.0))):
+    if (((fa > 0.0) and (fb > 0.0)) or ((fa < 0.0) and (fb < 0.0))):
         write_to_logfile("Error in zbrent: Root is not bracketed")
         # call die("root must be bracketed for zbrent") # UPDATE
     c = b
     fc = fb
     for iter in range(1, itmax + 1):
-        if (((fb > 0.0) & (fc > 0.0)) | ((fb < 0.0) & (fc < 0.0))):
+        if (((fb > 0.0) and (fc > 0.0)) or ((fb < 0.0) and (fc < 0.0))):
             c = a
             fc = fa
             d = b - a
@@ -620,10 +620,10 @@ def zbrent(func, x1, x2, tol, xopt):
         # check for convergence
         tol1 = 2.0 * eps * abs(b) + 0.5 * tol
         xm = 0.5 * (c - b)
-        if (abs(xm) <= tol1) | (fb == 0.0):
+        if (abs(xm) <= tol1) or (fb == 0.0):
             zbrent = b
             break
-        if (abs(e) >= tol1) & (abs(fa) > abs(fb)):
+        if (abs(e) >= tol1) and (abs(fa) > abs(fb)):
             s = fb / fa
             if (a == c):
                 p = 2.0 * xm * s

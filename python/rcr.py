@@ -678,6 +678,7 @@ def simplify_moments(moment_vector):
             xtmp[i, j] = mvtmp[h]
             xtmp[j, i] = mvtmp[h]
             h = h + 1
+    assert h == (m + 1)
     # The array XX will contain the symmetric matrix E(XX')
     XX = xtmp[0:(k - 2), 0:(k - 2)]
     # The array XY will contain the vector E(XY)
@@ -685,7 +686,7 @@ def simplify_moments(moment_vector):
     # The array XZ will contain the vector E(XZ)
     XZ = xtmp[(k - 1), 0:(k - 2)]
     # Now we fill in simplify_moments with the various moments.
-    simplify_moments = np.zeros(6)
+    simplify_moments = np.full(6,float("nan"))
     # varY
     simplify_moments[0] = (moment_vector[m - 3] -
                            (moment_vector[k - 3]) ** 2)
@@ -695,6 +696,7 @@ def simplify_moments(moment_vector):
     # covYZ
     simplify_moments[2] = (moment_vector[m - 2] -
                            moment_vector[k - 2]*moment_vector[k - 3])
+    # The XX matrix could be singular, so catch that exception
     try:
         # varYhat
         simplify_moments[3] = XY.T @ inv(XX) @ XY - (moment_vector[k - 3]) ** 2
@@ -703,8 +705,9 @@ def simplify_moments(moment_vector):
         # covYZhat
         simplify_moments[5] = ((XY.T @ inv(XX) @ XZ) -
                                (moment_vector[k - 2])*(moment_vector[k - 3]))
-    except:
-        die("FATAL ERROR: X'X matrix is singular")
+    except np.linalg.LinAlgError:
+        # These values will return as NaN
+        pass
     # When there is only one control variable, yhat and zhat are perfectly
     # correlated (positively or negatively) With rounding error, this can lead
     # to a correlation that is > 1 in absolute value.  This can create
@@ -724,6 +727,12 @@ def check_moments(moment_vector):
     sm = simplify_moments(moment_vector)
     # First make sure that moment_vector describes a valid covariance matrix
     valid = True
+    if not all(np.isfinite(sm)):
+        valid = False
+        if all(np.isfinite(sm[0:3])) and all(np.isnan(sm[4:7])):
+            warn("Invalid data: nonsingular X'X matrix.")
+        else:
+            warn("Invalid data: unknown issue")
     if sm[0] < 0.0:
         valid = False
         warn("Invalid data: var(y) = {0} < 0".format(sm[0]))
@@ -793,7 +802,7 @@ def thetastar_fun(moment_vector):
 
 
 def lambdafast(theta, simplifiedMoments):
-    """Calculate lambda for the given array of thetas"""
+    """Calculate lambda for each theta in the given array"""
     y = simplifiedMoments[0]
     z = simplifiedMoments[1]
     yz = simplifiedMoments[2]
@@ -925,7 +934,7 @@ def estimate_parameter(func, moment_vector):
                 msg2 = "Try normalizing variables to mean zero."
                 warn(msg1 + msg2)
     else:
-        estimate_parameter[1:] = 0.0   # change to internal_nan
+        estimate_parameter[1:] = 0.0   # or change to internal_nan
     return estimate_parameter
 
 

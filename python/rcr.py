@@ -742,9 +742,9 @@ def check_moments(moment_vector):
     if sm[3] < 0.0:
         valid = False
         warn("Invalid data: var(yhat) = {0} < 0".format(sm[3]))
-    if sm[5] < 0.0:
+    if sm[4] < 0.0:
         valid = False
-        warn("Invalid data: var(zhat) = {0} < 0".format(sm[5]))
+        warn("Invalid data: var(zhat) = {0} < 0".format(sm[4]))
     if np.abs(sm[2]) > np.sqrt(sm[0] * sm[1]):
         valid = False
         covyz = np.abs(sm[2])

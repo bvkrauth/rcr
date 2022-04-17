@@ -153,3 +153,13 @@ def warn(msg):
 def die(msg):
     write_to_logfile("FATAL ERROR: " + msg)
     return sys.exit(msg)
+
+
+def set_logfile(fname):
+    global logfile
+    logfile = fname
+
+
+def get_logfile():
+    global logfile
+    return logfile

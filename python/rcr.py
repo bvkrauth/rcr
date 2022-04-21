@@ -36,7 +36,7 @@ from numpy.linalg import inv
 
 # Local application imports
 from rcrutil import get_command_arguments, read_data, \
-                    write_results, write_to_logfile, warn, die
+                    write_results, write_to_logfile, warn, start_logfile
 
 
 def estimate_model(moment_vector, lambda_range):
@@ -152,7 +152,8 @@ def estimate_theta_segments(moment_vector):
             assert thetavec[i-2] < thetavec[i-1]
             assert thetavec[i] < thetavec[i+1]
         else:
-            msg = "thetastar (={0}) > thetamax (={1}).".format(thetastar, thetamax)
+            msg = "thetastar (={0}) > thetamax (={1}).".format(thetastar,
+                                                               thetamax)
             warn(msg)
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
@@ -686,7 +687,7 @@ def simplify_moments(moment_vector):
     # The array XZ will contain the vector E(XZ)
     XZ = xtmp[(k - 1), 0:(k - 2)]
     # Now we fill in simplify_moments with the various moments.
-    simplify_moments = np.full(6,float("nan"))
+    simplify_moments = np.full(6, float("nan"))
     # varY
     simplify_moments[0] = (moment_vector[m - 3] -
                            (moment_vector[k - 3]) ** 2)
@@ -749,12 +750,14 @@ def check_moments(moment_vector):
         valid = False
         covyz = np.abs(sm[2])
         sdyz = np.sqrt(sm[0] * sm[1])
-        warn("Invalid data: |cov(y,z)| = {0} > {1} sqrt(var(y)*var(z))".format(covyz, sdyz))
+        msg = "Invalid data: |cov(y,z)| = {0} > {1} sqrt(var(y)*var(z))"
+        warn(msg.format(covyz, sdyz))
     if np.abs(sm[5]) > np.sqrt(sm[3] * sm[4]):
         valid = False
         covyz = np.abs(sm[5])
         sdyz = np.sqrt(sm[3] * sm[4])
-        warn("Invalid data: cov(yhat,zhat) = {0} > {1} sqrt(var(yhat)*var(zhat))".format(covyz,sdyz))
+        msg = "Invalid data: cov(yh,zh) = {0} > {1} sqrt(var(yh)*var(zh))"
+        warn(msg.format(covyz, sdyz))
     # Next make sure that the identifying conditions are satisfied.
     # TODO: Maybe these could be addressed with warnings rather than error
     # messages?
@@ -942,22 +945,26 @@ def estimate_parameter(func, moment_vector):
 # Begin run code
 #############################################################################
 
-# Load in arguments from call to program
-infile, outfile, detail_file = get_command_arguments(sys.argv)
 
-# Read in the data from INFILE
-# Side effect: allocation/creation of moment_vector, lambda_range, and
-# result_matrix
-(n_moments, n_lambda, external_big_number, moment_vector,
-    lambda_range) = read_data(infile)
+if __name__ == "__main__":
+    # Load in arguments from call to program
+    infile, outfile, logfile, detail_file = get_command_arguments(sys.argv)
 
-# Perform the calculations and put the results in result_matrix
-# (side effect: allocation of theta_segments, writing to detail_file)
-result_matrix = estimate_model(moment_vector, lambda_range)
+    # Start the log file
+    start_logfile(logfile)
 
-# Write out the data to OUTFILE
-# Issue: Python breaks lines above a certain length, we don't want to do that
-write_results(result_matrix, outfile)
+    # Read in the data from INFILE
+    # Side effect: allocation/creation of moment_vector, lambda_range, and
+    # result_matrix
+    (n_moments, n_lambda, external_big_number, moment_vector,
+        lambda_range) = read_data(infile)
+
+    # Perform the calculations and put the results in result_matrix
+    # (side effect: allocation of theta_segments, writing to detail_file)
+    result_matrix = estimate_model(moment_vector, lambda_range)
+
+    # Write out the data to OUTFILE
+    write_results(result_matrix, outfile)
 
 #############################################################################
 # End run code

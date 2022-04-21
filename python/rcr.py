@@ -788,7 +788,7 @@ def lambdastar_fun(moment_vector):
     #   var(z) > 0 and that var(z) >= var(zhat) >= 0.
     # This implies that lambdastar >= 0.
     # Special values: If var(zhat) = 0, then lambdastar = +Infinity
-    lambdastar = np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
+    lambdastar = np.inf if sm[4] == 0.0 else np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
     return lambdastar
 
 
@@ -800,7 +800,7 @@ def thetastar_fun(moment_vector):
     # The check_moments subroutine should ensure that
     # var(zhat) >= 0 and that if var(zhat)=0 -> cov(yhat,zhat)=0.
     # Special values: If var(zhat)=0, then thetastar = 0/0 = NaN.
-    thetastar = sm[5] / sm[4]
+    thetastar = np.nan if sm[4] == 0.0 else sm[5] / sm[4]
     return thetastar
 
 
@@ -828,7 +828,6 @@ def lambdafast(theta, simplifiedMoments):
 
 def lambdafun(moment_vector, theta):
     """Calculate lambda for the given theta"""
-    # Potential FPE
     lambdafun = lambdafast(theta, simplify_moments(moment_vector))
     return lambdafun
 

@@ -654,7 +654,7 @@ def zbrent(func, x1, x2, tol, xopt):
             e = d
         a = b
         fa = fb
-        b = b + d if abs(d) > tol1 else tol1 * np.sign(xm)
+        b = (b + d) if (abs(d) > tol1) else (b + tol1 * np.sign(xm))
         fb = func(b, xopt)
     if (iter == itmax):
         zbrent = b

@@ -445,17 +445,23 @@ def estimate_theta(moment_vector,
                (lambda_segments <= lambda_range[1]+0.001))
     if (k > 1):
         inrange[0:k-1] = True
+    # If no IMPORTANT_THETAS are in range, the identified set is empty
+    if (sum(inrange) == 0):
+        estimate_theta[0, 0] = np.nan
     # If the lowest value in IMPORTANT_THETAS is in range, then there is no
     # (finite) lower bound
-    if inrange[np.argmin(important_thetas)]:
+    elif inrange[np.argmin(important_thetas)]:
         estimate_theta[0, 0] = -np.inf
     else:
         # Otherwise the the lower bound for theta is the minimum value in
         # IMPORTANT_THETAS that is in range
         estimate_theta[0, 0] = min(important_thetas[inrange])
+    # If no IMPORTANT_THETAS are in range, the identified set is empty
+    if (sum(inrange) == 0):
+        estimate_theta[1, 0] = np.nan
     # If the highest value in IMPORTANT_THETAS is in range, then there is no
     # (finite) upper bound
-    if inrange[np.argmax(important_thetas)]:
+    elif inrange[np.argmax(important_thetas)]:
         estimate_theta[1, 0] = np.inf
     else:
         # Otherwise the the upper bound for theta is the maximum value in

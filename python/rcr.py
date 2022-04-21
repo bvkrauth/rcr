@@ -851,7 +851,7 @@ def geop(first, factor, n):
     geop = np.zeros(n)
     if (n > 0):
         geop[0] = first
-    for k in range(1, n-1):
+    for k in range(1, n):
         geop[k] = geop[k - 1] * factor
     return geop
 

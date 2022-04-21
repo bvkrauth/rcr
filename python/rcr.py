@@ -152,7 +152,9 @@ def estimate_theta_segments(moment_vector):
             # Replace the two elements of thetavec that bracket thetastar
             # with two more carefully-chosen numbers.  See BRACKET_THETA_STAR
             # for details
-            thetavec[i-1: i+1] = bracket_theta_star(moment_vector)
+            bracket = bracket_theta_star(moment_vector)
+            if (bracket is not None):
+                thetavec[i-1: i+1] = bracket
             # TODO: There is a potential bug here.  The bracket_theta_star
             # function is used to take the two values in thetavec that are
             # closest to thetastar and replace them with values that are
@@ -330,13 +332,17 @@ def bracket_theta_star(moment_vector):
     # Get the limit of lambda(theta) as theta approaches THETASTAR,from below
     # and from above. These limits are generally not finite.
     sm = simplify_moments(moment_vector)
+    # If this condition holds, no need to find a bracket (and the code
+    # below won't work anyway)
+    if (sm[2] == sm[5] * sm[1]/sm[4]):
+        return None
     # We may want to use np.inf here
     # NOTE: the np.sign seems extraneous here.
     true_limit = (np.array((1.0, -1.0)) *
                   np.sign(sm[2] - sm[5] * sm[1]/sm[4]) *
                   sys.float_info.max)
     # Pick a default value
-    bracket = theta_star + np.array((-1.0, 1.0))*max(abs(theta_star), 1.0)*0.1
+    bracket = None
     j = 0
     for i in range(1, 101):
         # For the candidate bracket, consider THETASTAR plus or minus some

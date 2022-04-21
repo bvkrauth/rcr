@@ -812,17 +812,27 @@ def lambdafast(theta, simplifiedMoments):
     yhat = simplifiedMoments[3]
     zhat = simplifiedMoments[4]
     yzhat = simplifiedMoments[5]
-    # Potential FPE
     lf_num = (yhat -
               2.0 * theta * yzhat +
               theta ** 2 * zhat)
     lf_denom = (y - yhat -
                 (2.0) * theta * (yz - yzhat) +
                 theta ** 2 * (z - zhat))
-    lambdafast = np.asarray(lf_num / lf_denom)
-    lambdafast[lambdafast < 0.0] = np.nan
-    lambdafast = (yz - yzhat - theta * (z - zhat)) / \
-                 (yzhat - theta * zhat) * np.sqrt(lambdafast)
+    if type(theta) == np.ndarray:
+        lambdafast = np.full(len(theta), np.nan)
+        msk = (lf_denom != 0.0) & (theta != yhat/zhat)
+        lambdafast[msk] = lf_num[msk] / lf_denom[msk]
+        msk = msk & (lambdafast >= 0.0)
+        lambdafast[msk] = (yz - yzhat - theta[msk] * (z - zhat)) / \
+                          (yzhat - theta[msk] * zhat) * np.sqrt(lambdafast[msk])
+        lambdafast[~msk] = np.nan
+    else:
+        msk = (lf_denom != 0.0) & (theta != yhat/zhat)
+        lambdafast = lf_num / lf_denom if msk else np.nan
+        msk = msk and (lambdafast >= 0.0)
+        lambdafast = (yz - yzhat - theta * (z - zhat)) / \
+                     (yzhat - theta * zhat) * np.sqrt(lambdafast) \
+            if msk else np.nan
     return lambdafast
 
 

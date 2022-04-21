@@ -39,6 +39,16 @@ from rcrutil import get_command_arguments, read_data, \
                     write_results, write_to_logfile, warn, start_logfile
 
 
+def translate_result(mat, inf=np.inf, nan=np.nan):
+    """Translate inf and NaN values (e.g., for passing to Stata)"""
+    newmat = np.copy(mat)
+    msk1 = np.isinf(newmat)
+    newmat[msk1] = np.sign(newmat[msk1])*inf
+    msk2 = np.isnan(newmat)
+    newmat[msk2] = nan
+    return newmat
+
+
 def estimate_model(moment_vector, lambda_range):
     """Estimate the RCR model.
 
@@ -979,7 +989,7 @@ if __name__ == "__main__":
     result_matrix = estimate_model(moment_vector, lambda_range)
 
     # Write out the data to OUTFILE
-    write_results(result_matrix, outfile)
+    write_results(translate_result(result_matrix, inf=external_big_number, nan=0.0), outfile)
 
 #############################################################################
 # End run code

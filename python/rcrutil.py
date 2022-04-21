@@ -170,7 +170,7 @@ def write_to_logfile(str, mode="a"):
 
 def warn(msg):
     """Issue warning (to logfile and python warning system) but continue."""
-    write_to_logfile("WARNING: " + msg)
+    write_to_logfile("WARNING: " + msg + "\n")
     warnings.warn(msg)
 
 

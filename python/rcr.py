@@ -371,7 +371,7 @@ def bracket_theta_star(moment_vector):
                 j = i
                 bracket = candidate
             else:
-                break
+                continue
     if (j == 0):
         msg = "Unable to find a good bracket for thetastar"
         warn(msg)

@@ -523,7 +523,7 @@ def estimate_theta(moment_vector,
                 # Set the error to very large
                 err = big
                 # Generate a geometric series
-                fac[0:ntab - 1] = geop(con2, con2, ntab - 1)
+                fac = geop(con2, con2, ntab - 1)
                 # Now we try progressively smaller stepsizes
                 for k in range(2, ntab + 1):
                     # The new stepsize hh is the old stepsize divided by 1.4
@@ -539,10 +539,10 @@ def estimate_theta(moment_vector,
                                             fac[m - 2] -
                                             a[m - 2, k - 2]) /
                                            (fac[m - 2] - 1.0))
-                    errt[0:k - 2] = np.max((abs(a[1:k, k - 1] -
+                    errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
                                                 a[0:k - 1, k - 1]),
                                             abs(a[1:k, k - 1] -
-                                                a[0:k - 1, k - 2])))
+                                                a[0:k - 1, k - 2]))
                     ierrmin = np.argmin(errt[0:k - 1])
                     # If the approximation error is lower than any previous,
                     # use that value
@@ -576,10 +576,10 @@ def estimate_theta(moment_vector,
                             a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
                                                a[m - 2, k - 2]) / \
                                                (fac[m - 2] - 1.0)
-                        errt[0:k - 1] = np.max((abs(a[1:k, k - 1] -
+                        errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
                                                     a[0:k - 1, k - 1]),
                                                 abs(a[1:k, k - 1] -
-                                                    a[0:k - 1, k - 2])))
+                                                    a[0:k - 1, k - 2]))
                         ierrmin = np.argmin(errt[0:k - 1])
                         if (errt[ierrmin] <= err):
                             err = errt[ierrmin]

@@ -581,7 +581,8 @@ def estimate_theta(moment_vector,
                                                        a[0:k - 1, k - 1]),
                                                    abs(a[1:k, k - 1] -
                                                        a[0:k - 1, k - 2]))
-                        ierrmin = np.nanargmin(errt[0:k - 1]) if any(np.isfinite(errt[0:k - 1])) else 0
+                        ierrmin = np.nanargmin(errt[0:k - 1]) if \
+                            any(np.isfinite(errt[0:k - 1])) else 0
                         if (errt[ierrmin] <= err):
                             err = errt[ierrmin]
                             dfridr = a[1 + ierrmin, k - 1]
@@ -811,7 +812,8 @@ def lambdastar_fun(moment_vector):
     #   var(z) > 0 and that var(z) >= var(zhat) >= 0.
     # This implies that lambdastar >= 0.
     # Special values: If var(zhat) = 0, then lambdastar = +Infinity
-    lambdastar = np.inf if sm[4] == 0.0 else np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
+    lambdastar = np.inf if sm[4] == 0.0 else \
+        np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
     return lambdastar
 
 
@@ -846,8 +848,9 @@ def lambdafast(theta, simplifiedMoments):
         msk = (lf_denom != 0.0) & (theta != yhat/zhat)
         lambdafast[msk] = lf_num[msk] / lf_denom[msk]
         msk = msk & (lambdafast >= 0.0)
-        lambdafast[msk] = (yz - yzhat - theta[msk] * (z - zhat)) / \
-                          (yzhat - theta[msk] * zhat) * np.sqrt(lambdafast[msk])
+        lambdafast[msk] = ((yz - yzhat - theta[msk] * (z - zhat)) /
+                           (yzhat - theta[msk] * zhat) *
+                           np.sqrt(lambdafast[msk]))
         lambdafast[~msk] = np.nan
     else:
         msk = (lf_denom != 0.0) & (theta != yhat/zhat)
@@ -949,7 +952,8 @@ def estimate_parameter(func, moment_vector):
                                                       a[0:j - 1, j - 1]),
                                                np.abs(a[1:j, j - 1] -
                                                       a[0:j - 1, j - 2]))
-                    ierrmin = np.nanargmin(errt[0:j - 1]) if any(np.isfinite(errt[0:j - 1])) else 0
+                    ierrmin = np.nanargmin(errt[0:j - 1]) if \
+                        any(np.isfinite(errt[0:j - 1])) else 0
                     # If the error is smaller than the lowest previous error,
                     # use that hh
                     if (errt[ierrmin] <= err):
@@ -996,7 +1000,10 @@ if __name__ == "__main__":
     result_matrix = estimate_model(moment_vector, lambda_range)
 
     # Write out the data to OUTFILE
-    write_results(translate_result(result_matrix, inf=external_big_number, nan=0.0), outfile)
+    write_results(translate_result(result_matrix,
+                                   inf=external_big_number,
+                                   nan=0.0),
+                  outfile)
 
 #############################################################################
 # End run code

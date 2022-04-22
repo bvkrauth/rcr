@@ -540,10 +540,11 @@ def estimate_theta(moment_vector,
                                             a[m - 2, k - 2]) /
                                            (fac[m - 2] - 1.0))
                     errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
-                                                a[0:k - 1, k - 1]),
-                                            abs(a[1:k, k - 1] -
-                                                a[0:k - 1, k - 2]))
-                    ierrmin = np.argmin(errt[0:k - 1])
+                                                   a[0:k - 1, k - 1]),
+                                               abs(a[1:k, k - 1] -
+                                                   a[0:k - 1, k - 2]))
+                    ierrmin = np.nanargmin(errt[0:k - 1]) if \
+                        any(np.isfinite(errt[0:k - 1])) else 0
                     # If the approximation error is lower than any previous,
                     # use that value
                     if (errt[ierrmin] <= err):
@@ -577,10 +578,10 @@ def estimate_theta(moment_vector,
                                                a[m - 2, k - 2]) / \
                                                (fac[m - 2] - 1.0)
                         errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
-                                                    a[0:k - 1, k - 1]),
-                                                abs(a[1:k, k - 1] -
-                                                    a[0:k - 1, k - 2]))
-                        ierrmin = np.argmin(errt[0:k - 1])
+                                                       a[0:k - 1, k - 1]),
+                                                   abs(a[1:k, k - 1] -
+                                                       a[0:k - 1, k - 2]))
+                        ierrmin = np.nanargmin(errt[0:k - 1]) if any(np.isfinite(errt[0:k - 1])) else 0
                         if (errt[ierrmin] <= err):
                             err = errt[ierrmin]
                             dfridr = a[1 + ierrmin, k - 1]
@@ -948,7 +949,7 @@ def estimate_parameter(func, moment_vector):
                                                       a[0:j - 1, j - 1]),
                                                np.abs(a[1:j, j - 1] -
                                                       a[0:j - 1, j - 2]))
-                    ierrmin = np.argmin(errt[0:j - 1])
+                    ierrmin = np.nanargmin(errt[0:j - 1]) if any(np.isfinite(errt[0:j - 1])) else 0
                     # If the error is smaller than the lowest previous error,
                     # use that hh
                     if (errt[ierrmin] <= err):
@@ -959,14 +960,14 @@ def estimate_parameter(func, moment_vector):
                     if np.abs(a[j - 1, j - 1] - a[j - 2, j - 2]) >= \
                        (safe * err):
                         break
-                errmax = np.maximum(errmax, err)
+                errmax = max(errmax, err)
                 estimate_parameter[i] = dfridr
             if (errmax < 0.01):
                 break
             if (n == nmax):
-                msg1 = "Inaccurate SE for // fname //."
+                msg1 = "Inaccurate SE for {0}.".format(func.__name__)
                 msg2 = "Try normalizing variables to mean zero."
-                warn(msg1 + msg2)
+                warn(msg1 + " " + msg2)
     else:
         estimate_parameter[1:] = 0.0   # or change to internal_nan
     return estimate_parameter

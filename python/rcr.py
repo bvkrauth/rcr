@@ -188,7 +188,7 @@ def write_to_logfile(str, mode="a"):
     except:
         msg = "Cannot write to logfile {0}.".format(logfile)
         warnings.warn(msg)
-        pass
+    return None
 
 
 def warn(msg):
@@ -277,10 +277,10 @@ def estimate_model(moment_vector, lambda_range):
     # TODO: some model elements may still be identified here
     elif not identified:
         return result_matrix
-    # We have closed forms for the global parameters lambdastar, thetastar,
+    # We have closed forms for the global parameters lambda_star, theta_star,
     # and lambda(0), so we just estimate them directly.
-    result_matrix[0, ] = estimate_parameter(lambdastar_fun, moment_vector)
-    result_matrix[1, ] = estimate_parameter(thetastar_fun, moment_vector)
+    result_matrix[0, ] = estimate_parameter(lambdastar, moment_vector)
+    result_matrix[1, ] = estimate_parameter(thetastar, moment_vector)
     result_matrix[2, ] = estimate_parameter(lambda0_fun, moment_vector)
     # Here we get to the main estimation problem.  We need to find the range
     # of theta values consistent with the lambda(theta) function falling in
@@ -310,7 +310,7 @@ def estimate_theta_segments(moment_vector):
     """Divide real line into segments over which lambda(theta) is monotonic"""
     imax = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
-    thetastar = thetastar_fun(moment_vector)
+    theta_star = thetastar(moment_vector)
     # THETAMAX is the largest value of theta for which we can calculate both
     # lambda(theta) and lambda(-theta) without generating a floating point
     # exception.
@@ -321,16 +321,16 @@ def estimate_theta_segments(moment_vector):
     # Create a starting set of theta values at which to calculate lambda
     thetavec = np.sort(np.append(np.linspace(-50.0, 50.0, imax - 2),
                                  (thetamax, -thetamax)))
-    if (np.isfinite(thetastar)):
-        # Figure out where thetastar lies in thetavec
-        i = np.sum(thetavec < thetastar)
-        # If i=0 or i=k, then thetastar is finite but outside of
+    if (np.isfinite(theta_star)):
+        # Figure out where theta_star lies in thetavec
+        i = np.sum(thetavec < theta_star)
+        # If i=0 or i=k, then theta_star is finite but outside of
         # [-thetamax,thetamax]. This is unlikely, but we should check.
         if ((i > 0) and (i < imax)):
             # Adjust i to ensure that -thetamax and thetamax are still
             # included in thetavec
             i = min(max(i, 2), imax - 2)
-            # Replace the two elements of thetavec that bracket thetastar
+            # Replace the two elements of thetavec that bracket theta_star
             # with two more carefully-chosen numbers.  See BRACKET_THETA_STAR
             # for details
             bracket = bracket_theta_star(moment_vector)
@@ -338,16 +338,15 @@ def estimate_theta_segments(moment_vector):
                 thetavec[i-1: i+1] = bracket
             # TODO: There is a potential bug here.  The bracket_theta_star
             # function is used to take the two values in thetavec that are
-            # closest to thetastar and replace them with values that are
+            # closest to theta_star and replace them with values that are
             # guaranteed to give finite and nonzero lambda.  But there's
             # nothing to guarantee that these are still the two values in
-            # thetavec that are the closest to thetastar.
+            # thetavec that are the closest to theta_star.
             assert thetavec[i-2] < thetavec[i-1]
             assert thetavec[i] < thetavec[i+1]
         else:
-            msg = "thetastar (={0}) > thetamax (={1}).".format(thetastar,
-                                                               thetamax)
-            warn(msg)
+            msg = "theta_star (={0}) > thetamax (={1})."
+            warn(msg.format(theta_star, thetamax))
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
     # Calculate lambda for every theta in thetavec
@@ -374,12 +373,12 @@ def estimate_theta_segments(moment_vector):
                 (lambdavec[1:imax-1] > lambdavec[2:imax]))
     # The end points are not local max`ima
     localmax = np.append(np.insert(localmax, [0], [False]), False)
-    # Figure out where THETASTAR lies in THETAVEC.  We need to do this
+    # Figure out where theta_star lies in THETAVEC.  We need to do this
     # calculation again because we sorted THETAVEC
-    if (np.isfinite(thetastar)):
-        i = np.sum(thetavec < thetastar)
+    if (np.isfinite(theta_star)):
+        i = np.sum(thetavec < theta_star)
         if ((i > 0) and (i < imax)):
-            # The two values bracketing THETASTAR are never local optima
+            # The two values bracketing theta_star are never local optima
             localmin[i-1:i+1] = False
             localmax[i-1:i+1] = False
     # Right now, we only have approximate local optima.  We need to apply
@@ -401,15 +400,15 @@ def estimate_theta_segments(moment_vector):
                                   1.0e-10,
                                   simplify_moments(moment_vector))
     # Now we are ready to create THETA_SEGMENTS.
-    if (np.isfinite(thetastar) and (i > 0) and (i < imax)):
+    if (np.isfinite(theta_star) and (i > 0) and (i < imax)):
         # THETA_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
-        # values that bracket thetastar, and any local optima
+        # values that bracket theta_star, and any local optima
         theta_segments = np.append(np.concatenate([thetavec[i-1:i+1],
                                                    thetavec[localmin],
                                                    thetavec[localmax]]),
                                    (-thetamax, thetamax))
     else:
-        # If thetastar is not finite, then we have two less elements in
+        # If theta_star is not finite, then we have two less elements in
         # THETA_SEGMENTS
         theta_segments = np.concatenate([thetavec[i-1:i+1],
                                          thetavec[localmin],
@@ -448,7 +447,7 @@ def brent(ax, bx, cx, func, tol, xopt):
         tol1 = tol * abs(x) + zeps
         tol2 = 2.0 * tol1
         if (abs(x - xm) <= (tol2 - 0.5 * (b - a))):
-            brent = x
+            brent_solution = x
             break
         if (abs(e) > tol1):
             r = (x - w) * (fx - fv)
@@ -500,17 +499,17 @@ def brent(ax, bx, cx, func, tol, xopt):
                 v = u
                 fv = fu
     if (iter == itmax):
-        brent = x
+        brent_solution = x
         write_to_logfile("brent: exceed maximum iterations.\n")
-    return brent
+    return brent_solution
 
 
 def bracket_theta_star(moment_vector):
-    """Find theta valus close to thetastar"""
-    # Get the value of THETASTAR.  If we are in this function it should be
+    """Find theta valus close to theta_star"""
+    # Get the value of theta_star.  If we are in this function it should be
     # finite.
-    theta_star = thetastar_fun(moment_vector)
-    # Get the limit of lambda(theta) as theta approaches THETASTAR,from below
+    theta_star = thetastar(moment_vector)
+    # Get the limit of lambda(theta) as theta approaches theta_star,from below
     # and from above. These limits are generally not finite.
     sm = simplify_moments(moment_vector)
     # If this condition holds, no need to find a bracket (and the code
@@ -526,17 +525,17 @@ def bracket_theta_star(moment_vector):
     bracket = None
     j = 0
     for i in range(1, 101):
-        # For the candidate bracket, consider THETASTAR plus or minus some
+        # For the candidate bracket, consider theta_star plus or minus some
         # small number epsilon (epsilon gets smaller each iteration)
         candidate = (theta_star +
                      np.array((-1.0, 1.0)) * max(abs(theta_star), 1.0)*0.1**i)
         # To be a good bracket, candidate must satisfy some conditions:
         #    1. The bracket must be wide enough that the system can tell that
-        #       CANDIDATE(1) < THETASTAR < CANDIDATE(2)
+        #       CANDIDATE(1) < theta_star < CANDIDATE(2)
         #    2. The bracket must be narrow enough that lambda(candidate) is
         #       the same sign as true_limit.
         #    3. The bracket must be wide enough that lambda(candidate) is
-        #       finite and nonzero. If candidate is very close to thetastar,
+        #       finite and nonzero. If candidate is very close to theta_star,
         #       then the calculated lambda(candidate) can be *either* NaN or
         #       zero.  The reason for this is that lambda(candidate) is a
         #       ratio of two things that are going to zero.  Approximation
@@ -554,7 +553,7 @@ def bracket_theta_star(moment_vector):
             else:
                 continue
     if (j == 0):
-        msg = "Unable to find a good bracket for thetastar"
+        msg = "Unable to find a good bracket for theta_star"
         warn(msg)
     return bracket
 
@@ -571,22 +570,22 @@ def estimate_theta(moment_vector,
     safe = 2.0
     h = 1.0e-1
     errmax = 0.0
-    estimate_theta = np.zeros((2, len(moment_vector)+1))
+    theta_estimate = np.zeros((2, len(moment_vector)+1))
     deps = np.zeros(len(moment_vector))
     dmoments = np.zeros(len(moment_vector))
     a = np.zeros((ntab, ntab))
     fac = np.zeros(ntab-1)
     errt = np.zeros(ntab-1)
-    # Get lambdastar and thetastar
-    lambdastar = lambdastar_fun(moment_vector)
-    thetastar = thetastar_fun(moment_vector)
-    # Check to make sure that lambdastar is not in lambda_range.  If so,
+    # Get lambda_star and theta_star
+    lambda_star = lambdastar(moment_vector)
+    theta_star = thetastar(moment_vector)
+    # Check to make sure that lambda_star is not in lambda_range.  If so,
     # theta is completely unidentified.
-    if (lambda_range[0] <= lambdastar) and (lambdastar <= lambda_range[1]):
-        estimate_theta[0, 0] = -np.inf
-        estimate_theta[1, 0] = np.inf
-        estimate_theta[:, 1:] = 0.0
-        return estimate_theta
+    if (lambda_range[0] <= lambda_star) and (lambda_star <= lambda_range[1]):
+        theta_estimate[0, 0] = -np.inf
+        theta_estimate[1, 0] = np.inf
+        theta_estimate[:, 1:] = 0.0
+        return theta_estimate
     # IMPORTANT_THETAS is a list of theta values for which lambda(theta) needs
     # to be calculated. We don't know in advance how many important values
     # there will be, so we make IMPORTANT_THETAS way too big, and initialize
@@ -601,10 +600,10 @@ def estimate_theta(moment_vector,
         # Get the next pair of thetas.  This represents a range of thetas to
         # check
         current_theta_range = theta_segments[i-1:i+1]
-        # Skip ahead to the next pair if thetastar is in the current range
-        if ((not np.isfinite(thetastar)) or
-           (current_theta_range[0] >= thetastar) or
-           (current_theta_range[1] <= thetastar)):
+        # Skip ahead to the next pair if theta_star is in the current range
+        if ((not np.isfinite(theta_star)) or
+           (current_theta_range[0] >= theta_star) or
+           (current_theta_range[1] <= theta_star)):
             # Otherwise, calculate the range of lambdas associated with that
             # range of thetas
             current_lambda_range = lambdafast(current_theta_range,
@@ -644,30 +643,30 @@ def estimate_theta(moment_vector,
         inrange[0:k-1] = True
     # If no IMPORTANT_THETAS are in range, the identified set is empty
     if (sum(inrange) == 0):
-        estimate_theta[0, 0] = np.nan
+        theta_estimate[0, 0] = np.nan
     # If the lowest value in IMPORTANT_THETAS is in range, then there is no
     # (finite) lower bound
     elif inrange[np.argmin(important_thetas)]:
-        estimate_theta[0, 0] = -np.inf
+        theta_estimate[0, 0] = -np.inf
     else:
         # Otherwise the the lower bound for theta is the minimum value in
         # IMPORTANT_THETAS that is in range
-        estimate_theta[0, 0] = min(important_thetas[inrange])
+        theta_estimate[0, 0] = min(important_thetas[inrange])
     # If no IMPORTANT_THETAS are in range, the identified set is empty
     if (sum(inrange) == 0):
-        estimate_theta[1, 0] = np.nan
+        theta_estimate[1, 0] = np.nan
     # If the highest value in IMPORTANT_THETAS is in range, then there is no
     # (finite) upper bound
     elif inrange[np.argmax(important_thetas)]:
-        estimate_theta[1, 0] = np.inf
+        theta_estimate[1, 0] = np.inf
     else:
         # Otherwise the the upper bound for theta is the maximum value in
         # IMPORTANT_THETAS that is in range
-        estimate_theta[1, 0] = max(important_thetas[inrange])
+        theta_estimate[1, 0] = max(important_thetas[inrange])
     # Now we find the gradient
     # Take the gradient at both theta_L and theta_H
     for j in range(1, 3):
-        theta = estimate_theta[j-1, 0]
+        theta = theta_estimate[j-1, 0]
         # The gradient can only be calculated if theta is finite!
         if np.isfinite(theta):
             # Gradients are estimated using a simple finite central difference:
@@ -790,11 +789,11 @@ def estimate_theta(moment_vector,
             # Finally, we apply the implicit function theorem to calculate the
             # gradient that we actually need:
             #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
-            estimate_theta[j-1, 1:] = -dmoments / dtheta
+            theta_estimate[j-1, 1:] = -dmoments / dtheta
         else:
             # If theta is infinite, then the gradient is zero.
-            estimate_theta[j - 1, 1:] = 0.0
-    return estimate_theta
+            theta_estimate[j - 1, 1:] = 0.0
+    return theta_estimate
 
 
 def zbrent(func, x1, x2, tol, xopt):
@@ -827,7 +826,7 @@ def zbrent(func, x1, x2, tol, xopt):
         tol1 = 2.0 * eps * abs(b) + 0.5 * tol
         xm = 0.5 * (c - b)
         if (abs(xm) <= tol1) or (fb == 0.0):
-            zbrent = b
+            zbrent_solution = b
             break
         if (abs(e) >= tol1) and (abs(fa) > abs(fb)):
             s = fb / fa
@@ -856,9 +855,9 @@ def zbrent(func, x1, x2, tol, xopt):
         b = (b + d) if (abs(d) > tol1) else (b + tol1 * np.sign(xm))
         fb = func(b, xopt)
     if (iter == itmax):
-        zbrent = b
+        zbrent_solution = b
         write_to_logfile("zbrent: exceeded maximum iterations")
-    return zbrent
+    return zbrent_solution
 
 
 def lambda_minus_lambda(theta, simplified_moments_and_lambda):
@@ -892,25 +891,27 @@ def simplify_moments(moment_vector):
     # The array XZ will contain the vector E(XZ)
     XZ = xtmp[(k - 1), 0:(k - 2)]
     # Now we fill in simplify_moments with the various moments.
-    simplify_moments = np.full(6, float("nan"))
+    simplified_moments = np.full(6, float("nan"))
     # varY
-    simplify_moments[0] = (moment_vector[m - 3] -
-                           (moment_vector[k - 3]) ** 2)
+    simplified_moments[0] = (moment_vector[m - 3] -
+                             (moment_vector[k - 3]) ** 2)
     # varZ
-    simplify_moments[1] = (moment_vector[m - 1] -
-                           (moment_vector[k - 2]) ** 2)
+    simplified_moments[1] = (moment_vector[m - 1] -
+                             (moment_vector[k - 2]) ** 2)
     # covYZ
-    simplify_moments[2] = (moment_vector[m - 2] -
-                           moment_vector[k - 2]*moment_vector[k - 3])
+    simplified_moments[2] = (moment_vector[m - 2] -
+                             moment_vector[k - 2]*moment_vector[k - 3])
     # The XX matrix could be singular, so catch that exception
     try:
         # varYhat
-        simplify_moments[3] = XY.T @ inv(XX) @ XY - (moment_vector[k - 3]) ** 2
+        simplified_moments[3] = (XY.T @ inv(XX) @ XY -
+                                 moment_vector[k - 3] ** 2)
         # varZhat
-        simplify_moments[4] = XZ.T @ inv(XX) @ XZ - (moment_vector[k - 2]) ** 2
+        simplified_moments[4] = (XZ.T @ inv(XX) @ XZ -
+                                 moment_vector[k - 2] ** 2)
         # covYZhat
-        simplify_moments[5] = ((XY.T @ inv(XX) @ XZ) -
-                               (moment_vector[k - 2])*(moment_vector[k - 3]))
+        simplified_moments[5] = (XY.T @ inv(XX) @ XZ -
+                                 moment_vector[k - 2] * moment_vector[k - 3])
     except np.linalg.LinAlgError:
         # These values will return as NaN
         pass
@@ -922,10 +923,10 @@ def simplify_moments(moment_vector):
     # but only one happens to have a nonzero coefficient.  I don't know how to
     # handle that case.
     if k == 4:
-        simplify_moments[5] = (np.sign(simplify_moments[5]) *
-                               np.sqrt(simplify_moments[3] *
-                                       simplify_moments[4]))
-    return simplify_moments
+        simplified_moments[5] = (np.sign(simplified_moments[5]) *
+                                 np.sqrt(simplified_moments[3] *
+                                         simplified_moments[4]))
+    return simplified_moments
 
 
 def check_moments(moment_vector):
@@ -985,39 +986,39 @@ def check_moments(moment_vector):
     return valid, identified
 
 
-def lambdastar_fun(moment_vector):
-    """Calculate lambdastar"""
+def lambdastar(moment_vector):
+    """Calculate lambda_star"""
     sm = simplify_moments(moment_vector)
-    # lambdastar is defined as sqrt( var(z)/var(zhat) - 1)
+    # lambda_star is defined as sqrt( var(z)/var(zhat) - 1)
     # The check_moments subroutine should ensure that
     #   var(z) > 0 and that var(z) >= var(zhat) >= 0.
-    # This implies that lambdastar >= 0.
-    # Special values: If var(zhat) = 0, then lambdastar = +Infinity
-    lambdastar = np.inf if sm[4] == 0.0 else \
+    # This implies that lambda_star >= 0.
+    # Special values: If var(zhat) = 0, then lambda_star = +Infinity
+    lambda_star = np.inf if sm[4] == 0.0 else \
         np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
-    return lambdastar
+    return lambda_star
 
 
-def thetastar_fun(moment_vector):
-    """Calculate thetastar"""
+def thetastar(moment_vector):
+    """Calculate theta_star"""
     sm = simplify_moments(moment_vector)
-    # thetastar is defined as
+    # theta_star is defined as
     #   cov(yhat,zhat)/var(zhat)
     # The check_moments subroutine should ensure that
     # var(zhat) >= 0 and that if var(zhat)=0 -> cov(yhat,zhat)=0.
-    # Special values: If var(zhat)=0, then thetastar = 0/0 = NaN.
-    thetastar = np.nan if sm[4] == 0.0 else sm[5] / sm[4]
-    return thetastar
+    # Special values: If var(zhat)=0, then theta_star = 0/0 = NaN.
+    theta_star = np.nan if sm[4] == 0.0 else sm[5] / sm[4]
+    return theta_star
 
 
-def lambdafast(theta, simplifiedMoments):
+def lambdafast(theta, simplified_moments):
     """Calculate lambda for each theta in the given array"""
-    y = simplifiedMoments[0]
-    z = simplifiedMoments[1]
-    yz = simplifiedMoments[2]
-    yhat = simplifiedMoments[3]
-    zhat = simplifiedMoments[4]
-    yzhat = simplifiedMoments[5]
+    y = simplified_moments[0]
+    z = simplified_moments[1]
+    yz = simplified_moments[2]
+    yhat = simplified_moments[3]
+    zhat = simplified_moments[4]
+    yzhat = simplified_moments[5]
     lf_num = (yhat -
               2.0 * theta * yzhat +
               theta ** 2 * zhat)
@@ -1025,28 +1026,28 @@ def lambdafast(theta, simplifiedMoments):
                 (2.0) * theta * (yz - yzhat) +
                 theta ** 2 * (z - zhat))
     if type(theta) == np.ndarray:
-        lambdafast = np.full(len(theta), np.nan)
+        lambda_fast = np.full(len(theta), np.nan)
         msk = (lf_denom != 0.0) & (theta != yhat/zhat)
-        lambdafast[msk] = lf_num[msk] / lf_denom[msk]
-        msk = msk & (lambdafast >= 0.0)
-        lambdafast[msk] = ((yz - yzhat - theta[msk] * (z - zhat)) /
-                           (yzhat - theta[msk] * zhat) *
-                           np.sqrt(lambdafast[msk]))
-        lambdafast[~msk] = np.nan
+        lambda_fast[msk] = lf_num[msk] / lf_denom[msk]
+        msk = msk & (lambda_fast >= 0.0)
+        lambda_fast[msk] = ((yz - yzhat - theta[msk] * (z - zhat)) /
+                            (yzhat - theta[msk] * zhat) *
+                            np.sqrt(lambda_fast[msk]))
+        lambda_fast[~msk] = np.nan
     else:
         msk = (lf_denom != 0.0) & (theta != yhat/zhat)
-        lambdafast = lf_num / lf_denom if msk else np.nan
-        msk = msk and (lambdafast >= 0.0)
-        lambdafast = (yz - yzhat - theta * (z - zhat)) / \
-                     (yzhat - theta * zhat) * np.sqrt(lambdafast) \
+        lambda_fast = lf_num / lf_denom if msk else np.nan
+        msk = msk and (lambda_fast >= 0.0)
+        lambda_fast = (yz - yzhat - theta * (z - zhat)) / \
+                      (yzhat - theta * zhat) * np.sqrt(lambda_fast) \
             if msk else np.nan
-    return lambdafast
+    return lambda_fast
 
 
 def lambdafun(moment_vector, theta):
     """Calculate lambda for the given theta"""
-    lambdafun = lambdafast(theta, simplify_moments(moment_vector))
-    return lambdafun
+    lf = lambdafast(theta, simplify_moments(moment_vector))
+    return lf
 
 
 def lambda0_fun(moment_vector):
@@ -1065,18 +1066,18 @@ def lambda0_fun(moment_vector):
 
 def geop(first, factor, n):
     """Create a geometric series"""
-    geop = np.zeros(n)
+    g = np.zeros(n)
     if (n > 0):
-        geop[0] = first
+        g[0] = first
     for k in range(1, n):
-        geop[k] = geop[k - 1] * factor
-    return geop
+        g[k] = g[k - 1] * factor
+    return g
 
 
 def estimate_parameter(func, moment_vector):
     """Estimate a parameter and its gradient"""
-    estimate_parameter = np.zeros(len(moment_vector) + 1)
-    estimate_parameter[0] = func(moment_vector)
+    parameter_estimate = np.zeros(len(moment_vector) + 1)
+    parameter_estimate[0] = func(moment_vector)
     nmax = 10
     ntab = 10
     con = 1.4
@@ -1088,7 +1089,7 @@ def estimate_parameter(func, moment_vector):
     errt = np.zeros(ntab - 1)
     fac = np.zeros(ntab - 1)
     a = np.zeros((ntab, ntab))
-    if np.isfinite(estimate_parameter[0]):
+    if np.isfinite(parameter_estimate[0]):
         for n in range(1, nmax + 1):
             h = 0.1 ** n
             errmax = 0.0
@@ -1146,7 +1147,7 @@ def estimate_parameter(func, moment_vector):
                        (safe * err):
                         break
                 errmax = max(errmax, err)
-                estimate_parameter[i] = dfridr
+                parameter_estimate[i] = dfridr
             if (errmax < 0.01):
                 break
             if (n == nmax):
@@ -1154,8 +1155,8 @@ def estimate_parameter(func, moment_vector):
                 msg2 = "Try normalizing variables to mean zero."
                 warn(msg1 + " " + msg2)
     else:
-        estimate_parameter[1:] = 0.0   # or change to internal_nan
-    return estimate_parameter
+        parameter_estimate[1:] = 0.0   # or change to internal_nan
+    return parameter_estimate
 
 
 #############################################################################

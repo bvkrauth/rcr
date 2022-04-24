@@ -574,7 +574,7 @@ def estimate_theta(moment_vector,
     deps = np.zeros(len(moment_vector))
     dmoments = np.zeros(len(moment_vector))
     a = np.zeros((ntab, ntab))
-    fac = np.zeros(ntab-1)
+    fac = geop(con2, con2, ntab - 1)
     errt = np.zeros(ntab-1)
     # Get lambda_star and theta_star
     lambda_star = lambdastar(moment_vector)
@@ -702,8 +702,6 @@ def estimate_theta(moment_vector,
                           (2.0 * hh)
                 # Set the error to very large
                 err = big
-                # Generate a geometric series
-                fac = geop(con2, con2, ntab - 1)
                 # Now we try progressively smaller stepsizes
                 for k in range(2, ntab + 1):
                     # The new stepsize hh is the old stepsize divided by 1.4
@@ -745,7 +743,6 @@ def estimate_theta(moment_vector,
                                 lambdafun(moment_vector - deps, theta)) /
                                (2.0 * hh))
                     err = big
-                    fac[0:ntab - 1] = geop(con2, con2, ntab - 1)
                     for k in range(2, ntab + 1):
                         hh = hh / con
                         deps[i-1] = hh
@@ -861,7 +858,7 @@ def zbrent(func, x1, x2, tol, xopt):
 
 
 def lambda_minus_lambda(theta, simplified_moments_and_lambda):
-    """Calculate lamba(thetaval)-lambdaval given thetaval and lambdaval"""
+    """Calculate lamba(theta)-lambda given theta and lambda"""
     lambda1 = lambdafast(theta, simplified_moments_and_lambda[1:])
     lambda0 = simplified_moments_and_lambda[0]
     return lambda1 - lambda0
@@ -871,14 +868,14 @@ def simplify_moments(moment_vector):
     """Convert moment_vector into the six moments needed for the model"""
     # Get sizes
     m = len(moment_vector)
-    k = int(1 + np.floor((np.sqrt(1 + 8 * m) - 1) / 2))
+    k = int((np.sqrt(1 + 8 * m)+ 1) / 2)
     assert 2*(m + 1) == k ** 2 + k
     mvtmp = np.append(1.0, moment_vector)
-    xtmp = np.zeros((k, k))
+    xtmp = np.empty((k, k))
     # The array XTMP will contain the full cross-product matrix E(WW')
     # where W = [1 X Y Z]
     h = 0
-    for i in range(h, k):
+    for i in range(0, k):
         for j in range(i, k):
             xtmp[i, j] = mvtmp[h]
             xtmp[j, i] = mvtmp[h]
@@ -903,14 +900,15 @@ def simplify_moments(moment_vector):
                              moment_vector[k - 2]*moment_vector[k - 3])
     # The XX matrix could be singular, so catch that exception
     try:
+        invXX = inv(XX)
         # varYhat
-        simplified_moments[3] = (XY.T @ inv(XX) @ XY -
+        simplified_moments[3] = (XY.T @ invXX @ XY -
                                  moment_vector[k - 3] ** 2)
         # varZhat
-        simplified_moments[4] = (XZ.T @ inv(XX) @ XZ -
+        simplified_moments[4] = (XZ.T @ invXX @ XZ -
                                  moment_vector[k - 2] ** 2)
         # covYZhat
-        simplified_moments[5] = (XY.T @ inv(XX) @ XZ -
+        simplified_moments[5] = (XY.T @ invXX @ XZ -
                                  moment_vector[k - 2] * moment_vector[k - 3])
     except np.linalg.LinAlgError:
         # These values will return as NaN
@@ -1019,28 +1017,21 @@ def lambdafast(theta, simplified_moments):
     yhat = simplified_moments[3]
     zhat = simplified_moments[4]
     yzhat = simplified_moments[5]
-    lf_num = (yhat -
+    theta = np.atleast_1d(theta)
+    lf0_num = (yhat -
               2.0 * theta * yzhat +
               theta ** 2 * zhat)
-    lf_denom = (y - yhat -
+    lf0_denom = (y - yhat -
                 (2.0) * theta * (yz - yzhat) +
                 theta ** 2 * (z - zhat))
-    if type(theta) == np.ndarray:
-        lambda_fast = np.full(len(theta), np.nan)
-        msk = (lf_denom != 0.0) & (theta != yhat/zhat)
-        lambda_fast[msk] = lf_num[msk] / lf_denom[msk]
-        msk = msk & (lambda_fast >= 0.0)
-        lambda_fast[msk] = ((yz - yzhat - theta[msk] * (z - zhat)) /
-                            (yzhat - theta[msk] * zhat) *
-                            np.sqrt(lambda_fast[msk]))
-        lambda_fast[~msk] = np.nan
-    else:
-        msk = (lf_denom != 0.0) & (theta != yhat/zhat)
-        lambda_fast = lf_num / lf_denom if msk else np.nan
-        msk = msk and (lambda_fast >= 0.0)
-        lambda_fast = (yz - yzhat - theta * (z - zhat)) / \
-                      (yzhat - theta * zhat) * np.sqrt(lambda_fast) \
-            if msk else np.nan
+    lf1_num = (yz - yzhat - theta * (z - zhat))
+    lf1_denom = (yzhat - theta * zhat)
+    msk = ((lf0_denom != 0.0) &
+           (lf1_denom != 0.0) &
+           (np.sign(lf0_num) == np.sign(lf0_denom)))
+    lambda_fast = np.full(len(theta), np.nan)
+    lambda_fast[msk] = ((lf1_num[msk]/lf1_denom[msk]) *
+                         np.sqrt(lf0_num[msk]/lf0_denom[msk]))
     return lambda_fast
 
 
@@ -1060,8 +1051,17 @@ def lambda0_fun(moment_vector):
     # Special values: If cov(yhat,zhat)=0, then lambda0 can
     #   be +Infinity, -Infinity, or NaN depending on the sign
     #   of cov(y,z).
-    lambda0 = lambdafun(moment_vector, 0.0)
-    return lambda0
+    simplified_moments = simplify_moments(moment_vector)
+    y = simplified_moments[0]
+    yz = simplified_moments[2]
+    yhat = simplified_moments[3]
+    yzhat = simplified_moments[5]
+    msk = ((y != yhat) &
+           (yzhat != 0.0) &
+           (np.sign(yhat) == np.sign((y - yhat))))
+    lf0 = (((yz - yzhat)/yzhat) *
+           np.sqrt(yhat/(y - yhat))) if msk else np.nan
+    return lf0
 
 
 def geop(first, factor, n):
@@ -1087,7 +1087,7 @@ def estimate_parameter(func, moment_vector):
     big = 1.0e300
     deps = np.zeros(len(moment_vector))
     errt = np.zeros(ntab - 1)
-    fac = np.zeros(ntab - 1)
+    fac = geop(con2, con2, ntab - 1)
     a = np.zeros((ntab, ntab))
     if np.isfinite(parameter_estimate[0]):
         for n in range(1, nmax + 1):
@@ -1112,8 +1112,6 @@ def estimate_parameter(func, moment_vector):
                 dfridr = a[0, 0]   # WORKAROUND
                 # The error is assumed to be a big number
                 err = big
-                # Generate a geometric series
-                fac = geop(con2, con2, ntab - 1)
                 # Try a total of NTAB different step sizes
                 for j in range(2, ntab + 1):
                     # Generate the next step size

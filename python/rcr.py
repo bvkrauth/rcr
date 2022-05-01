@@ -86,7 +86,7 @@ def write_to_logfile(str, mode="a"):
     try:
         with open(logfile, mode) as lf:
             lf.write(str)
-    except:
+    except OSError:
         msg = "Cannot write to logfile {0}.".format(logfile)
         warnings.warn(msg)
     return None
@@ -122,7 +122,7 @@ def read_data(infile):
     except ValueError:
         msg = "Incorrect format in line 1 of infile {0}.\n".format(infile)
         die(msg)
-    except:
+    except Exception:
         msg = "Unknown problem with line 1 of infile {0}.\n".format(infile)
         die(msg)
     else:
@@ -139,7 +139,7 @@ def read_data(infile):
     except ValueError:
         msg = "Incorrect format in line 2 of infile {0}.\n".format(infile)
         die(msg)
-    except:
+    except Exception:
         msg = "Unknown problem with line 2 of infile {0}.\n".format(infile)
         die(msg)
     else:
@@ -154,7 +154,7 @@ def read_data(infile):
     except ValueError:
         msg = "Incorrect format in line 3 of infile {0}.\n".format(infile)
         die(msg)
-    except:
+    except Exception:
         msg = "Unknown problem with line 3 of infile {0}.\n".format(infile)
         die(msg)
     else:
@@ -205,7 +205,7 @@ def write_results(result_matrix, outfile):
     try:
         with np.printoptions(threshold=np.inf, linewidth=np.inf):
             np.savetxt(outfile, result_matrix, delimiter=" ")
-    except:
+    except OSError:
         msg = "Cannot write to output file {0}.".format(outfile)
         warn(msg)
     else:
@@ -221,7 +221,7 @@ def write_details(thetavec, lambdavec, detail_file):
                 df.write("theta, lambda \n")
                 for i in range(0, len(thetavec)):
                     df.write("{0}, {1} \n".format(thetavec[i], lambdavec[i]))
-        except:
+        except OSError:
             warn("Cannot write to detail file {0}.".format(detail_file))
 
 

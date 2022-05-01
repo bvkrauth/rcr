@@ -210,6 +210,19 @@ def write_results(result_matrix, outfile):
         write_to_logfile("RCR successfully concluded.\n")
 
 
+def write_details(thetavec, lambdavec, detail_file):
+    # If a detail_file has been specified, output thetavec and lambdavec to
+    # that file
+    if (len(detail_file) > 0):
+        try:
+            with open(detail_file, mode="w") as df:
+                df.write("theta, lambda \n")
+                for i in range(0, len(thetavec)):
+                    df.write("{0}, {1} \n".format(thetavec[i], lambdavec[i]))
+        except:
+            warn("Cannot write to detail file {0}.".format(detail_file))
+
+
 def warn(msg):
     """Issue warning (to logfile and python warning system) but continue."""
     write_to_logfile("WARNING: " + msg + "\n")
@@ -299,7 +312,7 @@ def estimate_model(moment_vector, lambda_range):
     #         between these points. Note that we don't know a priori how many
     #         critical points there will be, and so we don't know how big
     #         THETA_SEGMENTS will be.
-    theta_segments = estimate_theta_segments(moment_vector)
+    theta_segments, thetavec, lambdavec = estimate_theta_segments(moment_vector)
     # STEP 2: For each row of lambda_range (i.e., each pair of lambda values):
     # do i=1,size(lambda_range,1)
     # j is the row in result_matrix corresponding to lambda_range(i,:)
@@ -308,11 +321,10 @@ def estimate_model(moment_vector, lambda_range):
     result_matrix[3:5, :] = estimate_theta(moment_vector,
                                            lambda_range,
                                            theta_segments)
-    return result_matrix
+    return result_matrix, thetavec, lambdavec
 
 
 def estimate_theta_segments(moment_vector):
-    global detail_file
     """Divide real line into segments over which lambda(theta) is monotonic"""
     imax = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
@@ -357,16 +369,6 @@ def estimate_theta_segments(moment_vector):
     thetavec = np.sort(thetavec)
     # Calculate lambda for every theta in thetavec
     lambdavec = lambdafast(thetavec, simplify_moments(moment_vector))
-    # If a detail_file has been specified, output thetavec and lambdavec to
-    # that file
-    if ("detail_file" in globals()) and (len(detail_file) > 0):
-        try:
-            with open(detail_file, mode="w") as df:
-                df.write("theta, lambda \n")
-                for i in range(0, len(thetavec)):
-                    df.write("{0}, {1} \n".format(thetavec[i], lambdavec[i]))
-        except:
-            warn("Unable to write to detail file {0}.".format(detail_file))
     # LOCALMIN = True if the corresponding element of THETAVEC appears to be
     # a local minimum
     localmin = ((lambdavec[1:imax-1] < lambdavec[0:imax-2]) &
@@ -421,7 +423,7 @@ def estimate_theta_segments(moment_vector):
                                          thetavec[localmax]])
     # Sort the result (definitely necessary)
     theta_segments = np.sort(theta_segments)
-    return theta_segments
+    return theta_segments, thetavec, lambdavec
 
 
 def brent(ax, bx, cx, func, tol, xopt):
@@ -1170,26 +1172,27 @@ def estimate_parameter(func, moment_vector):
 
 if __name__ == "__main__":
     # Load in arguments from call to program
-    infile, outfile, logfile, detail_file = get_command_arguments(sys.argv)
+    (infile, outfile, logfile, detail_file) = get_command_arguments(sys.argv)
 
     # Start the log file
     start_logfile(logfile)
 
     # Read in the data from INFILE
-    # Side effect: allocation/creation of moment_vector, lambda_range, and
-    # result_matrix
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data(infile)
 
     # Perform the calculations and put the results in result_matrix
-    # (side effect: allocation of theta_segments, writing to detail_file)
-    result_matrix = estimate_model(moment_vector, lambda_range)
+    (result_matrix, thetavec, lambdavec) = estimate_model(moment_vector,
+                                                          lambda_range)
 
     # Write out the data to OUTFILE
     write_results(translate_result(result_matrix,
                                    inf=external_big_number,
                                    nan=0.0),
                   outfile)
+
+    if detail_file != "":
+        write_details(thetavec, lambdavec, detail_file)
 
 #############################################################################
 # End run code

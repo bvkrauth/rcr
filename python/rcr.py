@@ -314,7 +314,8 @@ def estimate_model(moment_vector, lambda_range):
     #         between these points. Note that we don't know a priori how many
     #         critical points there will be, and so we don't know how big
     #         THETA_SEGMENTS will be.
-    theta_segments, thetavec, lambdavec = estimate_theta_segments(moment_vector)
+    theta_segments, thetavec, lambdavec = \
+        estimate_theta_segments(moment_vector)
     # STEP 2: For each row of lambda_range (i.e., each pair of lambda values):
     # do i=1,size(lambda_range,1)
     # j is the row in result_matrix corresponding to lambda_range(i,:)
@@ -705,7 +706,7 @@ def estimate_theta(moment_vector,
                 # Otherwise we will try again with a smaller h
                 if (n == nmax):
                     msg1 = "Inaccurate SE for thetaL/H."
-                    msg2 = "Try normalizing variables to mean zero and unit variance."
+                    msg2 = "Try normalizing variables."
                     warn(msg1 + " " + msg2)
             # Finally, we apply the implicit function theorem to calculate the
             # gradient that we actually need:
@@ -721,7 +722,7 @@ def simplify_moments(moment_vector):
     """Convert moment_vector into the six moments needed for the model"""
     # Get sizes
     m = len(moment_vector)
-    k = int((np.sqrt(1 + 8 * m)+ 1) / 2)
+    k = int((np.sqrt(1 + 8 * m) + 1) / 2)
     assert 2*(m + 1) == k ** 2 + k
     mvtmp = np.append(1.0, moment_vector)
     xtmp = np.empty((k, k))
@@ -872,11 +873,11 @@ def lambdafast(theta, simplified_moments):
     yzhat = simplified_moments[5]
     theta = np.atleast_1d(theta)
     lf0_num = (yhat -
-              2.0 * theta * yzhat +
-              theta ** 2 * zhat)
+               2.0 * theta * yzhat +
+               theta ** 2 * zhat)
     lf0_denom = (y - yhat -
-                (2.0) * theta * (yz - yzhat) +
-                theta ** 2 * (z - zhat))
+                 (2.0) * theta * (yz - yzhat) +
+                 theta ** 2 * (z - zhat))
     lf1_num = (yz - yzhat - theta * (z - zhat))
     lf1_denom = (yzhat - theta * zhat)
     msk = ((lf0_denom != 0.0) &
@@ -884,7 +885,7 @@ def lambdafast(theta, simplified_moments):
            (np.sign(lf0_num) == np.sign(lf0_denom)))
     lambda_fast = np.full(len(theta), np.nan)
     lambda_fast[msk] = ((lf1_num[msk]/lf1_denom[msk]) *
-                         np.sqrt(lf0_num[msk]/lf0_denom[msk]))
+                        np.sqrt(lf0_num[msk]/lf0_denom[msk]))
     return lambda_fast
 
 
@@ -1004,7 +1005,7 @@ def estimate_parameter(func, moment_vector):
                 break
             if (n == nmax):
                 msg1 = "Inaccurate SE for {0}.".format(func.__name__)
-                msg2 = "Try normalizing variables to mean zero and unit variance."
+                msg2 = "Try normalizing variables."
                 warn(msg1 + " " + msg2)
     else:
         parameter_estimate[1:] = 0.0   # or change to internal_nan
@@ -1168,7 +1169,6 @@ def geop(first, factor, n):
     for k in range(1, n):
         g[k] = g[k - 1] * factor
     return g
-
 
 
 #############################################################################

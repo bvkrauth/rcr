@@ -35,10 +35,12 @@ import numpy as np
 from numpy.linalg import inv
 import pandas as pd
 
-# Local application imports (none)
+# Local application imports
+# (none)
 
 
 # I/O and system functions
+
 
 def get_command_arguments(args):
     """Retrieve command arguments, usually from sys.argv."""
@@ -426,88 +428,6 @@ def estimate_theta_segments(moment_vector):
     return theta_segments, thetavec, lambdavec
 
 
-def brent(ax, bx, cx, func, tol, xopt):
-    """Maximize by Brent algorithm"""
-    itmax = 1000
-    cgold = 0.3819660
-    zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
-    a = min(ax, cx)
-    b = max(ax, cx)
-    v = bx
-    w = v
-    x = v
-    e = 0.0
-    fx = func(x, xopt)
-    fv = fx
-    fw = fx
-    # NOTE: I've added the extraneous line below so that code-checking
-    # tools do not flag the "e = d" statement below as referencing
-    # a nonexistent variable. In practice, this statement will never
-    # be reached in the first loop iteration, after which point d will be
-    # defined.
-    d = e
-    for iter in range(1, itmax + 1):
-        xm = 0.5 * (a + b)
-        tol1 = tol * abs(x) + zeps
-        tol2 = 2.0 * tol1
-        if (abs(x - xm) <= (tol2 - 0.5 * (b - a))):
-            brent_solution = x
-            break
-        if (abs(e) > tol1):
-            r = (x - w) * (fx - fv)
-            q = (x - v) * (fx - fw)
-            p = (x - v) * q - (x - w) * r
-            q = 2.0 * (q - r)
-            if (q > 0.0):
-                p = -p
-            q = abs(q)
-            etemp = e
-            e = d     # See NOTE above
-            if (abs(p) >= abs(0.5 * q * etemp)) or \
-               (p <= q * (a - x)) or \
-               (p >= q * (b - x)):
-                e = (a - x) if (x >= xm) else (b - x)
-                d = cgold * e
-            else:
-                d = p / q
-                u = x + d
-                if (u - a < tol2) or (b - u < tol2):
-                    d = tol1 * np.sign(xm - x)
-        else:
-            e = (a - x) if (x >= xm) else (b - x)
-            d = cgold * e
-        u = (x + d) if (abs(d) >= tol1) else (x + tol1 * np.sign(d))
-        fu = func(u, xopt)
-        if (fu <= fx):
-            if (u >= x):
-                a = x
-            else:
-                b = x
-            v = w
-            w = x
-            x = u
-            fv = fw
-            fw = fx
-            fx = fu
-        else:
-            if (u < x):
-                a = u
-            else:
-                b = u
-            if (fu <= fw) or (w == x):
-                v = w
-                fv = fw
-                w = u
-                fw = fu
-            elif (fu <= fv) or (v == x) or (v == w):
-                v = u
-                fv = fu
-    if (iter == itmax):
-        brent_solution = x
-        write_to_logfile("Brent exceeded maximum iterations.\n")
-    return brent_solution
-
-
 def bracket_theta_star(moment_vector):
     """Find theta valus close to theta_star"""
     # Get the value of theta_star.  If we are in this function it should be
@@ -785,7 +705,7 @@ def estimate_theta(moment_vector,
                 # Otherwise we will try again with a smaller h
                 if (n == nmax):
                     msg1 = "Inaccurate SE for thetaL/H."
-                    msg2 = "Try normalizing variables to mean zero."
+                    msg2 = "Try normalizing variables to mean zero and unit variance."
                     warn(msg1 + " " + msg2)
             # Finally, we apply the implicit function theorem to calculate the
             # gradient that we actually need:
@@ -795,70 +715,6 @@ def estimate_theta(moment_vector,
             # If theta is infinite, then the gradient is zero.
             theta_estimate[j - 1, 1:] = 0.0
     return theta_estimate
-
-
-def zbrent(func, x1, x2, tol, xopt):
-    """Find a root using the Brent algorithm"""
-    itmax = 1000
-    eps = np.finfo(float).eps   # in fortran was epsilon(x1)
-    a = x1
-    b = x2
-    fa = func(a, xopt)
-    fb = func(b, xopt)
-    if (((fa > 0.0) and (fb > 0.0)) or ((fa < 0.0) and (fb < 0.0))):
-        write_to_logfile("Error in zbrent: Root is not bracketed")
-        # call die("root must be bracketed for zbrent") # UPDATE
-    c = b
-    fc = fb
-    for iter in range(1, itmax + 1):
-        if (((fb > 0.0) and (fc > 0.0)) or ((fb < 0.0) and (fc < 0.0))):
-            c = a
-            fc = fa
-            d = b - a
-            e = d
-        if (abs(fc) < abs(fb)):
-            a = b
-            b = c
-            c = a
-            fa = fb
-            fb = fc
-            fc = fa
-        # check for convergence
-        tol1 = 2.0 * eps * abs(b) + 0.5 * tol
-        xm = 0.5 * (c - b)
-        if (abs(xm) <= tol1) or (fb == 0.0):
-            zbrent_solution = b
-            break
-        if (abs(e) >= tol1) and (abs(fa) > abs(fb)):
-            s = fb / fa
-            if (a == c):
-                p = 2.0 * xm * s
-                q = 1.0 - s
-            else:
-                q = fa / fc
-                r = fb / fc
-                p = s * (2.0 * xm * q * (q - r) - (b - a) * (r - 1.0))
-                q = (q - 1.0) * (r - 1.0) * (s - 1.0)
-            if (p > 0.0):
-                q = -q
-            p = abs(p)
-            if (2.0 * p < min(3.0 * xm * q - abs(tol1 * q), abs(e * q))):
-                e = d
-                d = p / q
-            else:
-                d = xm
-                e = d
-        else:
-            d = xm
-            e = d
-        a = b
-        fa = fb
-        b = (b + d) if (abs(d) > tol1) else (b + tol1 * np.sign(xm))
-        fb = func(b, xopt)
-    if (iter == itmax):
-        zbrent_solution = b
-        write_to_logfile("zbrent: exceeded maximum iterations")
-    return zbrent_solution
 
 
 def simplify_moments(moment_vector):
@@ -1072,16 +928,6 @@ def lambda_minus_lambda(theta, simplified_moments_and_lambda):
     return lambda1 - lambda0
 
 
-def geop(first, factor, n):
-    """Create a geometric series"""
-    g = np.zeros(n)
-    if (n > 0):
-        g[0] = first
-    for k in range(1, n):
-        g[k] = g[k - 1] * factor
-    return g
-
-
 def estimate_parameter(func, moment_vector):
     """Estimate a parameter and its gradient"""
     parameter_estimate = np.zeros(len(moment_vector) + 1)
@@ -1158,11 +1004,171 @@ def estimate_parameter(func, moment_vector):
                 break
             if (n == nmax):
                 msg1 = "Inaccurate SE for {0}.".format(func.__name__)
-                msg2 = "Try normalizing variables to mean zero."
+                msg2 = "Try normalizing variables to mean zero and unit variance."
                 warn(msg1 + " " + msg2)
     else:
         parameter_estimate[1:] = 0.0   # or change to internal_nan
     return parameter_estimate
+
+
+# Standard numerical algorithms
+
+
+def brent(ax, bx, cx, func, tol, xopt):
+    """Maximize by Brent algorithm"""
+    itmax = 1000
+    cgold = 0.3819660
+    zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
+    a = min(ax, cx)
+    b = max(ax, cx)
+    v = bx
+    w = v
+    x = v
+    e = 0.0
+    fx = func(x, xopt)
+    fv = fx
+    fw = fx
+    # NOTE: I've added the extraneous line below so that code-checking
+    # tools do not flag the "e = d" statement below as referencing
+    # a nonexistent variable. In practice, this statement will never
+    # be reached in the first loop iteration, after which point d will be
+    # defined.
+    d = e
+    for iter in range(1, itmax + 1):
+        xm = 0.5 * (a + b)
+        tol1 = tol * abs(x) + zeps
+        tol2 = 2.0 * tol1
+        if (abs(x - xm) <= (tol2 - 0.5 * (b - a))):
+            brent_solution = x
+            break
+        if (abs(e) > tol1):
+            r = (x - w) * (fx - fv)
+            q = (x - v) * (fx - fw)
+            p = (x - v) * q - (x - w) * r
+            q = 2.0 * (q - r)
+            if (q > 0.0):
+                p = -p
+            q = abs(q)
+            etemp = e
+            e = d     # See NOTE above
+            if (abs(p) >= abs(0.5 * q * etemp)) or \
+               (p <= q * (a - x)) or \
+               (p >= q * (b - x)):
+                e = (a - x) if (x >= xm) else (b - x)
+                d = cgold * e
+            else:
+                d = p / q
+                u = x + d
+                if (u - a < tol2) or (b - u < tol2):
+                    d = tol1 * np.sign(xm - x)
+        else:
+            e = (a - x) if (x >= xm) else (b - x)
+            d = cgold * e
+        u = (x + d) if (abs(d) >= tol1) else (x + tol1 * np.sign(d))
+        fu = func(u, xopt)
+        if (fu <= fx):
+            if (u >= x):
+                a = x
+            else:
+                b = x
+            v = w
+            w = x
+            x = u
+            fv = fw
+            fw = fx
+            fx = fu
+        else:
+            if (u < x):
+                a = u
+            else:
+                b = u
+            if (fu <= fw) or (w == x):
+                v = w
+                fv = fw
+                w = u
+                fw = fu
+            elif (fu <= fv) or (v == x) or (v == w):
+                v = u
+                fv = fu
+    if (iter == itmax):
+        brent_solution = x
+        write_to_logfile("Brent exceeded maximum iterations.\n")
+    return brent_solution
+
+
+def zbrent(func, x1, x2, tol, xopt):
+    """Find a root using the Brent algorithm"""
+    itmax = 1000
+    eps = np.finfo(float).eps   # in fortran was epsilon(x1)
+    a = x1
+    b = x2
+    fa = func(a, xopt)
+    fb = func(b, xopt)
+    if (((fa > 0.0) and (fb > 0.0)) or ((fa < 0.0) and (fb < 0.0))):
+        write_to_logfile("Error in zbrent: Root is not bracketed")
+        # call die("root must be bracketed for zbrent") # UPDATE
+    c = b
+    fc = fb
+    for iter in range(1, itmax + 1):
+        if (((fb > 0.0) and (fc > 0.0)) or ((fb < 0.0) and (fc < 0.0))):
+            c = a
+            fc = fa
+            d = b - a
+            e = d
+        if (abs(fc) < abs(fb)):
+            a = b
+            b = c
+            c = a
+            fa = fb
+            fb = fc
+            fc = fa
+        # check for convergence
+        tol1 = 2.0 * eps * abs(b) + 0.5 * tol
+        xm = 0.5 * (c - b)
+        if (abs(xm) <= tol1) or (fb == 0.0):
+            zbrent_solution = b
+            break
+        if (abs(e) >= tol1) and (abs(fa) > abs(fb)):
+            s = fb / fa
+            if (a == c):
+                p = 2.0 * xm * s
+                q = 1.0 - s
+            else:
+                q = fa / fc
+                r = fb / fc
+                p = s * (2.0 * xm * q * (q - r) - (b - a) * (r - 1.0))
+                q = (q - 1.0) * (r - 1.0) * (s - 1.0)
+            if (p > 0.0):
+                q = -q
+            p = abs(p)
+            if (2.0 * p < min(3.0 * xm * q - abs(tol1 * q), abs(e * q))):
+                e = d
+                d = p / q
+            else:
+                d = xm
+                e = d
+        else:
+            d = xm
+            e = d
+        a = b
+        fa = fb
+        b = (b + d) if (abs(d) > tol1) else (b + tol1 * np.sign(xm))
+        fb = func(b, xopt)
+    if (iter == itmax):
+        zbrent_solution = b
+        write_to_logfile("zbrent: exceeded maximum iterations")
+    return zbrent_solution
+
+
+def geop(first, factor, n):
+    """Create a geometric series"""
+    g = np.zeros(n)
+    if (n > 0):
+        g[0] = first
+    for k in range(1, n):
+        g[k] = g[k - 1] * factor
+    return g
+
 
 
 #############################################################################

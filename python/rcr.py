@@ -38,6 +38,8 @@ import pandas as pd
 # Local application imports (none)
 
 
+# I/O and system functions
+
 def get_command_arguments(args):
     """Retrieve command arguments, usually from sys.argv."""
     # ARGS should be a list of 1 to 5 strings like sys.argv
@@ -55,6 +57,37 @@ def get_command_arguments(args):
     logfile = args[3].strip() if len(args) > 3 else "plog.txt"
     detail_file = args[4].strip() if len(args) > 4 else ""
     return infile, outfile, logfile, detail_file
+
+
+def set_logfile(fname):
+    """Set name of log file"""
+    global logfile
+    if isinstance(fname, str) or fname is None:
+        logfile = fname
+    else:
+        pass
+
+
+def get_logfile():
+    """Retrieve name of log file.  If undefined, return None"""
+    global logfile
+    if "logfile" not in globals():
+        logfile = None
+    return logfile
+
+
+def write_to_logfile(str, mode="a"):
+    """Write a note to the log file."""
+    logfile = get_logfile()
+    if logfile is None:
+        return
+    try:
+        with open(logfile, mode) as lf:
+            lf.write(str)
+    except:
+        msg = "Cannot write to logfile {0}.".format(logfile)
+        warnings.warn(msg)
+    return None
 
 
 def start_logfile(logfile):
@@ -164,7 +197,7 @@ def read_data(infile):
 
 
 def write_results(result_matrix, outfile):
-    """Write results to outfile."""
+    """Write the results_matrix array to outfile."""
     write_to_logfile("Writing results to output file {0}.\n".format(outfile))
     write_to_logfile("Actual results = ...\n")
     try:
@@ -177,20 +210,6 @@ def write_results(result_matrix, outfile):
         write_to_logfile("RCR successfully concluded.\n")
 
 
-def write_to_logfile(str, mode="a"):
-    """Write a note to the log file."""
-    logfile = get_logfile()
-    if logfile is None:
-        return
-    try:
-        with open(logfile, mode) as lf:
-            lf.write(str)
-    except:
-        msg = "Cannot write to logfile {0}.".format(logfile)
-        warnings.warn(msg)
-    return None
-
-
 def warn(msg):
     """Issue warning (to logfile and python warning system) but continue."""
     write_to_logfile("WARNING: " + msg + "\n")
@@ -200,24 +219,7 @@ def warn(msg):
 def die(msg):
     """Fatal error - write message to log file and then shut down."""
     write_to_logfile("FATAL ERROR: " + msg)
-    return sys.exit(msg)
-
-
-def set_logfile(fname):
-    """Set name of log file"""
-    global logfile
-    if isinstance(fname, str) or fname is None:
-        logfile = fname
-    else:
-        pass
-
-
-def get_logfile():
-    """Retrieve name of log file.  If undefined, return None"""
-    global logfile
-    if "logfile" not in globals():
-        logfile = None
-    return logfile
+    raise RuntimeError(msg)
 
 
 def translate_result(mat, inf=np.inf, nan=np.nan):
@@ -228,6 +230,9 @@ def translate_result(mat, inf=np.inf, nan=np.nan):
     msk2 = np.isnan(newmat)
     newmat[msk2] = nan
     return newmat
+
+
+# Model calculation functions
 
 
 def estimate_model(moment_vector, lambda_range):
@@ -307,6 +312,7 @@ def estimate_model(moment_vector, lambda_range):
 
 
 def estimate_theta_segments(moment_vector):
+    global detail_file
     """Divide real line into segments over which lambda(theta) is monotonic"""
     imax = 30000   # A bigger number produces an FP overflow in fortran
     sm = simplify_moments(moment_vector)
@@ -353,7 +359,7 @@ def estimate_theta_segments(moment_vector):
     lambdavec = lambdafast(thetavec, simplify_moments(moment_vector))
     # If a detail_file has been specified, output thetavec and lambdavec to
     # that file
-    if (len(detail_file) > 0):
+    if ("detail_file" in globals()) and (len(detail_file) > 0):
         try:
             with open(detail_file, mode="w") as df:
                 df.write("theta, lambda \n")
@@ -418,12 +424,8 @@ def estimate_theta_segments(moment_vector):
     return theta_segments
 
 
-def negative_lambdafast(theta, simplifiedMoments):
-    return -lambdafast(theta, simplifiedMoments)
-
-
 def brent(ax, bx, cx, func, tol, xopt):
-    """Optimize by Brent algorithm"""
+    """Maximize by Brent algorithm"""
     itmax = 1000
     cgold = 0.3819660
     zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
@@ -500,7 +502,7 @@ def brent(ax, bx, cx, func, tol, xopt):
                 fv = fu
     if (iter == itmax):
         brent_solution = x
-        write_to_logfile("brent: exceed maximum iterations.\n")
+        write_to_logfile("Brent exceeded maximum iterations.\n")
     return brent_solution
 
 
@@ -857,13 +859,6 @@ def zbrent(func, x1, x2, tol, xopt):
     return zbrent_solution
 
 
-def lambda_minus_lambda(theta, simplified_moments_and_lambda):
-    """Calculate lamba(theta)-lambda given theta and lambda"""
-    lambda1 = lambdafast(theta, simplified_moments_and_lambda[1:])
-    lambda0 = simplified_moments_and_lambda[0]
-    return lambda1 - lambda0
-
-
 def simplify_moments(moment_vector):
     """Convert moment_vector into the six moments needed for the model"""
     # Get sizes
@@ -1035,6 +1030,10 @@ def lambdafast(theta, simplified_moments):
     return lambda_fast
 
 
+def negative_lambdafast(theta, simplifiedMoments):
+    return -lambdafast(theta, simplifiedMoments)
+
+
 def lambdafun(moment_vector, theta):
     """Calculate lambda for the given theta"""
     lf = lambdafast(theta, simplify_moments(moment_vector))
@@ -1062,6 +1061,13 @@ def lambda0_fun(moment_vector):
     lf0 = (((yz - yzhat)/yzhat) *
            np.sqrt(yhat/(y - yhat))) if msk else np.nan
     return lf0
+
+
+def lambda_minus_lambda(theta, simplified_moments_and_lambda):
+    """Calculate lamba(theta)-lambda given theta and lambda"""
+    lambda1 = lambdafast(theta, simplified_moments_and_lambda[1:])
+    lambda0 = simplified_moments_and_lambda[0]
+    return lambda1 - lambda0
 
 
 def geop(first, factor, n):

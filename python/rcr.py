@@ -1655,6 +1655,9 @@ if __name__ == "__main__":
     if detail_file != "":
         write_details(thetavec, lambdavec, detail_file)
 
+    # Close the log file
+    set_logfile(None)
+
 #############################################################################
 # End run code
 #############################################################################

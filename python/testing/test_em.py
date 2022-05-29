@@ -9,7 +9,7 @@ import pandas as pd
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import read_data, estimate_model, get_logfile, set_logfile
+from rcr import read_data, estimate_model
 
 tol = 1e-04
 
@@ -24,8 +24,6 @@ tol = 1e-04
 # Basic functionality
 # Estimate parameters and gradient with real data
 def test_em_realdata():
-    oldlogfile = get_logfile()
-    set_logfile(None)
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
     true_result = np.asarray(pd.read_csv("testout1.txt",
@@ -39,13 +37,10 @@ def test_em_realdata():
     assert max(abs(em[:, 0] - true_em1)) < 1e-4
     # Check parameter estimates and gradient
     assert np.max(abs(em - true_result)) < 1e-4
-    set_logfile(oldlogfile)
 
 
 # lambda_range is a single point
 def test_em_lambdapoint():
-    oldlogfile = get_logfile()
-    set_logfile(None)
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
     lr0 = np.array([0, 0])
@@ -54,13 +49,10 @@ def test_em_lambdapoint():
     em, thetavec, lambdavec = estimate_model(moment_vector, lr0)
     assert max(abs(em[:, 0] - true_em)) < 1e-4
     # TODO: need to check gradient too
-    set_logfile(oldlogfile)
 
 
 # lambda_range has no lower bound
 def test_em_nolambdalow():
-    oldlogfile = get_logfile()
-    set_logfile(None)
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
     lr0 = np.array([-np.inf, 1])
@@ -70,13 +62,10 @@ def test_em_nolambdalow():
         em, thetavec, lambdavec = estimate_model(moment_vector, lr0)
     assert max(abs(em[:, 0] - true_em)) < 1e-4
     # TODO: need to check gradient too
-    set_logfile(oldlogfile)
 
 
 # lambda_range has no upper bound
 def test_em_nolambdahigh():
-    oldlogfile = get_logfile()
-    set_logfile(None)
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
     lr0 = np.array([0, np.inf])
@@ -87,26 +76,20 @@ def test_em_nolambdahigh():
     assert em[4, 0] == np.inf
     assert np.all(em[3:4, 1:] == 0.0)
     # TODO: need to check gradient too
-    set_logfile(oldlogfile)
 
 
 # Special cases for moments
 # Near-perfect RCT (cov(z,x) almost zero)
 def test_em_nearrct():
-    oldlogfile = get_logfile()
-    set_logfile(None)
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.000001, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
     em, thetavec, lambdavec = estimate_model(mv1, lr1)
     assert np.all(em[0:3, 0] > 1000)
     assert max(abs(em[3:4, 0] - 0.5)) < tol
-    set_logfile(oldlogfile)
 
 
 # Perfect RCT (cov(z,x) exactly zero)
 def test_em_rct():
-    oldlogfile = get_logfile()
-    set_logfile(None)
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.0, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
     # This test currently fails with an UnboundLocalError
@@ -117,4 +100,3 @@ def test_em_rct():
     else:
         assert np.all(em[0:3, 0] > 1000)
         assert max(abs(em[3:4, 0] - 0.5)) < tol
-    set_logfile(oldlogfile)

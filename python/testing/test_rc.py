@@ -10,7 +10,7 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR, get_logfile, set_logfile
+from rcr import RCR
 
 
 @pytest.fixture
@@ -42,8 +42,6 @@ def exog(dat, rcr_formula):
 # Basic functionality
 # Patsy design matrices
 def test_rc_patsy(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(endog, exog)
     assert isinstance(model, RCR)
@@ -69,13 +67,10 @@ def test_rc_patsy(dat, rcr_formula):
     assert model.lambda_range.shape == (2, )
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
-    set_logfile(oldlogfile)
 
 
 # Data frames (with Patsy design_info)
 def test_rc_patsy_df(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(endog, exog)
     assert isinstance(model.endog, np.ndarray)
@@ -100,13 +95,10 @@ def test_rc_patsy_df(dat, rcr_formula):
     assert model.lambda_range.shape == (2, )
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
-    set_logfile(oldlogfile)
 
 
 # Data frames (without Patsy design_info)
 def test_rc_dataframe(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(pd.DataFrame(endog), pd.DataFrame(exog))
     assert isinstance(model.endog, np.ndarray)
@@ -131,13 +123,10 @@ def test_rc_dataframe(dat, rcr_formula):
     assert model.lambda_range.shape == (2, )
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
-    set_logfile(oldlogfile)
 
 
 # Plain numpy arrays
 def test_rc_array(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat)
     model = RCR(np.asarray(endog), np.asarray(exog))
     assert isinstance(model.endog, np.ndarray)
@@ -160,27 +149,20 @@ def test_rc_array(dat, rcr_formula):
     assert model.lambda_range.shape == (2, )
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
-    set_logfile(oldlogfile)
 
 
 # Set lambda_range
 def test_rc_setlr(endog, exog):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     model = RCR(endog, exog, lambda_range=np.asarray([-1.0, 5.0]))
     assert model.lambda_range[0] == -1.0
     assert model.lambda_range[1] == 5.0
-    set_logfile(oldlogfile)
 
 
 # Set lambda_range
 def test_rc_setlrinf(endog, exog):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     model = RCR(endog, exog, lambda_range=np.asarray([-np.inf, np.inf]))
     assert np.isneginf(model.lambda_range[0])
     assert np.isposinf(model.lambda_range[1])
-    set_logfile(oldlogfile)
 
 
 # Exceptions
@@ -188,8 +170,6 @@ def test_rc_setlrinf(endog, exog):
 
 # endog is a 1-d array, should be a 2-d array
 def test_rc_endog1d(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog)[:, 1], np.asarray(exog))
@@ -197,13 +177,10 @@ def test_rc_endog1d(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # endog has only 1 column, should have 2
 def test_rc_endog1c(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog)[:, 1:], np.asarray(exog))
@@ -211,13 +188,10 @@ def test_rc_endog1c(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # endog has more than 2 columns
 def test_rc_endog7c(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(exog), np.asarray(exog))
@@ -225,13 +199,10 @@ def test_rc_endog7c(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # exog is a 1-d array, should be a 2-d array
 def test_rc_exog1d(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog), np.asarray(exog)[:, 1])
@@ -239,13 +210,10 @@ def test_rc_exog1d(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # exog has only 1 column, should have at least 2
 def test_rc_exog1c(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog), np.asarray(exog)[:, :1])
@@ -253,13 +221,10 @@ def test_rc_exog1c(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # endog and exog do not have the same number of rows
 def test_rc_nobsnoteq(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog), np.asarray(exog)[0:100, ])
@@ -267,13 +232,10 @@ def test_rc_nobsnoteq(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # lambda_range is a 2-d array, should be 1-d
 def test_rc_lr2d(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.asarray(endog))
@@ -281,13 +243,10 @@ def test_rc_lr2d(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # lambda_range has the wrong number of elements
 def test_rc_lr1e(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.zeros(1))
@@ -295,13 +254,10 @@ def test_rc_lr1e(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # lambda_range includes NaN values (inf values are OK)
 def test_rc_lrnan(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.asarray([0, np.nan]))
@@ -309,13 +265,10 @@ def test_rc_lrnan(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)
 
 
 # lambda_range is not in weakly ascending order
 def test_rc_lrnotsorted(dat, rcr_formula):
-    oldlogfile = get_logfile()
-    set_logfile(None)
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.asarray([1., 0.]))
@@ -323,4 +276,3 @@ def test_rc_lrnotsorted(dat, rcr_formula):
         pass
     else:
         raise AssertionError
-    set_logfile(oldlogfile)

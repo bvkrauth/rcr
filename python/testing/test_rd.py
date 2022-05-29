@@ -35,7 +35,7 @@ def test_rd_nonexistent():
     set_logfile(None)
     assert ~os.path.exists("nonexistent-file")
     try:
-       read_data("nonexistent-file")
+        read_data("nonexistent-file")
     except RuntimeError:
         pass
     else:
@@ -110,7 +110,7 @@ def test_rd_badlambda():
     except AssertionError:
         pass
     else:
-       raise AssertionError
+        raise AssertionError
 
 
 # external_big_number is not a valid value

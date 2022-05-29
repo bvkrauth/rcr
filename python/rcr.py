@@ -34,6 +34,7 @@ from datetime import datetime
 import numpy as np
 from numpy.linalg import inv
 import pandas as pd
+import scipy.stats
 
 # Local application imports
 # (none)
@@ -1169,6 +1170,460 @@ def geop(first, factor, n):
     for k in range(1, n):
         g[k] = g[k - 1] * factor
     return g
+
+
+def get_column_names(arr, default_names=None):
+    """
+    Return column names for an array_like object, if available
+    """
+    cols = default_names
+    if isinstance(arr, pd.DataFrame):
+        cols = arr.columns.tolist()
+    elif hasattr(arr, "design_info"):
+        cols = arr.design_info.column_names
+    return cols
+
+
+def bkouter(arrow):
+    """
+    Given a vector, return its outer product with itself, as a vector
+    """
+    mat = np.outer(arrow, arrow)
+    k = len(mat)
+    msk = np.triu(np.full((k, k), True)).flatten()
+    mat = mat.flatten()
+    return mat[msk]
+
+
+def check_lambda(lambda_range):
+    """
+    Check that the given lambda_range is valid
+    """
+    if type(lambda_range) != np.ndarray:
+        msg1 = "lambda_range should be a numpy array"
+        msg2 = " and is a {}.".format(type(lambda_range))
+        raise TypeError(msg1 + msg2)
+    elif lambda_range.ndim != 1:
+        msg1 = "lambda_range should be 1-d array"
+        msg2 = " and is a {}-d array.".format(lambda_range.ndim)
+        raise TypeError(msg1 + msg2)
+    elif lambda_range.shape[0] != 2:
+        msg1 = "lambda_range should have 2 elements"
+        msg2 = " and has {} element(s).".format(lambda_range.shape[0])
+        raise TypeError(msg1 + msg2)
+    elif lambda_range.shape[0] != 2:
+        msg1 = "lambda_range should have 2 elements"
+        msg2 = " and has {} element(s).".format(lambda_range.shape[0])
+        raise TypeError(msg1 + msg2)
+    elif any(np.isnan(lambda_range)):
+        msg = "lambda_range cannot be NaN."
+        raise ValueError(msg)
+    elif lambda_range[0] > lambda_range[1]:
+        msg1 = "elements of lambda_range ({0})".format(lambda_range)
+        msg2 = " must be in (weakly) ascending order."
+        raise ValueError(msg1 + msg2)
+    else:
+        return None
+
+
+def check_endog(endog):
+    """
+    Check that the given endog matrix is valid
+    """
+    if type(endog) != np.ndarray:
+        msg1 = "endog should be an array-like object"
+        msg2 = " and is a {}.".format(type(endog))
+        raise TypeError(msg1 + msg2)
+    elif endog.ndim != 2:
+        msg1 = "endog should be 2-d array"
+        msg2 = " and is a {}-d array.".format(endog.ndim)
+        raise TypeError(msg1 + msg2)
+    elif endog.shape[1] != 2:
+        msg1 = "endog should have 2 columns"
+        msg2 = "and has {} column(s).".format(endog.shape[1])
+        raise TypeError(msg1 + msg2)
+    else:
+        return None
+
+
+def check_exog(exog, nobs):
+    """
+    Check that the given exog matrix is valid
+    """
+    if type(exog) != np.ndarray:
+        msg1 = "exog should be an array-like object"
+        msg2 = " and is a {}.".format(type(exog))
+        raise TypeError(msg1 + msg2)
+    elif exog.ndim != 2:
+        msg = "exog should be 2-d array; is a {}-d array.".format(exog.ndim)
+        raise TypeError(msg)
+    elif exog.shape[1] < 2:
+        msg1 = "exog should have at least 2 columns"
+        msg2 = " and has {} column(s).".format(exog.shape[1])
+        raise TypeError(msg1 + msg2)
+    elif exog.shape[0] != nobs:
+        msg1 = "endog has {} observations".format(nobs)
+        msg2 = " and exog has {} observations.".format(exog.shape[0])
+        raise TypeError(msg1 + msg2)
+    elif any(exog[:, 0] != 1.0):
+        msg = "first column of exog must be an intercept"
+        raise ValueError(msg)
+    else:
+        return None
+
+
+def check_covinfo(cov_type, vceadj):
+    """
+    Check that the given cov_type and vceadj are valid
+    """
+    if cov_type not in ("nonrobust", ):
+        msg = "cov_type '{}' not yet supported.".format(cov_type)
+        raise ValueError(msg)
+    if type(vceadj) not in (float, int):
+        msg = "vceadj must be a number, is a {}.".format(type(vceadj))
+        raise TypeError(msg)
+    elif vceadj < 0.:
+        msg = "vceadj = {}, must be non-negative.".format(vceadj)
+        raise ValueError(msg)
+    else:
+        return None
+
+
+def check_ci(cilevel, citype=None):
+    """
+    Check that the given cilevel and citype are valid
+    """
+    if type(cilevel) not in (float, int):
+        msg = "cilevel must be a number, is a {}.".format(type(cilevel))
+        raise TypeError(msg)
+    elif cilevel < 0.:
+        msg = "cilevel = {}, should be between 0 and 100.".format(cilevel)
+        raise ValueError(msg)
+    if citype is None:
+        return None
+    elif citype not in ("conservative", "upper", "lower", "Imbens-Manski"):
+        msg = "Unsupported CI type {}.".format(citype)
+        raise ValueError(msg)
+    else:
+        return None
+
+
+class RCR:
+    """
+    A class to represent a regression model for RCR analysis.
+
+    Parameters
+    ----------
+    endog : array_like
+        A nobs x 2 array where nobs is the number of observations.
+        The first column represents the outcome (dependent variable)
+        and the second column represents the treatment
+        (explanatory variable of interest).
+    exog : array_like
+        a nobs x k array of control variables. The first column should
+        be an intercept.  See :func:`statsmodels.tools.add_constant`
+        to add an intercept.
+    lambda_range: array_like
+        a 1-d array of the form [lambdaL, lambdaH] where lambdaL
+        is the lower bound and lambdaH is the upper bound
+        for the RCR parameter lambda.  lambdaL can be -inf
+        to indicate no lower bound, and lambdaH can be inf
+        to indicate no upper bound.  lambdaL should be <=
+        to lambdaH. Default is [0.0, 1.0].
+
+    Attributes
+    ----------
+    endog : ndarray
+        the array of endogenous variables.
+    exog : ndarray
+        the array of exogenous variables
+    lambda_range : ndarray
+        the array of lambda values.
+    endog_names, exog_names : ndarray of str
+        the names of the variables in endog and exog.
+    depvar, treatvar, controlvars : str
+        the names of the dependent, treatment and
+        control variables (from endog_names and
+        exog_names)
+    nobs : float
+        the number of observations.
+
+    Methods
+    ------------
+    fit(lambda_range=None, cov_type="nonrobust", vceadj=1.0)
+        Estimates the RCR model.
+
+    See also
+    --------
+    To be added.
+
+    Notes
+    -----
+    The RCR class is patterned after
+    statsmodels.regression.linear_model.OLS.
+
+    Examples
+    --------
+    To be added.
+    """
+    def __init__(self,
+                 endog,
+                 exog,
+                 lambda_range=np.array([0.0, 1.0])):
+        """
+        Constructs the RCR object.
+        """
+        self.endog = np.asarray(endog)
+        check_endog(self.endog)
+        self.nobs = self.endog.shape[0]
+        self.exog = np.asarray(exog)
+        check_exog(self.exog, self.nobs)
+        endog_names_default = ["y", "treatment"]
+        self.endog_names = get_column_names(endog,
+                                            default_names=endog_names_default)
+        exog_names_default = ["x" + str(x) for
+                              x in
+                              list(range(1, exog.shape[1]))]
+        exog_names_default = ["Intercept"] + exog_names_default
+        self.exog_names = get_column_names(exog,
+                                           default_names=exog_names_default)
+        self.depvar = self.endog_names[0]
+        self.treatvar = self.endog_names[1]
+        self.controlvars = " ".join([str(item) for
+                                     item in
+                                     self.exog_names[1:]])
+        self.lambda_range = np.asarray(lambda_range)
+        check_lambda(self.lambda_range)
+
+    def fit(self,
+            lambda_range=None,
+            cov_type="nonrobust",
+            vceadj=1.0):
+        """
+        Estimates an RCR model.
+
+        Parameters
+        ----------
+        lambda_range : array_like
+            if supplied, overrides the value of lambda_range in
+            the RCR object.
+        cov_type : str
+            the method used to estimate the covariance matrix
+            of parameter estimates. Currently-available options
+            include 'nonrobust'.  Heteroscedasticity and
+            cluster robust uptions to be added. Default
+            is 'nonrobust'.
+        vceadj : float
+            degrees of freedom adjustment factor. The covariance
+            matrix of parameters will be multiplied by vceadj.
+            Default is no adjustment (vceadj = 1.0).
+
+        Returns
+        -------
+        RCR_results
+            the model estimation results.
+
+        See Also
+        --------
+        RCR_results
+            the results container.
+        """
+        if lambda_range is None:
+            lambda_range = self.lambda_range
+        else:
+            lambda_range = np.asarray(lambda_range)
+        check_lambda(lambda_range)
+        check_covinfo(cov_type, vceadj)
+        xyz = np.concatenate((self.exog, self.endog), axis=1)
+        xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
+        mv = xyzzyx.mean(axis=0)
+        covmat = np.cov(xyzzyx, rowvar=False)/self.nobs
+        (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
+        b = result_matrix[:, 0]
+        V = vceadj * result_matrix[:, 1:] @ covmat @ result_matrix[:, 1:].T
+        details = np.array([thetavec, lambdavec])
+        return RCR_results(self, b, V, details, cov_type, vceadj, lambda_range)
+
+
+class RCR_results:
+    """
+    Results class for an RCR model.
+
+    Parameters
+    ----------
+    endog : array_like
+        A nobs x 2 array where nobs is the number of observations.
+        The first column represents the outcome (dependent variable)
+        and the second column represents the treatment
+        (explanatory variable of interest).
+    exog : array_like
+        a nobs x k array of control variables. The first column should
+        be an intercept.  See :func:`statsmodels.tools.add_constant`
+        to add an intercept.
+    lambda_range: array_like
+        a 1-d array of the form [lambdaL, lambdaH] where lambdaL
+        is the lower bound and lambdaH is the upper bound
+        for the RCR parameter lambda.  lambdaL can be -inf
+        to indicate no lower bound, and lambdaH can be inf
+        to indicate no upper bound.  lambdaL should be <=
+        to lambdaH. Default is [0.0, 1.0].
+
+    Attributes
+    ----------
+    model : RCR object
+        the model that has been estimated.
+    params : ndarray
+        the estimated parameters.
+    param_names : list
+        the parameter names.
+    cov_params : ndarray
+        the covariance matrix for the parameter estimates.
+    cov_type : str
+        the covariance estimator used in the results.
+    vceadj : float
+        the user-supplied adjustment factor used to
+        calculate the covariance matrix.  Usually is
+        1.0 (no adjustment).
+    details : ndarray
+        a d x 2 array representing the lambda(theta) function
+        the first column is a set of theta values,
+        the second column is the estimated lambda(theta)
+        for that value.
+    nobs : float
+        the number of observations.
+
+    Methods
+    ------------
+    se()
+        standard errors for param.
+    z()
+        z-statistics for param.
+    pz()
+        asymptotic p-values for param.
+    ci(cilevel=95)
+        (cilevel)% confidence intervals for param.
+    betaxCI_conservative(cilevel=95)
+        conservative confidence interval for the causal effect.
+    betaxCI_upper(cilevel=95)
+        upper confidence interval for the causal effect.
+    betaxCI_lower(cilevel=95)
+        lower confidence interval for the causal effect.
+    betaxCI_imbensmanski(cilevel=95)
+        Imbens-Manski confidence interval for the causal effect.
+    summary()
+        Summary of results.
+
+    See also
+    --------
+    RCR class.
+
+    Notes
+    -----
+    The RCR_results class is patterned after
+    statsmodels.regression.linear_model.RegressionResults.
+
+    Examples
+    --------
+    To be added.
+    """
+    def __init__(self, model, b, V, details, cov_type, vceadj, lambda_range):
+        """
+        Constructs the RCR_results object.
+        """
+        self.model = model
+        self.params = b
+        self.param_names = ["lambdaInf",
+                            "betaxInf",
+                            "lambda0",
+                            "betaxL",
+                            "betaxH"]
+        self.cov_params = V
+        self.details = details
+        self.cov_type = cov_type
+        self.vceadj = vceadj
+        self.lambda_range = lambda_range
+
+    def se(self):
+        """
+        Standard errors for RCR parameter estimates
+        """
+        return np.sqrt(np.diag(self.cov_params))
+
+    def z(self):
+        """
+        z-statistics for RCR parameter estimates
+        """
+        return self.params / self.se()
+
+    def pz(self):
+        """
+        asymptotic p-values for RCR parameter estimates
+        """
+        a = scipy.stats.norm.cdf(np.abs(self.params / self.se()))
+        return 2 * (1.0 - a)
+
+    def ci(self, cilevel=95):
+        """
+        asymptotic confidence intervals for RCR parameter estimates
+        """
+        check_ci(cilevel)
+        crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
+        return np.array([self.params - crit * self.se(),
+                         self.params + crit * self.se()])
+
+    def betaxCI_conservative(self, cilevel=95):
+        """
+        conservative asymptotic confidence interval for causal effect.
+        """
+        crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
+        betaxCI_L = self.params[3] - crit * self.se()[3]
+        betaxCI_H = self.params[4] + crit * self.se()[4]
+        return np.array([betaxCI_L, betaxCI_H])
+
+    def betaxCI_upper(self, cilevel=95):
+        """
+        upper asymptotic confidence interval for causal effect.
+        """
+        crit = scipy.stats.norm.ppf(cilevel / 100)
+        betaxCI_L = self.params[3] - crit * self.se()[3]
+        betaxCI_H = np.inf
+        return np.array([betaxCI_L, betaxCI_H])
+
+    def betaxCI_lower(self, cilevel=95):
+        """
+        lower asymptotic confidence interval for causal effect.
+        """
+        crit = scipy.stats.norm.ppf(cilevel / 100)
+        betaxCI_L = -np.inf
+        betaxCI_H = self.params[4] + crit * self.se()[4]
+        return np.array([betaxCI_L, betaxCI_H])
+
+    def betaxCI_imbensmanski(self, cilevel=95):
+        """
+        Imbens-Manski confidence interval for causal effect.
+        """
+        cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
+        cv_max = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 200.0))
+        se = self.se()
+        delta = (self.params[4] - self.params[3]) / max(se[3], se[4])
+        cv = cv_min
+        if np.isfinite(delta):
+            while ((cv_max - cv_min) > 0.000001):
+                cv = (cv_min + cv_max) / 2.0
+                if (scipy.stats.norm.cdf(cv + delta) -
+                   scipy.stats.norm.cdf(-cv)) < (cilevel / 100):
+                    cv_min = cv
+                else:
+                    cv_max = cv
+        if se[3] > 0:
+            betaxCI_L = self.params[3]-(cv * se[3])
+        else:
+            betaxCI_L = -np.inf
+        if se[4] > 0:
+            betaxCI_H = self.params[4]+(cv * se[4])
+        else:
+            betaxCI_H = np.inf
+        return np.array([betaxCI_L, betaxCI_H])
 
 
 #############################################################################

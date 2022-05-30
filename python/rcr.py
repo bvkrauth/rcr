@@ -1369,7 +1369,11 @@ class RCR:
     def __init__(self,
                  endog,
                  exog,
-                 lambda_range=np.array([0.0, 1.0])):
+                 lambda_range=np.array([0.0, 1.0]),
+                 cov_type="nonrobust",
+                 vceadj=1.0,
+                 citype="conservative",
+                 cilevel=95):
         """
         Constructs the RCR object.
         """
@@ -1393,12 +1397,20 @@ class RCR:
                                      item in
                                      self.exog_names[1:]])
         self.lambda_range = np.asarray(lambda_range)
+        self.cov_type = cov_type
+        self.vceadj = vceadj
+        self.citype = citype
+        self.cilevel = cilevel
         check_lambda(self.lambda_range)
+        check_covinfo(cov_type, vceadj)
+        check_ci(cilevel, citype)
 
     def fit(self,
             lambda_range=None,
-            cov_type="nonrobust",
-            vceadj=1.0):
+            cov_type=None,
+            vceadj=None,
+            citype=None,
+            cilevel=None):
         """
         Estimates an RCR model.
 
@@ -1432,17 +1444,37 @@ class RCR:
             lambda_range = self.lambda_range
         else:
             lambda_range = np.asarray(lambda_range)
-        check_lambda(lambda_range)
+            check_lambda(lambda_range)
+        if cov_type is None:
+            cov_type = self.cov_type
+        if vceadj is None:
+            vceadj = self.vceadj
         check_covinfo(cov_type, vceadj)
+        if cilevel is None:
+            cilevel = self.cilevel
+        if citype is None:
+            citype = self.citype
+        check_ci(cilevel, citype)
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
         mv = xyzzyx.mean(axis=0)
-        covmat = np.cov(xyzzyx, rowvar=False)/self.nobs
+        cov_mv = np.cov(xyzzyx, rowvar=False)/self.nobs
         (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
-        b = result_matrix[:, 0]
-        V = vceadj * result_matrix[:, 1:] @ covmat @ result_matrix[:, 1:].T
+        params = result_matrix[:, 0]
+        cov_params = (vceadj *
+                      result_matrix[:, 1:] @
+                      cov_mv @
+                      result_matrix[:, 1:].T)
         details = np.array([thetavec, lambdavec])
-        return RCR_results(self, b, V, details, cov_type, vceadj, lambda_range)
+        return RCR_results(self,
+                           params,
+                           cov_params,
+                           details,
+                           cov_type,
+                           vceadj,
+                           lambda_range,
+                           cilevel,
+                           citype)
 
 
 class RCR_results:
@@ -1526,22 +1558,33 @@ class RCR_results:
     --------
     To be added.
     """
-    def __init__(self, model, b, V, details, cov_type, vceadj, lambda_range):
+    def __init__(self,
+                 model,
+                 params,
+                 cov_params,
+                 details,
+                 cov_type,
+                 vceadj,
+                 lambda_range,
+                 cilevel,
+                 citype):
         """
         Constructs the RCR_results object.
         """
         self.model = model
-        self.params = b
+        self.params = params
         self.param_names = ["lambdaInf",
                             "betaxInf",
                             "lambda0",
                             "betaxL",
                             "betaxH"]
-        self.cov_params = V
+        self.cov_params = cov_params
         self.details = details
         self.cov_type = cov_type
         self.vceadj = vceadj
         self.lambda_range = lambda_range
+        self.cilevel = cilevel
+        self.citype = citype
 
     def se(self):
         """
@@ -1562,46 +1605,56 @@ class RCR_results:
         a = scipy.stats.norm.cdf(np.abs(self.params / self.se()))
         return 2 * (1.0 - a)
 
-    def ci(self, cilevel=95):
+    def ci(self, cilevel=None):
         """
         asymptotic confidence intervals for RCR parameter estimates
         """
+        if cilevel is None:
+            cilevel = self.cilevel
         check_ci(cilevel)
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
         return np.array([self.params - crit * self.se(),
                          self.params + crit * self.se()])
 
-    def betaxCI_conservative(self, cilevel=95):
+    def betaxCI_conservative(self, cilevel=None):
         """
         conservative asymptotic confidence interval for causal effect.
         """
+        if cilevel is None:
+            cilevel = self.cilevel
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
         betaxCI_L = self.params[3] - crit * self.se()[3]
         betaxCI_H = self.params[4] + crit * self.se()[4]
         return np.array([betaxCI_L, betaxCI_H])
 
-    def betaxCI_upper(self, cilevel=95):
+    def betaxCI_upper(self, cilevel=None):
         """
         upper asymptotic confidence interval for causal effect.
         """
+        if cilevel is None:
+            cilevel = self.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         betaxCI_L = self.params[3] - crit * self.se()[3]
         betaxCI_H = np.inf
         return np.array([betaxCI_L, betaxCI_H])
 
-    def betaxCI_lower(self, cilevel=95):
+    def betaxCI_lower(self, cilevel=None):
         """
         lower asymptotic confidence interval for causal effect.
         """
+        if cilevel is None:
+            cilevel = self.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         betaxCI_L = -np.inf
         betaxCI_H = self.params[4] + crit * self.se()[4]
         return np.array([betaxCI_L, betaxCI_H])
 
-    def betaxCI_imbensmanski(self, cilevel=95):
+    def betaxCI_imbensmanski(self, cilevel=None):
         """
         Imbens-Manski confidence interval for causal effect.
         """
+        if cilevel is None:
+            cilevel = self.cilevel
         cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
         cv_max = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 200.0))
         se = self.se()

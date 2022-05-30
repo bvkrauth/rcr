@@ -76,6 +76,10 @@ def test_rf_basic(model):
                                    'lambda0',
                                    'betaxL',
                                    'betaxH']
+    assert results.cov_type == "nonrobust"
+    assert results.vceadj == 1.0
+    assert results.citype == "conservative"
+    assert results.cilevel == 95
 
 
 # Set lambda_range

@@ -67,6 +67,10 @@ def test_rc_patsy(dat, rcr_formula):
     assert model.lambda_range.shape == (2, )
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
+    assert model.cov_type == "nonrobust"
+    assert model.vceadj == 1.0
+    assert model.citype == "conservative"
+    assert model.cilevel == 95
 
 
 # Data frames (with Patsy design_info)

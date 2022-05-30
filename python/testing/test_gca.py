@@ -69,8 +69,8 @@ def test_gca_extra():
             "alt_logfile", "alt_detailfile", "EXTRA JUNK"]
     with pytest.warns(UserWarning, match="Unused program arguments"):
         tmp = get_command_arguments(args)
-        assert tmp == ("alt_infile", "alt_outfile",
-                       "alt_logfile", "alt_detailfile")
+    assert tmp == ("alt_infile", "alt_outfile",
+                   "alt_logfile", "alt_detailfile")
 
 
 # Blank/whitespace arguments
@@ -90,16 +90,16 @@ def test_gca_nonarray():
     msg = "Invalid command arguments, using defaults"
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(None)
-        assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
+    assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments("string")
-        assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
+    assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(True)
-        assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
+    assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(1.0)
-        assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
+    assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
 
 
 # Non-string array argument
@@ -108,7 +108,7 @@ def test_gca_nonstring():
     msg = "Invalid command arguments, using defaults"
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(np.array([True, False]))
-        assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
+    assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(np.zeros(2))
-        assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
+    assert tmp == ("in.txt", "pout.txt", "plog.txt", "")

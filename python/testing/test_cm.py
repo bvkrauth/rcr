@@ -10,8 +10,6 @@ sys.path.append("./")
 sys.path.append("../")
 from rcr import check_moments, read_data
 
-tol = 1e-04
-
 
 # Test with simple data
 def test_cm_basic():
@@ -57,7 +55,8 @@ def test_cm_randomdata():
     # Test with randomly-generated data
     for i in range(10):
         mvi, true_smi = random_mv()
-        assert check_moments(mvi) == (True, True)
+        result = check_moments(mvi)
+        assert result == (True, True)
 
 
 # Special cases
@@ -75,13 +74,17 @@ def test_cm_wronglen():
 # All zeros
 # This should return a mix of zero and NaN
 def test_cm_allzeros():
+    mv = np.zeros(9)
     with pytest.warns(UserWarning, match="Invalid data: nonsingular"):
-        assert check_moments(np.zeros(9)) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)
 
 
 # Integer data
 def test_cm_integer():
-    assert check_moments(np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])) == (True, True)
+    mv = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
+    result = check_moments(mv)
+    assert result == (True, True)
 
 
 # var(x) = 0
@@ -89,7 +92,8 @@ def test_cm_integer():
 def test_cm_varx0():
     mv = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data: nonsingular"):
-        assert check_moments(mv) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)
 
 
 # var(x) < 0
@@ -97,26 +101,31 @@ def test_cm_varx0():
 def test_cm_varxneg():
     mv = np.array([0, 0, 0, -1, 0.5, 0.5, 1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        assert check_moments(mv) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)
 
 
 # var(y) <= 0
 # Should return numeric values
 def test_cm_varyneg():
+    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
-        assert(check_moments(mv0)) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)
+    mv = np.array([0, 0, 0, 1, 0.5, 0.5, -1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, -1, 0.5, 1.0])
-        assert(check_moments(mv0)) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)
 
 
 # var(z) <= 0
 # Should return numeric values
 def test_cm_varzneg():
+    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
-        assert(check_moments(mv0)) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)
+    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, -1])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, -1])
-        assert(check_moments(mv0)) == (False, False)
+        result = check_moments(mv)
+    assert result == (False, False)

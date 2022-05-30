@@ -12,11 +12,16 @@ from rcr import read_data, lambdafast, simplify_moments, \
     estimate_theta_segments
 
 
-# Basic functionality
-# Estimate parameters and gradient with real data
-def test_ets_realdata():
+@pytest.fixture
+def moment_vector():
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
+    return moment_vector
+
+
+# Basic functionality
+# Estimate parameters and gradient with real data
+def test_ets_realdata(moment_vector):
     em_true = np.array([-1.00000000e+100,
                         -1.48223355e+001,
                         8.16970996e+000,
@@ -28,11 +33,9 @@ def test_ets_realdata():
 
 # Additional functionality
 # Provide details on thetavec and lambdavec
-def test_ets_details():
+def test_ets_details(moment_vector):
     global detail_file
-    (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data("testin1.txt")
-    em, thetavec, lambdavec = estimate_theta_segments(moment_vector)
+    (em, thetavec, lambdavec) = estimate_theta_segments(moment_vector)
     lambdavec_true = lambdafast(thetavec,
                                 simplify_moments(moment_vector))
     assert all(np.isfinite(thetavec))

@@ -4,32 +4,39 @@ TEST_SM.PY: Unit tests for simplify_moments()
 import sys
 
 import numpy as np
+import pytest
 
 sys.path.append("./")
 sys.path.append("../")
 from rcr import simplify_moments, read_data
 
-tol = 1e-04
+
+@pytest.fixture
+def moment_vector():
+    (n_moments, n_lambda, external_big_number, moment_vector,
+        lambda_range) = read_data("testin1.txt")
+    return moment_vector
+
 
 # SIMPLIFY_MOMENTS
 
 
 # Test with simple data
 def test_sm_basic():
-    mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
-    sm1 = simplify_moments(mv1)
-    assert sum(abs(sm1 - np.array([1, 1, .5, .25, .25, .25]))) < tol
-    assert sm1[5] == (np.sign(sm1[5]) * np.sqrt(sm1[3] * sm1[4]))
+    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
+    true_sm = np.array([1, 1, .5, .25, .25, .25])
+    sm = simplify_moments(mv)
+    assert sm == pytest.approx(true_sm)
+    assert sm[5] == (np.sign(sm[5]) * np.sqrt(sm[3] * sm[4]))
 
 
 # Test with real data
-def test_sm_realdata():
-    (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data("testin1.txt")
-    sm = np.array([5.42538313e+02, 2.05839484e-01,
-                   1.07467966e+00, 4.47643916e+01,
-                   1.34931719e-03, 1.10235301e-02])
-    assert max(abs(simplify_moments(moment_vector) - sm)) < tol
+def test_sm_realdata(moment_vector):
+    true_sm = np.array([5.42538313e+02, 2.05839484e-01,
+                        1.07467966e+00, 4.47643916e+01,
+                        1.34931719e-03, 1.10235301e-02])
+    sm = simplify_moments(moment_vector)
+    assert sm == pytest.approx(true_sm)
     assert sm[5] <= (np.sign(sm[5]) * np.sqrt(sm[3] * sm[4]))
 
 
@@ -65,7 +72,7 @@ def test_sm_randomdata():
     for i in range(10):
         mvi, true_smi = random_mv()
         smi = simplify_moments(mvi)
-        assert max(abs(smi - true_smi)) < tol
+        assert smi == pytest.approx(true_smi)
         assert smi[5] == (np.sign(smi[5]) * np.sqrt(smi[3] * smi[4]))
 
 # Special cases
@@ -74,9 +81,9 @@ def test_sm_randomdata():
 # Invalid length
 # This should throw an exception
 def test_sm_wronglen():
+    mv = np.zeros(8)
     try:
-        mv0 = np.zeros(8)
-        simplify_moments(mv0)
+        simplify_moments(mv)
     except AssertionError:
         pass
     else:
@@ -86,25 +93,28 @@ def test_sm_wronglen():
 # All zeros
 # This should return a mix of zero and NaN
 def test_sm_allzeros():
-    mv0 = np.zeros(9)
-    sm0 = simplify_moments(mv0)
-    assert all(sm0[0:3] == 0.0) and all(np.isnan(sm0[3:]))
+    mv = np.zeros(9)
+    true_sm = np.array([0, 0, 0, np.nan, np.nan, np.nan])
+    sm = simplify_moments(mv)
+    assert sm == pytest.approx(true_sm, nan_ok=True)
 
 
 # Integer data
 def test_sm_integer():
     mv1 = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
+    true_sm1 = np.array([2, 2, 1, .5, .5, .5])
     sm1 = simplify_moments(mv1)
-    assert sum(abs(sm1 - np.array([2, 2, 1, .5, .5, .5]))) < tol
+    assert sm1 == pytest.approx(true_sm1)
     assert sm1[5] == (np.sign(sm1[5]) * np.sqrt(sm1[3] * sm1[4]))
 
 
 # var(x) = 0
 # Should return NaN
 def test_sm_varx0():
-    mv0 = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
-    sm0 = simplify_moments(mv0)
-    assert all(np.isnan(sm0[3:]))
+    mv = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
+    true_sm = np.array([1, 1, 0.5, np.nan, np.nan, np.nan])
+    sm = simplify_moments(mv)
+    assert sm == pytest.approx(true_sm, nan_ok=True)
 
 
 # var(x) < 0

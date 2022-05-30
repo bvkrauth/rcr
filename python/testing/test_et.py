@@ -10,8 +10,6 @@ sys.path.append("./")
 sys.path.append("../")
 from rcr import read_data, estimate_theta_segments, estimate_theta
 
-tol = 1e-04
-
 
 # Test with simple data
 def test_et_basic():
@@ -21,7 +19,7 @@ def test_et_basic():
     et_true = np.array([-0.33333333, 1.])
     with pytest.warns(UserWarning, match="Inaccurate SE"):
         et = estimate_theta(mv1, lr1, ts1)
-    assert max(abs(et[:, 0] - et_true)) < tol
+    assert et[:, 0] == pytest.approx(et_true, rel=1e-04)
 
 
 # Basic functionality
@@ -31,8 +29,9 @@ def test_et_realdata():
         lambda_range) = read_data("testin1.txt")
     theta_segments, thetavec, lambdavec = \
         estimate_theta_segments(moment_vector)
+    et_true = np.array([5.13504376,  5.20150257])
     et = estimate_theta(moment_vector, lambda_range, theta_segments)
-    assert max(abs(et[:, 0] - np.array([5.13504376,  5.20150257]))) < tol
+    assert et[:, 0] == pytest.approx(et_true)
     # TODO: need to check gradient too
 
 
@@ -44,8 +43,9 @@ def test_et_lambdapoint():
     lr0 = np.array([0, 0])
     theta_segments, thetavec, lambdavec = \
         estimate_theta_segments(moment_vector)
+    et_true = np.array([5.20150257,  5.20150257])
     et = estimate_theta(moment_vector, lr0, theta_segments)
-    assert max(abs(et[:, 0] - np.array([5.20150257,  5.20150257]))) < tol
+    assert et[:, 0] == pytest.approx(et_true)
     # TODO: need to check gradient too
 
 
@@ -54,11 +54,12 @@ def test_et_nolambdalow():
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
     lr0 = np.array([-np.inf, 1])
+    et_true = np.array([5.13504376,  8.16970996])
     with pytest.warns(UserWarning, match="Inaccurate SE"):
         theta_segments, thetavec, lambdavec = \
             estimate_theta_segments(moment_vector)
         et = estimate_theta(moment_vector, lr0, theta_segments)
-    assert max(abs(et[:, 0] - np.array([5.13504376,  8.16970996]))) < tol
+    assert et[:, 0] == pytest.approx(et_true)
     # TODO: need to check gradient too
 
 
@@ -82,14 +83,16 @@ def test_et_nearrct():
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.000001, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
     ts1, thetavec, lambdavec = estimate_theta_segments(mv1)
+    et_true = 0.5
     et = estimate_theta(mv1, lr1, ts1)
-    assert max(abs(et[:, 0] - 0.5)) < tol
+    assert et[:, 0] == pytest.approx(et_true, rel=1e-04)
 
 
 # Perfect RCT (cov(z,x) exactly zero)
 def test_et_rct():
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.0, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
+    et_true = 0.5
     # This test currently fails with an UnboundLocalError
     try:
         ts1, thetavec, lambdavec = estimate_theta_segments(mv1)
@@ -97,4 +100,4 @@ def test_et_rct():
         pass
     else:
         et = estimate_theta(mv1, lr1, ts1)
-        assert max(abs(et[:, 0] - 0.5)) < tol
+        assert et[:, 0] == pytest.approx(et_true, rel=1e-04)

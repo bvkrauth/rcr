@@ -4,19 +4,19 @@ TEST_TSF.PY: Unit tests for thetastar()
 import sys
 
 import numpy as np
+import pytest
 
 sys.path.append("./")
 sys.path.append("../")
 from rcr import thetastar, read_data
-
-tol = 1e-04
 
 
 # Test with simple data
 def test_tsf_basic():
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
     tsf = 1.0
-    assert abs(thetastar(mv1) - tsf) < tol
+    ts1 = thetastar(mv1)
+    assert ts1 == pytest.approx(tsf)
 
 
 # Test with real data
@@ -24,7 +24,8 @@ def test_tsf_realdata():
     (n_moments, n_theta, external_big_number, moment_vector,
         theta_range) = read_data("testin1.txt")
     tsf = 8.169709964904111
-    assert abs(thetastar(moment_vector) - tsf) < tol
+    ts1 = thetastar(moment_vector)
+    assert ts1 == pytest.approx(tsf)
 
 
 # Special cases

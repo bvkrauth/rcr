@@ -4,19 +4,18 @@ TEST_LSF.PY: Unit tests for lambdastar()
 import sys
 
 import numpy as np
+import pytest
 
 sys.path.append("./")
 sys.path.append("../")
 from rcr import lambdastar, read_data
-
-tol = 1e-04
 
 
 # Test with simple data
 def test_lsf_basic():
     mv1 = np.array([0, 0, 0, 1, 0.5, np.sqrt(0.2), 1, 0.5, 1.0])
     lsf = 2.0
-    assert abs(lambdastar(mv1) - lsf) < tol
+    assert lambdastar(mv1) == pytest.approx(lsf)
 
 
 # Test with real data
@@ -24,7 +23,7 @@ def test_lsf_realdata():
     (n_moments, n_lambda, external_big_number, moment_vector,
         lambda_range) = read_data("testin1.txt")
     lsf = 12.310599093115798
-    assert abs(lambdastar(moment_vector) - lsf) < tol
+    assert lambdastar(moment_vector) == pytest.approx(lsf)
 
 # Special cases
 

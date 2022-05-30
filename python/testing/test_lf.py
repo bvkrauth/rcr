@@ -4,13 +4,13 @@ TEST_LF.PY: Unit tests for lambdafast()
 import sys
 
 import numpy as np
+import pytest
 
 sys.path.append("./")
 sys.path.append("../")
 from rcr import lambdafast, thetastar, lambdastar, simplify_moments, \
     read_data
 
-tol = 1e-04
 
 # Basic functionality
 # Takes a single value or array for theta, and a simpified moment vector
@@ -20,9 +20,9 @@ tol = 1e-04
 # Test with simple data and a scalar theta
 def test_lf_basic():
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
-    lf = lambdafast(0.0, simplify_moments(mv1))
     lf_true = 0.5773502691896257
-    assert abs(lf - lf_true) < tol
+    lf = lambdafast(0.0, simplify_moments(mv1))
+    assert lf == pytest.approx(lf_true)
 
 
 # Test with real data and an array theta
@@ -31,7 +31,7 @@ def test_lf_realdata():
         lambda_range) = read_data("testin1.txt")
     lf = lambdafast(np.array([0.0, 1.0, ]), simplify_moments(moment_vector))
     lf_true = np.array([28.93548917, 26.67790368])
-    assert max(abs(lf - lf_true)) < tol
+    assert lf == pytest.approx(lf_true)
 
 
 # Special cases
@@ -55,4 +55,4 @@ def test_lf_bigtheta():
     lambda_star = lambdastar(moment_vector)
     lf = lambdafast(np.array([-bignum, bignum]),
                     simplify_moments(moment_vector))
-    assert max(abs(lf - lambda_star)) < tol
+    assert lf == pytest.approx(lambda_star)

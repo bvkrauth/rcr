@@ -4,13 +4,12 @@ TEST_EP.PY: Unit tests for estimate_parameter()
 import sys
 
 import numpy as np
+import pytest
 
 sys.path.append("./")
 sys.path.append("../")
 from rcr import estimate_parameter, thetastar, lambdastar, \
     simplify_moments, read_data
-
-tol = 1e-04
 
 
 def vary(moment_vector):
@@ -23,7 +22,7 @@ def test_ep_basic():
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
     ep_true = np.array([1., 0, 0, 0, 0, 0, 0, 1, 0, 0])
     ep = estimate_parameter(vary, mv1)
-    assert max(abs(ep - ep_true)) < tol
+    assert ep == pytest.approx(ep_true)
 
 
 # Test with real data
@@ -35,7 +34,7 @@ def test_ep_realdata():
     ep_true[0] = 542.53831290783
     ep_true[7] = -102.89924396
     ep_true[42] = 1.0
-    assert max(abs(ep - ep_true)) < tol
+    assert ep == pytest.approx(ep_true)
 
 
 # Special cases

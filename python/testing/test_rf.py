@@ -55,9 +55,6 @@ def test_rf_basic(model):
                              28.93548917,
                              5.13504376,
                              5.20150257])
-    assert max(abs(results.params - trueparams)) < 1e-6
-    # We will check values by checking other calculations
-    assert results.cov_params.shape == (5, 5)
     truecov = np.asarray([[4.40273105e+00,  1.68091057e+00,  1.48603397e+01,
                            2.62163549e-02,  1.48105699e-02],
                           [1.68091057e+00,  9.36816074e+02, -3.30554494e+03,
@@ -68,7 +65,10 @@ def test_rf_basic(model):
                            9.15729396e-01,  4.38565221e-01],
                           [1.48105699e-02,  9.45995702e-02,  2.09329548e+00,
                            4.38565221e-01,  4.30902711e-01]])
-    assert np.max(abs(results.cov_params - truecov)) < 1e-4
+    assert results.params == pytest.approx(trueparams)
+    # We will check values by checking other calculations
+    assert results.cov_params.shape == (5, 5)
+    assert results.cov_params == pytest.approx(truecov)
     # We will not check values here, though maybe we should
     assert results.details.shape == (2, 30000)
     assert results.param_names == ['lambdaInf',
@@ -86,12 +86,12 @@ def test_rf_lr(model, endog, exog):
                              5.20150257,
                              5.20150257])
     results = model.fit(lambda_range=np.asarray([0.0, 0.0]))
-    assert max(abs(results.params - trueparams)) < 1e-6
+    assert results.params == pytest.approx(trueparams)
     model = RCR(endog, exog, lambda_range=np.asarray([0.0, 0.0]))
     results = model.fit()
-    assert max(abs(results.params - trueparams)) < 1e-6
+    assert results.params == pytest.approx(trueparams)
     results = model.fit(lambda_range=np.asarray([0.0, 0.0]))
-    assert max(abs(results.params - trueparams)) < 1e-6
+    assert results.params == pytest.approx(trueparams)
 
 
 # lambda_range with no lower bound
@@ -104,7 +104,7 @@ def test_rf_lrnolb(model):
     # This will produce a warning
     with pytest.warns(UserWarning, match="Inaccurate SE"):
         results = model.fit(lambda_range=np.asarray([-np.inf, 1]))
-    assert max(abs(results.params - trueparams)) < 1e-4
+    assert results.params == pytest.approx(trueparams)
 
 
 # lambda_range with no upper bound
@@ -127,10 +127,8 @@ def test_rf_lrnoub(model):
                           [0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
                            0.00000000e+00,  0.00000000e+00]])
     results = model.fit(lambda_range=np.asarray([0, np.inf]))
-    assert max(abs(results.params[0:3] - trueparams[0:3])) < 1e-4
-    assert np.isneginf(results.params[3])
-    assert np.isposinf(results.params[4])
-    assert np.max(abs(results.cov_params - truecov)) < 1e-4
+    assert results.params == pytest.approx(trueparams)
+    assert results.cov_params == pytest.approx(truecov)
 
 
 # lambda_range is a 2-d array (should be 1-d)
@@ -190,7 +188,7 @@ def test_rf_vceadj(model):
                           [7.40528497e-03,  4.72997851e-02,  1.04664774e+00,
                            2.19282610e-01,  2.15451356e-01]])
     results = model.fit(cov_type="nonrobust", vceadj=0.5)
-    assert np.max(abs(results.cov_params - truecov)) < 1e-4
+    assert results.cov_params == pytest.approx(truecov)
 
 
 # cov_type is unsupported

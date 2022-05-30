@@ -59,21 +59,24 @@ def test_rr_basic(model):
 def test_rr_se(results):
     truese = np.asarray([2.09826858,  30.60745128, 108.51947421,   0.95693751,
                          0.6564318])
-    assert np.max(abs(results.se() - truese)) < 1e-4
+    se = results.se()
+    assert se == pytest.approx(truese)
 
 
 # z() method
 def test_rr_z(results):
     truez = np.asarray([5.86702731, 0.26691899, 0.26663868,
                         5.36612236, 7.92390398])
-    assert np.max(abs(results.z() - truez)) < 1e-4
+    z = results.z()
+    assert z == pytest.approx(truez)
 
 
 # pz() method
 def test_rr_pz(results):
     truepz = np.asarray([4.43677606e-09, 7.89531535e-01, 7.89747372e-01,
                          8.04473756e-08, 2.22044605e-15])
-    assert np.max(abs(results.pz() - truepz)) < 1e-4
+    pz = results.pz()
+    assert pz == pytest.approx(truepz)
 
 
 # ci() method, default options
@@ -82,7 +85,8 @@ def test_rr_ci(results):
                           3.91491988],
                         [16.42312995, 68.15921213, 241.62975025, 7.01060682,
                          6.48808526]])
-    assert np.max(abs(results.ci() - trueci)) < 1e-4
+    ci = results.ci()
+    assert ci == pytest.approx(trueci)
 
 
 # ci() method, optional cilevel = 90
@@ -91,7 +95,8 @@ def test_rr_ci90(results):
                           4.12176834],
                          [15.76194378, 58.51448721, 207.43413992, 6.7090659,
                           6.2812368]])
-    assert np.max(abs(results.ci(cilevel=90) - trueci)) < 1e-4
+    ci = results.ci(cilevel=90)
+    assert ci == pytest.approx(trueci)
 
 
 # ci() method, invalid cilevel (string)
@@ -117,25 +122,29 @@ def test_rr_cineg(results):
 # betaxCI_conservative() method, default options
 def test_rr_bciconservative(results):
     trueci = np.asarray([3.25948071, 6.48808526])
-    assert np.max(abs(results.betaxCI_conservative() - trueci)) < 1e-4
+    ci = results.betaxCI_conservative()
+    assert ci == pytest.approx(trueci)
 
 
 # betaxCI_upper() method, default options
 def test_rr_bciupper(results):
-    assert np.max(abs(results.betaxCI_upper()[0] - 3.56102163)) < 1e-4
-    assert np.isposinf(results.betaxCI_upper()[1])
+    trueci = np.asarray([3.56102163, np.inf])
+    ci = results.betaxCI_upper()
+    assert ci == pytest.approx(trueci)
 
 
 # betaxCI_upper() method, default options
 def test_rr_bcilower(results):
-    assert np.isneginf(results.betaxCI_lower()[0])
-    assert np.max(abs(results.betaxCI_lower()[1] - 6.281236804882139)) < 1e-4
+    trueci = np.asarray([-np.inf, 6.281236804882139])
+    ci = results.betaxCI_lower()
+    assert ci == pytest.approx(trueci)
 
 
 # betaxCI_imbensmanski() method, default options
 def test_rr_bciimbensmanski(results):
     trueci = np.asarray([3.29158006, 6.46606603])
-    assert np.max(abs(results.betaxCI_imbensmanski() - trueci)) < 1e-4
+    ci = results.betaxCI_imbensmanski()
+    assert ci == pytest.approx(trueci)
 
 
 # handling when identified set is (-inf, inf)

@@ -147,6 +147,15 @@ def test_rr_bciimbensmanski(results):
     assert ci == pytest.approx(trueci)
 
 
+# summary() method, default options
+def test_rr_summary(results):
+    summary = results.summary()
+    assert type(summary).__name__ == "Summary"
+    assert type(summary.tables) == list
+    assert len(summary.tables) == 3
+    assert len(summary.extra_txt) > 0
+
+
 # handling when identified set is (-inf, inf)
 def test_rr_noid(model):
     results = model.fit(lambda_range=np.asarray([0.0, np.inf]))

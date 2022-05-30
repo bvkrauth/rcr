@@ -35,6 +35,8 @@ import numpy as np
 from numpy.linalg import inv
 import pandas as pd
 import scipy.stats
+import statsmodels.iolib as si
+import statsmodels.iolib.summary as su
 
 # Local application imports
 # (none)
@@ -1677,6 +1679,112 @@ class RCR_results:
         else:
             betaxCI_H = np.inf
         return np.array([betaxCI_L, betaxCI_H])
+
+    def summary(self,
+                citype="conservative",
+                cilevel=95,
+                tableformats=["%9.4f", "%9.3f", "%9.3f",
+                              "%9.3f", "%9.3f", "%9.3f"]):
+        """
+        Display summary of RCR results and return a summary
+        object.
+
+        Parameters
+        ----------
+        cilevel : float
+            the confidence level for the confidence intervals, on
+            a scale of 0 to 100.  Default is the cilevel
+            attribute of the RCR_results object.
+        citype : "conservative", "upper", "lower" or "Imbens-Manski"
+            the method to be used in calculating the confidence
+            interval for the causal effect betax. Default is
+            the citype attribute of the RCR_results object.
+        tableformats: list
+            a list of formatting strings to use for the table
+            of parameter estimates. If the length of tableformats
+            is <6, elements will be repeated as needed.  Default
+            is ["%9.4f", "%9.3f", "%9.3f", "%9.3f", "%9.3f", "%9.3f"].
+
+        See also
+        --------
+        RCR class, RCR_results class
+
+        Notes
+        -----
+        The summary() method returns a
+        statsmodels.iolib.summary.Summary object.
+
+        Examples
+        --------
+        To be added.
+        """
+        tableformats = (tableformats*6)[0:6]
+        outmat = pd.DataFrame(index=self.param_names)
+        outmat["b"] = self.params
+        outmat["se"] = self.se()
+        outmat["z"] = self.z()
+        outmat["pz"] = self.pz()
+        ci = self.ci(cilevel=cilevel)
+        outmat["ciL"] = ci[0, :]
+        outmat["ciH"] = ci[1, :]
+        if citype == "conservative":
+            betaxCI = self.betaxCI_conservative(cilevel=cilevel)
+        elif citype == "upper":
+            betaxCI = self.betaxCI_upper(cilevel=cilevel)
+        elif citype == "lower":
+            betaxCI = self.betaxCI_lower(cilevel=cilevel)
+        elif citype == "Imbens-Manski":
+            betaxCI = self.betaxCI_imbensmanski(cilevel=cilevel)
+        else:
+            betaxCI = np.array([np.nan, np.nan])
+        table1data = [[self.model.depvar,
+                       self.model.treatvar],
+                      [datetime.now().strftime("%a, %d %b %Y"),
+                       self.lambda_range[0]],
+                      [datetime.now().strftime("%H:%M:%S"),
+                       self.lambda_range[1]],
+                      [self.model.nobs,
+                       ""],
+                      [self.cov_type,
+                       self.vceadj]]
+        table1stub1 = ["Dep. Variable",
+                       "Date",
+                       "Time",
+                       "No. Observations",
+                       "Covariance Type"]
+        table1stub2 = ["Treatment Variable",
+                       "Lower bound on lambda",
+                       "Upper bound on lambda",
+                       "",
+                       "Cov. adjustment factor"]
+        table1 = si.table.SimpleTable(table1data,
+                                      stubs=table1stub1,
+                                      title="RCR Regression Results")
+        table1.insert_stubs(2, table1stub2)
+        table2data = np.asarray(outmat)
+        table2headers = ["coef",
+                         "std err",
+                         "z",
+                         "P>|z|",
+                         "[" + str((100 - cilevel)/200),
+                         str((100 + cilevel)/200) + "]"]
+        table2stubs = self.param_names
+        table2 = si.table.SimpleTable(table2data,
+                                      headers=table2headers,
+                                      stubs=table2stubs,
+                                      data_fmts=tableformats)
+        table3data = [[betaxCI[0], betaxCI[1]]]
+        table3stubs = ["betaxCI (" +
+                       citype +
+                       ")                            "]
+        table3 = si.table.SimpleTable(table3data,
+                                      stubs=table3stubs,
+                                      data_fmts=tableformats[5:])
+        obj = su.Summary()
+        obj.tables = [table1, table2, table3]
+        cstr = "Control Variables: {0}".format(self.model.controlvars)
+        obj.add_extra_txt([cstr])
+        return obj
 
 
 #############################################################################

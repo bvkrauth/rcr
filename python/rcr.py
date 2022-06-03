@@ -1629,6 +1629,21 @@ class RCR_results:
         return np.array([self.params - crit * self.se(),
                          self.params + crit * self.se()])
 
+    def betaxCI(self,
+                cilevel=None,
+                citype="conservative"):
+        if citype == "conservative":
+            betaxCI = self.betaxCI_conservative(cilevel=cilevel)
+        elif citype == "upper":
+            betaxCI = self.betaxCI_upper(cilevel=cilevel)
+        elif citype == "lower":
+            betaxCI = self.betaxCI_lower(cilevel=cilevel)
+        elif citype == "Imbens-Manski":
+            betaxCI = self.betaxCI_imbensmanski(cilevel=cilevel)
+        else:
+            betaxCI = np.array([np.nan, np.nan])
+        return betaxCI
+
     def betaxCI_conservative(self, cilevel=None):
         """
         conservative asymptotic confidence interval for causal effect.
@@ -1827,16 +1842,7 @@ class RCR_results:
         ci = self.ci(cilevel=cilevel)
         outmat["ciL"] = ci[0, :]
         outmat["ciH"] = ci[1, :]
-        if citype == "conservative":
-            betaxCI = self.betaxCI_conservative(cilevel=cilevel)
-        elif citype == "upper":
-            betaxCI = self.betaxCI_upper(cilevel=cilevel)
-        elif citype == "lower":
-            betaxCI = self.betaxCI_lower(cilevel=cilevel)
-        elif citype == "Imbens-Manski":
-            betaxCI = self.betaxCI_imbensmanski(cilevel=cilevel)
-        else:
-            betaxCI = np.array([np.nan, np.nan])
+        betaxCI = self.betaxCI(cilevel=cilevel, citype=citype)
         table1data = [[self.model.depvar,
                        self.model.treatvar],
                       [datetime.now().strftime("%a, %d %b %Y"),

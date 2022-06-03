@@ -122,29 +122,37 @@ def test_rr_cineg(results):
 # betaxCI_conservative() method, default options
 def test_rr_bciconservative(results):
     trueci = np.asarray([3.25948071, 6.48808526])
-    ci = results.betaxCI_conservative()
-    assert ci == pytest.approx(trueci)
+    ci1 = results.betaxCI_conservative()
+    ci2 = results.betaxCI(citype="conservative")
+    assert ci1 == pytest.approx(trueci)
+    assert ci2 == pytest.approx(trueci)
 
 
 # betaxCI_upper() method, default options
 def test_rr_bciupper(results):
     trueci = np.asarray([3.56102163, np.inf])
-    ci = results.betaxCI_upper()
-    assert ci == pytest.approx(trueci)
+    ci1 = results.betaxCI_upper()
+    ci2 = results.betaxCI(citype="upper")
+    assert ci1 == pytest.approx(trueci)
+    assert ci2 == pytest.approx(trueci)
 
 
 # betaxCI_upper() method, default options
 def test_rr_bcilower(results):
     trueci = np.asarray([-np.inf, 6.281236804882139])
-    ci = results.betaxCI_lower()
-    assert ci == pytest.approx(trueci)
+    ci1 = results.betaxCI_lower()
+    ci2 = results.betaxCI(citype="lower")
+    assert ci1 == pytest.approx(trueci)
+    assert ci2 == pytest.approx(trueci)
 
 
 # betaxCI_imbensmanski() method, default options
 def test_rr_bciimbensmanski(results):
     trueci = np.asarray([3.29158006, 6.46606603])
-    ci = results.betaxCI_imbensmanski()
-    assert ci == pytest.approx(trueci)
+    ci1 = results.betaxCI_imbensmanski()
+    ci2 = results.betaxCI(citype="Imbens-Manski")
+    assert ci1 == pytest.approx(trueci)
+    assert ci2 == pytest.approx(trueci)
 
 
 # summary() method, default options

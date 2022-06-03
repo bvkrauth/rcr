@@ -37,6 +37,7 @@ import pandas as pd
 import scipy.stats
 import statsmodels.iolib as si
 import statsmodels.iolib.summary as su
+import matplotlib.pyplot as plt
 
 # Local application imports
 # (none)
@@ -1407,6 +1408,16 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
+    def _mv(self, estimate_cov=False):
+        xyz = np.concatenate((self.exog, self.endog), axis=1)
+        xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
+        mv = xyzzyx.mean(axis=0)
+        if estimate_cov:
+            cov_mv = np.cov(xyzzyx, rowvar=False)/self.nobs
+            return mv, cov_mv
+        else:
+            return mv
+
     def fit(self,
             lambda_range=None,
             cov_type=None,
@@ -1679,6 +1690,95 @@ class RCR_results:
         else:
             betaxCI_H = np.inf
         return np.array([betaxCI_L, betaxCI_H])
+
+    def _lambdafun(self,
+                   thetavals=np.linspace(-50, 50, 100),
+                   include_thetastar=True):
+        """
+        Estimate lambda for a set of theta values
+        """
+        ts = self.params[1]
+        sm0 = simplify_moments(self.model._mv())
+        lambdavals = lambdafast(thetavals, sm0)
+        if include_thetastar and ts >= min(thetavals) and ts <= max(thetavals):
+            thetavals = np.append(thetavals, [ts])
+            lambdavals = np.append(lambdavals, [np.nan])
+        msk = np.argsort(thetavals)
+        return thetavals[msk], lambdavals[msk]
+
+    def rcrplot(self,
+                ax=None,
+                xlim=(-50, 50),
+                ylim=None,
+                tsline=False,
+                lsline=False,
+                idset=False,
+                title=None,
+                xlabel=r"Effect ($\beta_x$)",
+                ylabel=r"Relative correlation ($\lambda$)",
+                flabel=r"$\lambda(\beta_x)$ function",
+                tslabel=r"$\beta_x^{\infty}$",
+                lslabel=r"$\lambda^{\infty}$",
+                idlabels=(r"assumed $[\lambda^L,\lambda^H]$",
+                          r"Identified set $[\beta_x^L,\beta_x^H]$"),
+                tss="--",
+                lss="-.",
+                fcolor="C0",
+                tscolor="0.75",
+                lscolor="0.75",
+                idcolors=("C0", "C0"),
+                idalphas=(0.25, 0.75),
+                legend=False):
+        """
+        Create plot of RCR estimation results
+        """
+        xlim = np.sort(np.asarray(xlim))
+        if len(xlim) == 2:
+            xgrid = np.linspace(xlim[0], xlim[1], num=100)
+        else:
+            xgrid = xlim
+        thetavals, lambdavals = self._lambdafun(thetavals=xgrid)
+        if ax is None:
+            ax = plt.gca()
+            ax.clear()
+        ax.plot(thetavals,
+                lambdavals,
+                label=flabel,
+                color=fcolor)
+        if ylim is not None:
+            ax.set_ylim(ylim[0], ylim[1])
+        if tsline is True:
+            ts = self.params[1]
+            if ts >= xlim[0] and ts <= xlim[-1]:
+                ax.axvline(ts,
+                           ls=tss,
+                           color=tscolor,
+                           label=tslabel)
+        if lsline is True:
+            ls = self.params[0]
+            if any(lambdavals <= ls) and any(lambdavals >= ls):
+                ax.axhline(ls,
+                           ls=lss,
+                           color=lscolor,
+                           label=lslabel)
+        if idset is True:
+            ax.axhspan(self.lambda_range[0],
+                       self.lambda_range[1],
+                       color=idcolors[0],
+                       alpha=idalphas[0],
+                       label=idlabels[0])
+            ax.axvspan(self.params[3],
+                       self.params[4],
+                       color=idcolors[1],
+                       alpha=idalphas[1],
+                       label=idlabels[1])
+        if title is not None:
+            ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if legend:
+            ax.legend()
+        return ax
 
     def summary(self,
                 citype="conservative",

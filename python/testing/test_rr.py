@@ -155,6 +155,16 @@ def test_rr_bciimbensmanski(results):
     assert ci2 == pytest.approx(trueci)
 
 
+# test_betax() method
+def test_rr_testbetax(results):
+    t0 = results.test_betax()
+    t1 = results.test_betax(0.)
+    t2 = results.test_betax(5.2)
+    assert t0 == pytest.approx(1.1920928955078125e-07)
+    assert t1 == pytest.approx(1.1920928955078125e-07)
+    assert t2 == 1.0
+
+
 # summary() method, default options
 def test_rr_summary(results):
     summary = results.summary()

@@ -1721,6 +1721,33 @@ class RCR_results:
         msk = np.argsort(thetavals)
         return thetavals[msk], lambdavals[msk]
 
+    def test_betax(self, h0=0.0):
+        """
+        Perform a hypothesis test for betax
+
+        This test works by inverting the Imbens-Manski confidence interval.
+        That is, the function reports a p-value defined as (1 - L/100)
+        where L is the highest confidence level at which h0 is outside
+        of the L% confidence interval.  For example, the p-value will
+        be less than 0.05 (reject the null at 5%) if h0 is outside of
+        the 95% confidence interval.
+        """
+        low = 0.0
+        high = 100.0
+        mid = 50.0
+        if h0 >= self.params[3] and h0 <= self.params[4]:
+            pvalue = 1.0
+        else:
+            while (high - low) > 0.00001:
+                mid = (high + low) / 2.0
+                ci = self.betaxCI_imbensmanski(cilevel=mid)
+                if h0 >= ci[0] and h0 <= ci[1]:
+                    high = mid
+                else:
+                    low = mid
+            pvalue = 1.0 - low/100.0
+        return pvalue
+
     def rcrplot(self,
                 ax=None,
                 xlim=(-50, 50),

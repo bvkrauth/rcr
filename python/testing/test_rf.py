@@ -233,3 +233,27 @@ def test_rf_vceneg(model):
         pass
     else:
         raise AssertionError
+
+
+# weights
+def test_rf_weighted(endog, exog):
+    wt = np.array(([1., 0.] * 2920)[0:5839])
+    msk = (wt > 0.5)
+    model0 = RCR(endog[msk], exog[msk])
+    model1 = RCR(endog, exog, weights=wt)
+    model2 = RCR(endog, exog)
+    res0 = model0.fit()
+    lf0 = res0._lambdafun(thetavals=np.zeros(1),
+                          include_thetastar=False)
+    res1 = model1.fit()
+    res2 = model2.fit(weights=wt)
+    assert res1.params == pytest.approx(res0.params)
+    assert res1.cov_params == pytest.approx(res0.cov_params)
+    lf1 = res1._lambdafun(thetavals=np.zeros(1),
+                          include_thetastar=False)
+    assert lf1 == pytest.approx(lf0)
+    assert res2.params == pytest.approx(res0.params)
+    assert res2.cov_params == pytest.approx(res0.cov_params)
+    lf2 = res2._lambdafun(thetavals=np.zeros(1),
+                          include_thetastar=False)
+    assert lf2 == pytest.approx(lf0)

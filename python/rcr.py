@@ -1311,6 +1311,37 @@ def check_ci(cilevel, citype=None):
         return None
 
 
+def check_weights(weights, nobs):
+    """
+    Check that the given weights are valid
+    """
+    if weights is None:
+        return None
+    elif type(weights) != np.ndarray:
+        msg = "weights must be a numpy array, is a {}.".format(type(weights))
+        raise TypeError(msg)
+    elif weights.ndim != 1:
+        msg1 = "weights must be a 1-d array"
+        msg2 = " but is a {}-d array.".format(weights.ndim)
+        raise TypeError(msg1 + msg2)
+    elif weights.dtype not in (float, int):
+        msg1 = "weights must be an array of numbers"
+        msg2 = " but is an array of {}.".format(weights.dtype)
+        raise TypeError(msg1 + msg2)
+    elif len(weights) != nobs:
+        msg = "len(weights) = {0} but nobs = {1}.".format(len(weights),
+                                                          nobs)
+        raise TypeError(msg)
+    elif not all(np.isfinite(weights)):
+        msg = "all weights must be finite."
+        raise ValueError(msg)
+    elif sum(weights) <= 0:
+        msg = "weights must sum to a positive number."
+        raise ValueError(msg)
+    else:
+        return None
+
+
 class RCR:
     """
     A class to represent a regression model for RCR analysis.
@@ -1376,7 +1407,8 @@ class RCR:
                  cov_type="nonrobust",
                  vceadj=1.0,
                  citype="conservative",
-                 cilevel=95):
+                 cilevel=95,
+                 weights=None):
         """
         Constructs the RCR object.
         """
@@ -1385,6 +1417,11 @@ class RCR:
         self.nobs = self.endog.shape[0]
         self.exog = np.asarray(exog)
         check_exog(self.exog, self.nobs)
+        if weights is None:
+            self.weights = None
+        else:
+            self.weights = np.asarray(weights)
+        check_weights(self.weights, self.nobs)
         endog_names_default = ["y", "treatment"]
         self.endog_names = get_column_names(endog,
                                             default_names=endog_names_default)
@@ -1408,12 +1445,18 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
-    def _mv(self, estimate_cov=False):
+    def _mv(self, estimate_cov=False, weights=None):
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
-        mv = xyzzyx.mean(axis=0)
+        mv = np.average(xyzzyx, axis=0, weights=weights)
         if estimate_cov:
-            cov_mv = np.cov(xyzzyx, rowvar=False)/self.nobs
+            if weights is None:
+                fac = 1/self.nobs
+            else:
+                fac = sum((weights/sum(weights)) ** 2)
+            cov_mv = fac*np.cov(xyzzyx,
+                                rowvar=False,
+                                aweights=weights)
             return mv, cov_mv
         else:
             return mv
@@ -1423,7 +1466,8 @@ class RCR:
             cov_type=None,
             vceadj=None,
             citype=None,
-            cilevel=None):
+            cilevel=None,
+            weights=None):
         """
         Estimates an RCR model.
 
@@ -1468,10 +1512,10 @@ class RCR:
         if citype is None:
             citype = self.citype
         check_ci(cilevel, citype)
-        xyz = np.concatenate((self.exog, self.endog), axis=1)
-        xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
-        mv = xyzzyx.mean(axis=0)
-        cov_mv = np.cov(xyzzyx, rowvar=False)/self.nobs
+        if weights is None:
+            weights = self.weights
+        check_weights(weights, self.nobs)
+        mv, cov_mv = self._mv(estimate_cov=True, weights=weights)
         (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
         params = result_matrix[:, 0]
         cov_params = (vceadj *
@@ -1487,7 +1531,8 @@ class RCR:
                            vceadj,
                            lambda_range,
                            cilevel,
-                           citype)
+                           citype,
+                           weights)
 
 
 class RCR_results:
@@ -1580,7 +1625,8 @@ class RCR_results:
                  vceadj,
                  lambda_range,
                  cilevel,
-                 citype):
+                 citype,
+                 weights):
         """
         Constructs the RCR_results object.
         """
@@ -1598,6 +1644,7 @@ class RCR_results:
         self.lambda_range = lambda_range
         self.cilevel = cilevel
         self.citype = citype
+        self.weights = weights
 
     def se(self):
         """
@@ -1713,7 +1760,7 @@ class RCR_results:
         Estimate lambda for a set of theta values
         """
         ts = self.params[1]
-        sm0 = simplify_moments(self.model._mv())
+        sm0 = simplify_moments(self.model._mv(weights=self.weights))
         lambdavals = lambdafast(thetavals, sm0)
         if include_thetastar and ts >= min(thetavals) and ts <= max(thetavals):
             thetavals = np.append(thetavals, [ts])

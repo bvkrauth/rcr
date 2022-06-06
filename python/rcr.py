@@ -1317,10 +1317,8 @@ def check_weights(weights, nrows):
     """
     if weights is None:
         return None
-    elif type(weights) != np.ndarray:
-        msg = "weights must be a numpy array, is a {}.".format(type(weights))
-        raise TypeError(msg)
-    elif weights.ndim != 1:
+    weights = np.asarray(weights)
+    if weights.ndim != 1:
         msg1 = "weights must be a 1-d array"
         msg2 = " but is a {}-d array.".format(weights.ndim)
         raise TypeError(msg1 + msg2)
@@ -1516,6 +1514,10 @@ class RCR:
         if weights is None:
             weights = self.weights
         check_weights(weights, len(self.endog))
+        if weights is None:
+            nobs = self.nobs
+        else:
+            nobs = sum(weights > 0.)
         mv, cov_mv = self._mv(estimate_cov=True, weights=weights)
         (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
         params = result_matrix[:, 0]
@@ -1533,7 +1535,8 @@ class RCR:
                            lambda_range,
                            cilevel,
                            citype,
-                           weights)
+                           weights,
+                           nobs)
 
 
 class RCR_results:
@@ -1627,7 +1630,8 @@ class RCR_results:
                  lambda_range,
                  cilevel,
                  citype,
-                 weights):
+                 weights,
+                 nobs):
         """
         Constructs the RCR_results object.
         """
@@ -1646,6 +1650,7 @@ class RCR_results:
         self.cilevel = cilevel
         self.citype = citype
         self.weights = weights
+        self.nobs = nobs
 
     def se(self):
         """
@@ -1924,7 +1929,7 @@ class RCR_results:
                        self.lambda_range[0]],
                       [datetime.now().strftime("%H:%M:%S"),
                        self.lambda_range[1]],
-                      [self.model.nobs,
+                      [self.nobs,
                        ""],
                       [self.cov_type,
                        self.vceadj]]

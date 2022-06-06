@@ -1249,7 +1249,7 @@ def check_endog(endog):
         return None
 
 
-def check_exog(exog, nobs):
+def check_exog(exog, nrows):
     """
     Check that the given exog matrix is valid
     """
@@ -1264,9 +1264,9 @@ def check_exog(exog, nobs):
         msg1 = "exog should have at least 2 columns"
         msg2 = " and has {} column(s).".format(exog.shape[1])
         raise TypeError(msg1 + msg2)
-    elif exog.shape[0] != nobs:
-        msg1 = "endog has {} observations".format(nobs)
-        msg2 = " and exog has {} observations.".format(exog.shape[0])
+    elif exog.shape[0] != nrows:
+        msg1 = "endog has {} rows".format(nrows)
+        msg2 = " and exog has {} rows.".format(exog.shape[0])
         raise TypeError(msg1 + msg2)
     elif any(exog[:, 0] != 1.0):
         msg = "first column of exog must be an intercept"
@@ -1311,7 +1311,7 @@ def check_ci(cilevel, citype=None):
         return None
 
 
-def check_weights(weights, nobs):
+def check_weights(weights, nrows):
     """
     Check that the given weights are valid
     """
@@ -1328,9 +1328,9 @@ def check_weights(weights, nobs):
         msg1 = "weights must be an array of numbers"
         msg2 = " but is an array of {}.".format(weights.dtype)
         raise TypeError(msg1 + msg2)
-    elif len(weights) != nobs:
-        msg = "len(weights) = {0} but nobs = {1}.".format(len(weights),
-                                                          nobs)
+    elif len(weights) != nrows:
+        msg = "len(weights) = {0} but nrows = {1}.".format(len(weights),
+                                                           nrows)
         raise TypeError(msg)
     elif not all(np.isfinite(weights)):
         msg = "all weights must be finite."
@@ -1349,12 +1349,11 @@ class RCR:
     Parameters
     ----------
     endog : array_like
-        A nobs x 2 array where nobs is the number of observations.
-        The first column represents the outcome (dependent variable)
-        and the second column represents the treatment
-        (explanatory variable of interest).
+        A nrows x 2 array.  first column represents the outcome
+        (dependent variable) and the second column represents the
+        treatment (explanatory variable of interest).
     exog : array_like
-        a nobs x k array of control variables. The first column should
+        a nrows x k array of control variables. The first column should
         be an intercept.  See :func:`statsmodels.tools.add_constant`
         to add an intercept.
     lambda_range: array_like
@@ -1414,14 +1413,16 @@ class RCR:
         """
         self.endog = np.asarray(endog)
         check_endog(self.endog)
-        self.nobs = self.endog.shape[0]
+        nrows = self.endog.shape[0]
         self.exog = np.asarray(exog)
-        check_exog(self.exog, self.nobs)
+        check_exog(self.exog, nrows)
         if weights is None:
             self.weights = None
+            self.nobs = nrows
         else:
             self.weights = np.asarray(weights)
-        check_weights(self.weights, self.nobs)
+            self.nobs = sum(weights > 0)
+        check_weights(self.weights, nrows)
         endog_names_default = ["y", "treatment"]
         self.endog_names = get_column_names(endog,
                                             default_names=endog_names_default)
@@ -1514,7 +1515,7 @@ class RCR:
         check_ci(cilevel, citype)
         if weights is None:
             weights = self.weights
-        check_weights(weights, self.nobs)
+        check_weights(weights, len(self.endog))
         mv, cov_mv = self._mv(estimate_cov=True, weights=weights)
         (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
         params = result_matrix[:, 0]

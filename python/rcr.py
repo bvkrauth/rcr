@@ -1490,11 +1490,11 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
-    def _mv(self,
-            estimate_cov=False,
-            cov_type="conservative",
-            weights=None,
-            groupvar=None):
+    def _get_mv(self,
+                estimate_cov=False,
+                cov_type="conservative",
+                weights=None,
+                groupvar=None):
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
         mv = np.average(xyzzyx, axis=0, weights=weights)
@@ -1578,10 +1578,10 @@ class RCR:
             nobs = self.nobs
         else:
             nobs = sum(weights > 0.)
-        mv, cov_mv = self._mv(estimate_cov=True,
-                              weights=weights,
-                              cov_type=cov_type,
-                              groupvar=groupvar)
+        mv, cov_mv = self._get_mv(estimate_cov=True,
+                                  weights=weights,
+                                  cov_type=cov_type,
+                                  groupvar=groupvar)
         (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
         params = result_matrix[:, 0]
         cov_params = (vceadj *
@@ -1832,7 +1832,7 @@ class RCR_results:
         """
         thetavals = np.asarray(thetavals).flatten()
         ts = self.params[1]
-        sm0 = simplify_moments(self.model._mv(weights=self.weights))
+        sm0 = simplify_moments(self.model._get_mv(weights=self.weights))
         lambdavals = lambdafast(thetavals, sm0)
         if add_thetastar and ts >= min(thetavals) and ts <= max(thetavals):
             thetavals = np.append(thetavals, [ts])

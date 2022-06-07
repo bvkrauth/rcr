@@ -54,7 +54,7 @@ def test_rp_basic(results):
     """
     Test rcrplot with default arguments
     """
-    thetavals, lambdavals = results._lambdafun()
+    lambdavals, thetavals = results.lambdavals(add_thetastar=True)
     ax = results.rcrplot()
     assert type(ax).__name__ == "AxesSubplot"
     assert ax.get_title() == ""
@@ -77,7 +77,8 @@ def test_rp_xlim1(results):
     """
     xlim = (0, 6)
     thetavals = np.linspace(xlim[0], xlim[1], 100)
-    thetavals, lambdavals = results._lambdafun(thetavals)
+    lambdavals, thetavals = results.lambdavals(thetavals,
+                                               add_thetastar=True)
     ax = results.rcrplot(xlim=xlim)
     assert np.all(ax.get_lines()[0].get_xdata() == thetavals)
     assert np.all(np.logical_or(ax.get_lines()[0].get_ydata() == lambdavals,
@@ -91,7 +92,8 @@ def test_rp_xlim2(results):
     """
     xlim = (0, 5, 6)
     thetavals = np.asarray(xlim)
-    thetavals, lambdavals = results._lambdafun(thetavals)
+    lambdavals, thetavals = results.lambdavals(thetavals,
+                                               add_thetastar=True)
     ax = results.rcrplot(xlim=xlim)
     assert np.all(ax.get_lines()[0].get_xdata() == thetavals)
     assert np.all(np.logical_or(ax.get_lines()[0].get_ydata() == lambdavals,

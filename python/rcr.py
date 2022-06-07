@@ -1824,20 +1824,23 @@ class RCR_results:
             betaxCI_H = np.inf
         return np.array([betaxCI_L, betaxCI_H])
 
-    def _lambdafun(self,
+    def lambdavals(self,
                    thetavals=np.linspace(-50, 50, 100),
-                   include_thetastar=True):
+                   add_thetastar=False):
         """
         Estimate lambda for a set of theta values
         """
+        thetavals = np.asarray(thetavals).flatten()
         ts = self.params[1]
         sm0 = simplify_moments(self.model._mv(weights=self.weights))
         lambdavals = lambdafast(thetavals, sm0)
-        if include_thetastar and ts >= min(thetavals) and ts <= max(thetavals):
+        if add_thetastar and ts >= min(thetavals) and ts <= max(thetavals):
             thetavals = np.append(thetavals, [ts])
             lambdavals = np.append(lambdavals, [np.nan])
-        msk = np.argsort(thetavals)
-        return thetavals[msk], lambdavals[msk]
+            msk = np.argsort(thetavals)
+            lambdavals = lambdavals[msk]
+            thetavals = thetavals[msk]
+        return lambdavals, thetavals
 
     def test_betax(self, h0=0.0):
         """
@@ -1897,7 +1900,8 @@ class RCR_results:
             xgrid = np.linspace(xlim[0], xlim[1], num=100)
         else:
             xgrid = xlim
-        thetavals, lambdavals = self._lambdafun(thetavals=xgrid)
+        lambdavals, thetavals = self.lambdavals(thetavals=xgrid,
+                                                add_thetastar=True)
         if ax is None:
             ax = plt.gca()
             ax.clear()

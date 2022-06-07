@@ -1590,17 +1590,17 @@ class RCR:
                       result_matrix[:, 1:].T)
         details = np.array([thetavec, lambdavec])
         return RCR_results(self,
-                           params,
-                           cov_params,
-                           details,
-                           cov_type,
-                           groupvar,
-                           vceadj,
-                           lambda_range,
-                           cilevel,
-                           citype,
-                           weights,
-                           nobs)
+                           params=params,
+                           cov_params=cov_params,
+                           details=details,
+                           cov_type=cov_type,
+                           groupvar=groupvar,
+                           vceadj=vceadj,
+                           lambda_range=lambda_range,
+                           cilevel=cilevel,
+                           citype=citype,
+                           weights=weights,
+                           nobs=nobs)
 
 
 class RCR_results:

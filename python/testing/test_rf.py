@@ -50,6 +50,12 @@ def weights(dat):
     return wt
 
 
+@pytest.fixture
+def cluster(dat):
+    clust = dat["TCHID"]
+    return clust
+
+
 # Basic functionality
 def test_rf_basic(model):
     results = model.fit()
@@ -266,3 +272,47 @@ def test_rf_weighted(endog, exog, weights):
     assert lf2 == pytest.approx(lf0)
     assert res2.model.nobs == len(endog)
     assert res2.nobs == res0.nobs
+
+
+# cluster-robust standard error
+def test_rf_cluster(endog, exog, cluster):
+    model = RCR(endog,
+                exog,
+                cov_type="cluster",
+                groupvar=cluster)
+    truecov = np.array([[6.91681472e+01,  1.26630806e+02, -1.21548954e+02,
+                         -1.94406588e+00,  1.22940162e-01],
+                        [1.26630806e+02,  1.90495752e+03, -6.12590889e+03,
+                         -3.75141027e+01,  3.66381486e+00],
+                        [-1.21548954e+02, -6.12590889e+03,  2.10764578e+04,
+                         1.29096257e+02, -6.60769826e+00],
+                        [-1.94406588e+00, -3.75141027e+01,  1.29096257e+02,
+                         1.84604809e+00,  1.00506874e+00],
+                        [1.22940162e-01,  3.66381486e+00, -6.60769826e+00,
+                         1.00506874e+00,  1.06212946e+00]])
+    result = model.fit()
+    assert result.model.ngroups == 323
+    assert result.cov_params == pytest.approx(truecov)
+
+
+# clusters and weights
+def test_rf_clust_and_wt(endog, exog, cluster, weights):
+    model = RCR(endog,
+                exog,
+                cov_type="cluster",
+                groupvar=cluster,
+                weights=weights)
+    truecov = np.array([[6.50239759e+02,  1.07844382e+02, -9.32223483e+02,
+                         -1.31757653e-01, -2.38992069e+01],
+                        [1.07844382e+02,  9.97990718e+03, -4.14671277e+03,
+                         2.72173698e+01, -6.49984265e+01],
+                        [-9.32223483e+02, -4.14671277e+03,  2.95964719e+03,
+                         -1.76052641e+01,  5.18035063e+01],
+                        [-1.31757653e-01,  2.72173698e+01, -1.76052641e+01,
+                         2.18090187e+00,  1.96384166e+00],
+                        [-2.38992069e+01, -6.49984265e+01,  5.18035063e+01,
+                         1.96384166e+00,  3.39851221e+00]])
+    result = model.fit()
+    assert result.model.nobs == 3325
+    assert result.model.ngroups == 184
+    assert result.cov_params == pytest.approx(truecov)

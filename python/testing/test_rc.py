@@ -39,6 +39,19 @@ def exog(dat, rcr_formula):
     return exog
 
 
+@pytest.fixture
+def weights(dat):
+    wt = np.mod(dat["TCHID"], 2)
+    wt.name = "TCHID_wt"
+    return wt
+
+
+@pytest.fixture
+def clusters(dat):
+    clust = dat["TCHID"]
+    return clust
+
+
 # Basic functionality
 # Patsy design matrices
 def test_rc_patsy(dat, rcr_formula):
@@ -71,6 +84,7 @@ def test_rc_patsy(dat, rcr_formula):
     assert model.vceadj == 1.0
     assert model.citype == "conservative"
     assert model.cilevel == 95
+    assert model.weights is None
 
 
 # Data frames (with Patsy design_info)
@@ -280,3 +294,46 @@ def test_rc_lrnotsorted(dat, rcr_formula):
         pass
     else:
         raise AssertionError
+
+
+# weights
+def test_rc_weights(endog, exog, weights):
+    model = RCR(endog, exog, weights=weights)
+    assert all(model.weights == weights)
+    assert model.weights_name == "TCHID_wt"
+    assert model.nobs == 3325
+
+
+# weights - no variable name
+def test_rc_weights_noname(endog, exog, weights):
+    model = RCR(endog, exog, weights=np.asarray(weights))
+    assert all(model.weights == weights)
+    assert model.weights_name == "(no name)"
+    assert model.nobs == 3325
+
+
+# cluster
+def test_rc_clusters(endog, exog, clusters):
+    model = RCR(endog, exog, groupvar=clusters)
+    assert all(model.groupvar == clusters)
+    assert model.groupvar_name == "TCHID"
+    assert model.ngroups == 323
+
+
+# clusters - no variable name
+def test_rc_clusters_noname(endog, exog, clusters):
+    model = RCR(endog, exog, groupvar=np.asarray(clusters))
+    assert all(model.groupvar == clusters)
+    assert model.groupvar_name == "(no name)"
+    assert model.ngroups == 323
+
+
+# clusters and wieghts
+def test_rc_clust_and_wt(endog, exog, clusters, weights):
+    model = RCR(endog, exog, weights=weights, groupvar=clusters)
+    assert all(model.weights == weights)
+    assert all(model.groupvar == clusters)
+    assert model.weights_name == "TCHID_wt"
+    assert model.groupvar_name == "TCHID"
+    assert model.nobs == 3325
+    assert model.ngroups == 184

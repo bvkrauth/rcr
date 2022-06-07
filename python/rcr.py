@@ -1182,6 +1182,8 @@ def get_column_names(arr, default_names=None):
     cols = default_names
     if isinstance(arr, pd.DataFrame):
         cols = arr.columns.tolist()
+    elif isinstance(arr, pd.Series):
+        cols = arr.name
     elif hasattr(arr, "design_info"):
         cols = arr.design_info.column_names
     return cols
@@ -1279,7 +1281,7 @@ def check_covinfo(cov_type, vceadj):
     """
     Check that the given cov_type and vceadj are valid
     """
-    if cov_type not in ("nonrobust", ):
+    if cov_type not in ("nonrobust", "cluster"):
         msg = "cov_type '{}' not yet supported.".format(cov_type)
         raise ValueError(msg)
     if type(vceadj) not in (float, int):
@@ -1338,6 +1340,35 @@ def check_weights(weights, nrows):
         raise ValueError(msg)
     else:
         return None
+
+
+def robust_cov(x,
+               groupvar=None,
+               weights=None):
+    u = pd.DataFrame(x - np.average(x, weights=weights, axis=0))
+    if weights is None:
+        nobs = len(x)
+        weights = np.ones(nobs)/nobs
+    else:
+        nobs = sum(weights > 0.)
+        weights = weights/sum(weights)
+    umat = (np.asarray(u).T * weights).T
+    if groupvar is None:
+        ubarmat = umat
+        dofadj = nobs/(nobs-1)
+    else:
+        ubar = u.groupby(groupvar).sum()
+        ngroups = sum(pd.Series(weights).groupby(groupvar).sum() > 0)
+        bothu = u.join(ubar,
+                       on=groupvar,
+                       how="right",
+                       rsuffix=".ubar").sort_index()
+        ubarmat = np.asarray(bothu.loc[:,
+                                       bothu.columns.str.endswith('.ubar')])
+        ubarmat = (ubarmat.T * weights).T
+        dofadj = ngroups / (ngroups - 1)
+    out = np.dot(ubarmat.T, umat) * dofadj
+    return out
 
 
 class RCR:
@@ -1405,7 +1436,8 @@ class RCR:
                  vceadj=1.0,
                  citype="conservative",
                  cilevel=95,
-                 weights=None):
+                 weights=None,
+                 groupvar=None):
         """
         Constructs the RCR object.
         """
@@ -1419,8 +1451,22 @@ class RCR:
             self.nobs = nrows
         else:
             self.weights = np.asarray(weights)
+            self.weights_name = get_column_names(weights,
+                                                 default_names="(no name)")
             self.nobs = sum(weights > 0)
         check_weights(self.weights, nrows)
+        if groupvar is not None:
+            self.groupvar = np.asarray(groupvar)
+            self.groupvar_name = get_column_names(groupvar,
+                                                  default_names="(no name)")
+            if weights is None:
+                grp = pd.Series(np.ones(nrows)).groupby(groupvar).sum() > 0
+                self.ngroups = sum(grp)
+            else:
+                grp = pd.Series(weights).groupby(groupvar).sum() > 0
+                self.ngroups = sum(grp)
+        else:
+            self.groupvar = None
         endog_names_default = ["y", "treatment"]
         self.endog_names = get_column_names(endog,
                                             default_names=endog_names_default)
@@ -1444,18 +1490,29 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
-    def _mv(self, estimate_cov=False, weights=None):
+    def _mv(self,
+            estimate_cov=False,
+            cov_type="conservative",
+            weights=None,
+            groupvar=None):
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
         mv = np.average(xyzzyx, axis=0, weights=weights)
         if estimate_cov:
-            if weights is None:
+            if weights is None and groupvar is None:
                 fac = 1/self.nobs
-            else:
+                cov_mv = fac*np.cov(xyzzyx,
+                                    rowvar=False)
+            elif (weights is not None and
+                  (groupvar is None or cov_type != "cluster")):
                 fac = sum((weights/sum(weights)) ** 2)
-            cov_mv = fac*np.cov(xyzzyx,
-                                rowvar=False,
-                                aweights=weights)
+                cov_mv = fac*np.cov(xyzzyx,
+                                    rowvar=False,
+                                    aweights=weights)
+            else:
+                cov_mv = robust_cov(xyzzyx,
+                                    groupvar=groupvar,
+                                    weights=weights)
             return mv, cov_mv
         else:
             return mv
@@ -1463,6 +1520,7 @@ class RCR:
     def fit(self,
             lambda_range=None,
             cov_type=None,
+            groupvar=None,
             vceadj=None,
             citype=None,
             cilevel=None,
@@ -1503,6 +1561,8 @@ class RCR:
             check_lambda(lambda_range)
         if cov_type is None:
             cov_type = self.cov_type
+        if groupvar is None:
+            groupvar = self.groupvar
         if vceadj is None:
             vceadj = self.vceadj
         check_covinfo(cov_type, vceadj)
@@ -1518,7 +1578,10 @@ class RCR:
             nobs = self.nobs
         else:
             nobs = sum(weights > 0.)
-        mv, cov_mv = self._mv(estimate_cov=True, weights=weights)
+        mv, cov_mv = self._mv(estimate_cov=True,
+                              weights=weights,
+                              cov_type=cov_type,
+                              groupvar=groupvar)
         (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
         params = result_matrix[:, 0]
         cov_params = (vceadj *
@@ -1531,6 +1594,7 @@ class RCR:
                            cov_params,
                            details,
                            cov_type,
+                           groupvar,
                            vceadj,
                            lambda_range,
                            cilevel,
@@ -1626,6 +1690,7 @@ class RCR_results:
                  cov_params,
                  details,
                  cov_type,
+                 groupvar,
                  vceadj,
                  lambda_range,
                  cilevel,
@@ -1923,6 +1988,7 @@ class RCR_results:
         outmat["ciL"] = ci[0, :]
         outmat["ciH"] = ci[1, :]
         betaxCI = self.betaxCI(cilevel=cilevel, citype=citype)
+        ncontrols = self.model.exog.shape[1] - 1
         table1data = [[self.model.depvar,
                        self.model.treatvar],
                       [datetime.now().strftime("%a, %d %b %Y"),
@@ -1930,7 +1996,7 @@ class RCR_results:
                       [datetime.now().strftime("%H:%M:%S"),
                        self.lambda_range[1]],
                       [self.nobs,
-                       ""],
+                       ncontrols],
                       [self.cov_type,
                        self.vceadj]]
         table1stub1 = ["Dep. Variable",
@@ -1941,8 +2007,18 @@ class RCR_results:
         table1stub2 = ["Treatment Variable",
                        "Lower bound on lambda",
                        "Upper bound on lambda",
-                       "",
+                       "No. Controls",
                        "Cov. adjustment factor"]
+        if self.cov_type == "cluster":
+            table1data.append([self.model.groupvar_name,
+                               self.model.ngroups])
+            table1stub1.append("Cluster variable:")
+            table1stub2.append("No. Clusters")
+        if self.weights is not None:
+            table1data.append([self.model.weights_name,
+                               ""])
+            table1stub1.append("Weight variable:")
+            table1stub2.append("")
         table1 = si.table.SimpleTable(table1data,
                                       stubs=table1stub1,
                                       title="RCR Regression Results")

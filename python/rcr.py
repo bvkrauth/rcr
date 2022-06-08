@@ -1936,8 +1936,7 @@ class RCRResults:
     def summary(self,
                 citype="conservative",
                 cilevel=95,
-                tableformats=["%9.4f", "%9.3f", "%9.3f",
-                              "%9.3f", "%9.3f", "%9.3f"]):
+                tableformats=None):
         """
         Display summary of RCR results and return a summary
         object.
@@ -1971,6 +1970,9 @@ class RCRResults:
         --------
         To be added.
         """
+        if tableformats is None:
+            tableformats=["%9.4f", "%9.3f", "%9.3f",
+                          "%9.3f", "%9.3f", "%9.3f"]
         tableformats = (tableformats*6)[0:6]
         outmat = pd.DataFrame(index=self.param_names)
         outmat["b"] = self.params

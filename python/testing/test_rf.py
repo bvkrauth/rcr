@@ -254,19 +254,14 @@ def test_rf_weighted(endog, exog, weights):
     model1 = RCR(endog, exog, weights=weights)
     model2 = RCR(endog, exog)
     res0 = model0.fit()
-    lf0 = res0.lambdavals(thetavals=np.zeros(1))
     res1 = model1.fit()
     res2 = model2.fit(weights=weights)
     assert res1.params == pytest.approx(res0.params)
     assert res1.cov_params == pytest.approx(res0.cov_params)
     assert res1.model.nobs == res0.model.nobs
     assert res1.nobs == res0.nobs
-    lf1 = res1.lambdavals(thetavals=np.zeros(1))
-    assert lf1 == pytest.approx(lf0)
     assert res2.params == pytest.approx(res0.params)
     assert res2.cov_params == pytest.approx(res0.cov_params)
-    lf2 = res2.lambdavals(thetavals=np.zeros(1))
-    assert lf2 == pytest.approx(lf0)
     assert res2.model.nobs == len(endog)
     assert res2.nobs == res0.nobs
 

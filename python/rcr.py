@@ -1509,6 +1509,25 @@ class RCR:
             return mv, cov_mv
         return mv
 
+    def lambdavals(self,
+                   thetavals=np.linspace(-50, 50, 100),
+                   add_thetastar=False):
+        """
+        Estimate lambda for a set of theta values
+        """
+        thetavals = np.asarray(thetavals).flatten()
+        mv = self._get_mv(weights=self.weights)
+        sm0 = simplify_moments(mv)
+        ts = thetastar(mv)
+        lambdavals = lambdafast(thetavals, sm0)
+        if add_thetastar and min(thetavals) <= ts <= max(thetavals):
+            thetavals = np.append(thetavals, [ts])
+            lambdavals = np.append(lambdavals, [np.nan])
+            msk = np.argsort(thetavals)
+            lambdavals = lambdavals[msk]
+            thetavals = thetavals[msk]
+        return lambdavals, thetavals
+
     def fit(self,
             lambda_range=None,
             cov_type=None,
@@ -1821,24 +1840,6 @@ class RCRResults:
             ci_ub = np.inf
         return np.array([ci_lb, ci_ub])
 
-    def lambdavals(self,
-                   thetavals=np.linspace(-50, 50, 100),
-                   add_thetastar=False):
-        """
-        Estimate lambda for a set of theta values
-        """
-        thetavals = np.asarray(thetavals).flatten()
-        ts = self.params[1]
-        sm0 = simplify_moments(self.model._get_mv(weights=self.weights))
-        lambdavals = lambdafast(thetavals, sm0)
-        if add_thetastar and min(thetavals) <= ts <= max(thetavals):
-            thetavals = np.append(thetavals, [ts])
-            lambdavals = np.append(lambdavals, [np.nan])
-            msk = np.argsort(thetavals)
-            lambdavals = lambdavals[msk]
-            thetavals = thetavals[msk]
-        return lambdavals, thetavals
-
     def test_betax(self, h0=0.0):
         """
         Perform a hypothesis test for betax
@@ -1897,8 +1898,8 @@ class RCRResults:
             xgrid = np.linspace(xlim[0], xlim[1], num=100)
         else:
             xgrid = xlim
-        lambdavals, thetavals = self.lambdavals(thetavals=xgrid,
-                                                add_thetastar=True)
+        lambdavals, thetavals = self.model.lambdavals(thetavals=xgrid,
+                                                      add_thetastar=True)
         if ax is None:
             ax = plt.gca()
             ax.clear()

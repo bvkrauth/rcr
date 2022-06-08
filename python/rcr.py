@@ -51,7 +51,7 @@ logfile = None
 def get_command_arguments(args):
     """Retrieve command arguments, usually from sys.argv."""
     # ARGS should be a list of 1 to 5 strings like sys.argv
-    if isinstance(args, list) and all([type(item) == str for item in args]):
+    if isinstance(args, list) and all(isinstance(item, str) for item in args):
         if len(args) > 5:
             msg = "Unused program arguments {0}".format(args[5:])
             warnings.warn(msg)
@@ -100,7 +100,6 @@ def write_to_logfile(msg, mode="a"):
 def start_logfile(logfile):
     """Start the log file."""
     set_logfile(logfile)
-    # TODO: Add any warnings that have already been thrown
     write_to_logfile("Log file {0} for RCR version 1.0\n".format(logfile),
                      mode="w")
     start_time = datetime.now().strftime("%H:%M on %m/%d/%y")
@@ -194,8 +193,7 @@ def read_data(infile):
     # Check to make sure external_big_number is a valid value
     assert external_big_number > 0.0
     # If external_big_number is bigger than sys.float_info.max, then issue a
-    # warning but don't stop program.
-    # TODO: I'm not satisfied with this.
+    # warning but don't stop program. I'm not satisfied with this.
     if external_big_number > sys.float_info.max:
         msg = "Largest Python real ({0}) is less than largest in Stata {1}"
         warn(msg.format(sys.float_info.max, external_big_number))
@@ -301,7 +299,6 @@ def estimate_model(moment_vector, lambda_range):
     if not valid:
         return result_matrix
     # If model is not identified, just stop there
-    # TODO: some model elements may still be identified here
     if not identified:
         return result_matrix
     # We have closed forms for the global parameters lambda_star, theta_star,
@@ -364,7 +361,7 @@ def estimate_theta_segments(moment_vector):
             bracket = bracket_theta_star(moment_vector)
             if bracket is not None:
                 thetavec[i-1: i+1] = bracket
-            # TODO: There is a potential bug here.  The bracket_theta_star
+            # There is a potential bug here.  The bracket_theta_star
             # function is used to take the two values in thetavec that are
             # closest to theta_star and replace them with values that are
             # guaranteed to give finite and nonzero lambda.  But there's
@@ -568,7 +565,6 @@ def estimate_theta(moment_vector,
     #     lambda_range(1) <= lambda(theta) <= lambda_range(2)
     # Notice that we have put a little error tolerance in here, since
     # zbrent won't find the exact root.
-    # TODO: Make sure the tolerance is big enough for the error in zbrent.
     inrange = ((lambda_segments >= lambda_range[0]-0.001) &
                (lambda_segments <= lambda_range[1]+0.001))
     if k > 1:
@@ -778,7 +774,7 @@ def simplify_moments(moment_vector):
     # correlated (positively or negatively) With rounding error, this can lead
     # to a correlation that is > 1 in absolute value.  This can create
     # problems, so we force the correlation to be exactly 1.
-    # TODO: This also could happen if there is more than one control variable
+    # This also could happen if there is more than one control variable
     # but only one happens to have a nonzero coefficient.  I don't know how to
     # handle that case.
     if k == 4:
@@ -824,7 +820,7 @@ def check_moments(moment_vector):
         msg = "Invalid data: cov(yh,zh) = {0} > {1} sqrt(var(yh)*var(zh))"
         warn(msg.format(covyz, sdyz))
     # Next make sure that the identifying conditions are satisfied.
-    # TODO: Maybe these could be addressed with warnings rather than error
+    # Maybe these could be addressed with warnings rather than error
     # messages?
     identified = valid
     if sm[0] == 0.0:
@@ -839,7 +835,7 @@ def check_moments(moment_vector):
     if sm[3] == sm[0]:
         identified = False
         warn("Model not identified: y is an exact linear function of X")
-    # TODO: We may also want to check for var(zhat)=0.
+    # We may also want to check for var(zhat)=0.
     # The model is identified in this case, but we may need to take special
     # steps to get the calculations right.
     return valid, identified
@@ -1208,7 +1204,7 @@ def check_lambda(lambda_range):
     """
     Check that the given lambda_range is valid
     """
-    if type(lambda_range) != np.ndarray:
+    if not isinstance(lambda_range, np.ndarray):
         msg1 = "lambda_range should be a numpy array"
         msg2 = " and is a {}.".format(type(lambda_range))
         raise TypeError(msg1 + msg2)
@@ -1237,7 +1233,7 @@ def check_endog(endog):
     """
     Check that the given endog matrix is valid
     """
-    if type(endog) != np.ndarray:
+    if not isinstance(endog, np.ndarray):
         msg1 = "endog should be an array-like object"
         msg2 = " and is a {}.".format(type(endog))
         raise TypeError(msg1 + msg2)
@@ -1255,7 +1251,7 @@ def check_exog(exog, nrows):
     """
     Check that the given exog matrix is valid
     """
-    if type(exog) != np.ndarray:
+    if not isinstance(exog, np.ndarray):
         msg1 = "exog should be an array-like object"
         msg2 = " and is a {}.".format(type(exog))
         raise TypeError(msg1 + msg2)
@@ -1297,12 +1293,12 @@ def check_ci(cilevel, citype=None):
     if type(cilevel) not in (float, int):
         msg = "cilevel must be a number, is a {}.".format(type(cilevel))
         raise TypeError(msg)
-    elif cilevel < 0.:
+    if cilevel < 0.:
         msg = "cilevel = {}, should be between 0 and 100.".format(cilevel)
         raise ValueError(msg)
     if citype is None:
         return None
-    elif citype not in ("conservative", "upper", "lower", "Imbens-Manski"):
+    if citype not in ("conservative", "upper", "lower", "Imbens-Manski"):
         msg = "Unsupported CI type {}.".format(citype)
         raise ValueError(msg)
     return None
@@ -1319,18 +1315,18 @@ def check_weights(weights, nrows):
         msg1 = "weights must be a 1-d array"
         msg2 = " but is a {}-d array.".format(weights.ndim)
         raise TypeError(msg1 + msg2)
-    elif weights.dtype not in (float, int):
+    if weights.dtype not in (float, int):
         msg1 = "weights must be an array of numbers"
         msg2 = " but is an array of {}.".format(weights.dtype)
         raise TypeError(msg1 + msg2)
-    elif len(weights) != nrows:
+    if len(weights) != nrows:
         msg = "len(weights) = {0} but nrows = {1}.".format(len(weights),
                                                            nrows)
         raise TypeError(msg)
-    elif not all(np.isfinite(weights)):
+    if not all(np.isfinite(weights)):
         msg = "all weights must be finite."
         raise ValueError(msg)
-    elif sum(weights) <= 0:
+    if sum(weights) <= 0:
         msg = "weights must sum to a positive number."
         raise ValueError(msg)
     return None

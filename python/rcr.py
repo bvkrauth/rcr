@@ -25,6 +25,7 @@ Usage:
        LOGFILE.
 
 """
+# pylint: disable=too-many-lines
 # Standard library imports
 import sys
 import warnings
@@ -68,7 +69,7 @@ def get_command_arguments(args):
 
 def set_logfile(fname):
     """Set name of log file"""
-    global LOGFILE # pylint: disable=global-statement
+    global LOGFILE  # pylint: disable=global-statement
     if isinstance(fname, str) or fname is None:
         LOGFILE = fname
     else:
@@ -77,7 +78,7 @@ def set_logfile(fname):
 
 def get_logfile():
     """Retrieve name of log file.  If undefined, return None"""
-    global LOGFILE # pylint: disable=global-statement
+    global LOGFILE  # pylint: disable=global-statement
     if "LOGFILE" not in globals():
         LOGFILE = None
     return LOGFILE
@@ -1020,7 +1021,8 @@ def estimate_parameter(func, moment_vector):
 
 def brent(ax, bx, cx, func, tol, xopt):
     """Maximize by Brent algorithm"""
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+    # pylint: disable=too-many-arguments,too-many-locals
+    # pylint: disable=too-many-branches,too-many-statements
     itmax = 1000
     cgold = 0.3819660
     zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
@@ -1103,7 +1105,8 @@ def brent(ax, bx, cx, func, tol, xopt):
 
 def zbrent(func, x1, x2, tol, xopt):
     """Find a root using the Brent algorithm"""
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+    # pylint: disable=too-many-arguments,too-many-locals
+    # pylint: disable=too-many-branches,too-many-statements
     # pylint: disable=consider-swap-variables
     itmax = 1000
     eps = np.finfo(float).eps   # in fortran was epsilon(x1)
@@ -1606,17 +1609,17 @@ class RCR:
                       result_matrix[:, 1:].T)
         details = np.array([thetavec, lambdavec])
         return RCRResults(self,
-                           params=params,
-                           cov_params=cov_params,
-                           details=details,
-                           cov_type=cov_type,
-                           groupvar=groupvar,
-                           vceadj=vceadj,
-                           lambda_range=lambda_range,
-                           cilevel=cilevel,
-                           citype=citype,
-                           weights=weights,
-                           nobs=nobs)
+                          params=params,
+                          cov_params=cov_params,
+                          details=details,
+                          cov_type=cov_type,
+                          groupvar=groupvar,
+                          vceadj=vceadj,
+                          lambda_range=lambda_range,
+                          cilevel=cilevel,
+                          citype=citype,
+                          weights=weights,
+                          nobs=nobs)
 
 
 class RCRResults:
@@ -1767,8 +1770,8 @@ class RCRResults:
                          self.params + crit * self.se()])
 
     def betax_ci(self,
-                cilevel=None,
-                citype="conservative"):
+                 cilevel=None,
+                 citype="conservative"):
         """
         asymptotic confidence interval for causal effect.
         """
@@ -1989,8 +1992,8 @@ class RCRResults:
         """
         # pylint: disable=too-many-locals
         if tableformats is None:
-            tableformats=["%9.4f", "%9.3f", "%9.3f",
-                          "%9.3f", "%9.3f", "%9.3f"]
+            tableformats = ["%9.4f", "%9.3f", "%9.3f",
+                            "%9.3f", "%9.3f", "%9.3f"]
         tableformats = (tableformats*6)[0:6]
         outmat = pd.DataFrame(index=self.param_names)
         outmat["b"] = self.params

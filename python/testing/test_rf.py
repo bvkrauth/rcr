@@ -10,7 +10,7 @@ import patsy
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR, RCR_results
+from rcr import RCR, RCRResults
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def cluster(dat):
 # Basic functionality
 def test_rf_basic(model):
     results = model.fit()
-    assert isinstance(results, RCR_results)
+    assert isinstance(results, RCRResults)
     assert isinstance(results.model, RCR)
     assert results.model == model
     trueparams = np.asarray([12.31059909,

@@ -10,7 +10,7 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR, RCR_results
+from rcr import RCR, RCRResults
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def results(model):
 # Basic functionality
 def test_rr_basic(model):
     results = model.fit()
-    assert isinstance(results, RCR_results)
+    assert isinstance(results, RCRResults)
 
 
 # se() method

@@ -1538,12 +1538,12 @@ class RCR:
 
         Returns
         -------
-        RCR_results
+        RCRResults
             the model estimation results.
 
         See Also
         --------
-        RCR_results
+        RCRResults
             the results container.
         """
         if lambda_range is None:
@@ -1581,7 +1581,7 @@ class RCR:
                       cov_mv @
                       result_matrix[:, 1:].T)
         details = np.array([thetavec, lambdavec])
-        return RCR_results(self,
+        return RCRResults(self,
                            params=params,
                            cov_params=cov_params,
                            details=details,
@@ -1595,7 +1595,7 @@ class RCR:
                            nobs=nobs)
 
 
-class RCR_results:
+class RCRResults:
     """
     Results class for an RCR model.
 
@@ -1669,7 +1669,7 @@ class RCR_results:
 
     Notes
     -----
-    The RCR_results class is patterned after
+    The RCRResults class is patterned after
     statsmodels.regression.linear_model.RegressionResults.
 
     Examples
@@ -1690,7 +1690,7 @@ class RCR_results:
                  weights,
                  nobs):
         """
-        Constructs the RCR_results object.
+        Constructs the RCRResults object.
         """
         self.model = model
         self.params = params
@@ -1955,11 +1955,11 @@ class RCR_results:
         cilevel : float
             the confidence level for the confidence intervals, on
             a scale of 0 to 100.  Default is the cilevel
-            attribute of the RCR_results object.
+            attribute of the RCRResults object.
         citype : "conservative", "upper", "lower" or "Imbens-Manski"
             the method to be used in calculating the confidence
             interval for the causal effect betax. Default is
-            the citype attribute of the RCR_results object.
+            the citype attribute of the RCRResults object.
         tableformats: list
             a list of formatting strings to use for the table
             of parameter estimates. If the length of tableformats
@@ -1968,7 +1968,7 @@ class RCR_results:
 
         See also
         --------
-        RCR class, RCR_results class
+        RCR class, RCRResults class
 
         Notes
         -----

@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import get_command_arguments
+from rcr import get_command_arguments  # pylint: disable=wrong-import-position
 
 # get_command_arguments() takes a list of 0+ strings
 # and returns a list of 4 strings.  Any strings not
@@ -16,8 +16,9 @@ from rcr import get_command_arguments
 # strings are discarded.
 
 
-# Base case: No arguments
+# Base case
 def test_gca_noargs():
+    """use defaults if no command arguments"""
     args = ["program name"]
     assert get_command_arguments(args) == ("in.txt",
                                            "pout.txt",
@@ -25,8 +26,8 @@ def test_gca_noargs():
                                            "")
 
 
-# One argument (infile)
 def test_gca_infile():
+    """change infile if one argument"""
     args = ["program name", "alt_infile"]
     assert get_command_arguments(args) == ("alt_infile",
                                            "pout.txt",
@@ -34,8 +35,8 @@ def test_gca_infile():
                                            "")
 
 
-# Two arguments (infile outfile)
 def test_gca_outfile():
+    """change infile, outfile if two arguments"""
     args = ["program name", "alt_infile", "alt_outfile"]
     assert get_command_arguments(args) == ("alt_infile",
                                            "alt_outfile",
@@ -43,8 +44,8 @@ def test_gca_outfile():
                                            "")
 
 
-# Three arguments (infile outfile logfile)
 def test_gca_logfile():
+    """change infile, outfile, logfile if three arguments"""
     args = ["program name", "alt_infile", "alt_outfile", "alt_logfile"]
     assert get_command_arguments(args) == ("alt_infile",
                                            "alt_outfile",
@@ -52,8 +53,8 @@ def test_gca_logfile():
                                            "")
 
 
-# Four arguments (infile outfile logfile detail_file)
 def test_gca_detfile():
+    """change ...detail_file if four arguments"""
     args = ["program name", "alt_infile", "alt_outfile",
             "alt_logfile", "alt_detailfile"]
     assert get_command_arguments(args) == ("alt_infile",
@@ -62,9 +63,8 @@ def test_gca_detfile():
                                            "alt_detailfile")
 
 
-# Five+ arguments (infile outfile logfile detail_file)
-# Should issue a warning
 def test_gca_extra():
+    """issue a warning if five+ arguments"""
     args = ["program name", "alt_infile", "alt_outfile",
             "alt_logfile", "alt_detailfile", "EXTRA JUNK"]
     with pytest.warns(UserWarning, match="Unused program arguments"):
@@ -74,9 +74,9 @@ def test_gca_extra():
 
 
 # Blank/whitespace arguments
-# Returns a blank string
 # This will be an invalid file name so maybe we should issue a warning
 def test_gca_blank():
+    """return a blank string if blank/whitespace arguments"""
     args = ["program name", "", "    "]
     assert get_command_arguments(args) == ("",
                                            "",
@@ -84,9 +84,8 @@ def test_gca_blank():
                                            "")
 
 
-# Non-array argument
-# Should issue a warning and return the defaults
 def test_gca_nonarray():
+    """warn and return defaults if non-array arguments"""
     msg = "Invalid command arguments, using defaults"
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(None)
@@ -102,9 +101,8 @@ def test_gca_nonarray():
     assert tmp == ("in.txt", "pout.txt", "plog.txt", "")
 
 
-# Non-string array argument
-# Should issue a warning and return the defaults
 def test_gca_nonstring():
+    """warn and return defaults if non-string arguments"""
     msg = "Invalid command arguments, using defaults"
     with pytest.warns(UserWarning, match=msg):
         tmp = get_command_arguments(np.array([True, False]))

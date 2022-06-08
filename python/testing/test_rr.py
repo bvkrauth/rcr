@@ -10,17 +10,19 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR, RCRResults
+from rcr import RCR, RCRResults  # pylint: disable=wrong-import-position
 
 
 @pytest.fixture
 def dat():
+    """get test data from web page"""
     fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
     return pd.read_stata(fname)
 
 
 @pytest.fixture
 def rcr_formula():
+    """construct formula for test example"""
     rcr_left = "SAT + Small_Class ~ "
     rcr_right1 = "White_Asian + Girl + Free_Lunch + White_Teacher + "
     rcr_right2 = "Teacher_Experience + Masters_Degree"
@@ -29,58 +31,64 @@ def rcr_formula():
 
 @pytest.fixture
 def endog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    endog = patsy.dmatrices(rcr_formula, dat)[0]
     return endog
 
 
 @pytest.fixture
 def exog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    exog = patsy.dmatrices(rcr_formula, dat)[1]
     return exog
 
 
 @pytest.fixture
 def model(endog, exog):
+    """construct RCR mdodel"""
     return RCR(endog, exog)
 
 
 @pytest.fixture
 def results(model):
+    """fit RCR mdodel"""
     return model.fit()
 
 
 # Basic functionality
 def test_rr_basic(model):
+    """check that fit produces RCRResults object"""
     results = model.fit()
     assert isinstance(results, RCRResults)
 
 
-# se() method
+# Methods
 def test_rr_se(results):
+    """calculate standard errors with the se() method"""
     truese = np.asarray([2.09826858,  30.60745128, 108.51947421,   0.95693751,
                          0.6564318])
     se = results.se()
     assert se == pytest.approx(truese)
 
 
-# z() method
 def test_rr_z(results):
+    """calculate z-statistics with the z() method"""
     truez = np.asarray([5.86702731, 0.26691899, 0.26663868,
                         5.36612236, 7.92390398])
     z = results.z()
     assert z == pytest.approx(truez)
 
 
-# pz() method
 def test_rr_pz(results):
+    """calculate p-values with the pz() method"""
     truepz = np.asarray([4.43677606e-09, 7.89531535e-01, 7.89747372e-01,
                          8.04473756e-08, 2.22044605e-15])
     pz = results.pz()
     assert pz == pytest.approx(truepz)
 
 
-# ci() method, default options
 def test_rr_ci(results):
+    """calculate confidence intervals with default options"""
     trueci = np.asarray([[8.19806824, -51.8197922, -183.75877191, 3.25948071,
                           3.91491988],
                         [16.42312995, 68.15921213, 241.62975025, 7.01060682,
@@ -89,8 +97,8 @@ def test_rr_ci(results):
     assert ci == pytest.approx(trueci)
 
 
-# ci() method, optional cilevel = 90
 def test_rr_ci90(results):
+    """calculate confidence intervals with optional cilevel = 90"""
     trueci = np.asarray([[8.8592544, -42.17506728, -149.56316158, 3.56102163,
                           4.12176834],
                          [15.76194378, 58.51448721, 207.43413992, 6.7090659,
@@ -99,8 +107,8 @@ def test_rr_ci90(results):
     assert ci == pytest.approx(trueci)
 
 
-# ci() method, invalid cilevel (string)
 def test_rr_cistr(results):
+    """raise exception if cilevel is non-numeric"""
     try:
         results.ci(cilevel="this should be a number")
     except TypeError:
@@ -109,8 +117,8 @@ def test_rr_cistr(results):
         raise AssertionError
 
 
-# ci() method, invalid cilevel (bad number)
 def test_rr_cineg(results):
+    """raise exception if cilevel is out of range"""
     try:
         results.ci(cilevel=-50)
     except ValueError:
@@ -119,8 +127,8 @@ def test_rr_cineg(results):
         raise AssertionError
 
 
-# betax_ci_conservative() method, default options
 def test_rr_bciconservative(results):
+    """conservative confidence interval, default options"""
     trueci = np.asarray([3.25948071, 6.48808526])
     ci1 = results.betax_ci_conservative()
     ci2 = results.betax_ci(citype="conservative")
@@ -128,8 +136,8 @@ def test_rr_bciconservative(results):
     assert ci2 == pytest.approx(trueci)
 
 
-# betax_ci_upper() method, default options
 def test_rr_bciupper(results):
+    """upper confidence interval, default options"""
     trueci = np.asarray([3.56102163, np.inf])
     ci1 = results.betax_ci_upper()
     ci2 = results.betax_ci(citype="upper")
@@ -137,8 +145,8 @@ def test_rr_bciupper(results):
     assert ci2 == pytest.approx(trueci)
 
 
-# betax_ci_upper() method, default options
 def test_rr_bcilower(results):
+    """lower confidence interval, default options"""
     trueci = np.asarray([-np.inf, 6.281236804882139])
     ci1 = results.betax_ci_lower()
     ci2 = results.betax_ci(citype="lower")
@@ -146,8 +154,8 @@ def test_rr_bcilower(results):
     assert ci2 == pytest.approx(trueci)
 
 
-# betax_ci_imbensmanski() method, default options
 def test_rr_bciimbensmanski(results):
+    """Imbens-Manski confidence interval, default options"""
     trueci = np.asarray([3.29158006, 6.46606603])
     ci1 = results.betax_ci_imbensmanski()
     ci2 = results.betax_ci(citype="Imbens-Manski")
@@ -155,8 +163,8 @@ def test_rr_bciimbensmanski(results):
     assert ci2 == pytest.approx(trueci)
 
 
-# test_betax() method
 def test_rr_testbetax(results):
+    """test_betax() method with default options"""
     t0 = results.test_betax()
     t1 = results.test_betax(0.)
     t2 = results.test_betax(5.2)
@@ -165,8 +173,8 @@ def test_rr_testbetax(results):
     assert t2 == 1.0
 
 
-# summary() method, default options
 def test_rr_summary(results):
+    """summary() method with default options"""
     summary = results.summary()
     assert type(summary).__name__ == "Summary"
     assert type(summary.tables) == list
@@ -174,8 +182,8 @@ def test_rr_summary(results):
     assert len(summary.extra_txt) > 0
 
 
-# handling when identified set is (-inf, inf)
 def test_rr_noid(model):
+    """handle when identified set is (-inf, inf)"""
     results = model.fit(lambda_range=np.asarray([0.0, np.inf]))
     assert np.isneginf(results.params[3])
     assert np.isposinf(results.params[4])

@@ -10,12 +10,12 @@ import numpy as np
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import write_details
+from rcr import write_details  # pylint: disable=wrong-import-position
 
 
-# Basic fnctionality
-# Write the specified arrays to the specified text file
+# Basic functionality
 def test_wd_basic():
+    """write the specified arrays to the specified test file"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with tempfile.TemporaryDirectory() as tmp:
@@ -26,37 +26,31 @@ def test_wd_basic():
 
 
 # Exceptions to handle
-
-
-# File name is blank ("")
-# Should do nothing
 def test_wd_nofile():
+    """do nothing if file name is blank"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     write_details(thetavec, lambdavec, "")
 
 
-# Read-only file
-# Should issue a warning and continue
 def test_wd_readonly():
+    """warn and continue if read-only file"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with pytest.warns(UserWarning, match="Cannot write"):
         write_details(thetavec, lambdavec, "testing/read-only-file.txt")
 
 
-# Nonexistent folder name
-# Should issue a warning and continue
 def test_wd_badfolder():
+    """warn and continue if non-existend folder"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with pytest.warns(UserWarning, match="Cannot write"):
         write_details(thetavec, lambdavec, "nonexistent-path-name/pout.txt")
 
 
-# Illegal file name
-# Should issue a warning and continue
 def test_wd_illegalname():
+    """warn and continue if illegal file name"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with pytest.warns(UserWarning, match="Cannot write"):

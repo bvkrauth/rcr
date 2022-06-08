@@ -9,12 +9,13 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import get_logfile, set_logfile, start_logfile
+from rcr import get_logfile, set_logfile, \
+    start_logfile  # pylint: disable=wrong-import-position
 
 
-# Basic functionality: set logfile name to its argument,
-# open it for writing, and write the first line
+# Basic functionality
 def test_slf_basic():
+    """set logfile name, open for writing, write the first line"""
     oldlogfile = get_logfile()
     with tempfile.TemporaryDirectory() as tmp:
         logfile = os.path.join(tmp, 'log.txt')
@@ -24,46 +25,40 @@ def test_slf_basic():
     set_logfile(oldlogfile)
 
 
-# logfile set to None
-# Do nothing
 def test_slf_none():
+    """do nothing if logfile is set to None"""
     oldlogfile = get_logfile()
     start_logfile(None)
     set_logfile(oldlogfile)
 
 
 # Exceptions
-
-# Read-only file
-# Issue a warning but continue
 def test_slf_readonly():
+    """warn and continue if read-only file"""
     oldlogfile = get_logfile()
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
         start_logfile("testing/read-only-file.txt")
     set_logfile(oldlogfile)
 
 
-# Nonexistent folder name
-# Issue a warning but continue
 def test_slf_badfolder():
+    """warn and continue if folder does not exist"""
     oldlogfile = get_logfile()
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
         start_logfile("nonexistent-folder/log.txt")
     set_logfile(oldlogfile)
 
 
-# Illegal file name
-# Issue a warning but continue
 def test_slf_badfilename():
+    """warn and continue if illegal file name"""
     oldlogfile = get_logfile()
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
         start_logfile("?/:")
     set_logfile(oldlogfile)
 
 
-# Non-string argument
-# Do nothing
 def test_slf_notastring():
+    """do nothing if non-string file name"""
     oldlogfile = get_logfile()
     start_logfile(1.0)
     start_logfile(True)

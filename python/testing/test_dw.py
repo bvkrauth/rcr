@@ -7,12 +7,13 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import warn, die, set_logfile, get_logfile
+from rcr import warn, die, set_logfile, \
+    get_logfile  # pylint: disable=wrong-import-position
 
 
 # Basic functionality of warn()
-# Write to the logfile and issue a warning
 def test_warn():
+    """write to the logfile and issue a warning"""
     oldlogfile = get_logfile()
     set_logfile(None)
     with pytest.warns(UserWarning, match="Test warning"):
@@ -21,8 +22,8 @@ def test_warn():
 
 
 # Basic functionality of die()
-# Issue an exception
 def test_die():
+    """issue an exception"""
     oldlogfile = get_logfile()
     set_logfile(None)
     try:

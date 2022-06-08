@@ -10,17 +10,19 @@ import patsy
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR, RCRResults
+from rcr import RCR, RCRResults  # pylint: disable=wrong-import-position
 
 
 @pytest.fixture
 def dat():
+    """get test data from web page"""
     fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
     return pd.read_stata(fname)
 
 
 @pytest.fixture
 def rcr_formula():
+    """construct formula for test example"""
     rcr_left = "SAT + Small_Class ~ "
     rcr_right1 = "White_Asian + Girl + Free_Lunch + White_Teacher + "
     rcr_right2 = "Teacher_Experience + Masters_Degree"
@@ -29,35 +31,41 @@ def rcr_formula():
 
 @pytest.fixture
 def endog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    endog = patsy.dmatrices(rcr_formula, dat)[0]
     return endog
 
 
 @pytest.fixture
 def exog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    exog = patsy.dmatrices(rcr_formula, dat)[1]
     return exog
 
 
 @pytest.fixture
 def model(endog, exog):
+    """construct RCR mdodel"""
     return RCR(endog, exog)
 
 
 @pytest.fixture
 def weights(dat):
+    """get weights"""
     wt = np.mod(dat["TCHID"], 2)
     return wt
 
 
 @pytest.fixture
 def cluster(dat):
+    """get cluster IDs"""
     clust = dat["TCHID"]
     return clust
 
 
 # Basic functionality
 def test_rf_basic(model):
+    """RCR.fit with default options"""
     results = model.fit()
     assert isinstance(results, RCRResults)
     assert isinstance(results.model, RCR)
@@ -96,6 +104,7 @@ def test_rf_basic(model):
 
 # Set lambda_range
 def test_rf_lr(model, endog, exog):
+    """RCR.fit with finite lambda_range set"""
     trueparams = np.asarray([12.31059909,
                              8.16970997,
                              28.93548917,
@@ -110,8 +119,8 @@ def test_rf_lr(model, endog, exog):
     assert results.params == pytest.approx(trueparams)
 
 
-# lambda_range with no lower bound
 def test_rf_lrnolb(model):
+    """RCR.fit with lambda_range with no lower bound"""
     trueparams = np.asarray([12.31059909,
                              8.16970997,
                              28.93548917,
@@ -123,8 +132,8 @@ def test_rf_lrnolb(model):
     assert results.params == pytest.approx(trueparams)
 
 
-# lambda_range with no upper bound
 def test_rf_lrnoub(model):
+    """RCR.fit with lambda_range with no upper bound"""
     trueparams = np.asarray([12.31059909,
                              8.16970997,
                              28.93548917,
@@ -147,8 +156,9 @@ def test_rf_lrnoub(model):
     assert results.cov_params == pytest.approx(truecov)
 
 
-# lambda_range is a 2-d array (should be 1-d)
+# Exceptions for lambda_range
 def test_rf_lr2d(model):
+    """raise exception if lambda_range is a 2-d array"""
     try:
         model.fit(lambda_range=np.zeros((2, 2)))
     except TypeError:
@@ -159,6 +169,7 @@ def test_rf_lr2d(model):
 
 # lambda_range has wrong number of elements
 def test_rf_lr1e(model):
+    """raise exception if lambda_range has wrong # of elements"""
     try:
         model.fit(lambda_range=np.zeros(1))
     except TypeError:
@@ -167,8 +178,8 @@ def test_rf_lr1e(model):
         raise AssertionError
 
 
-# lambda_range has NaNs
 def test_rf_lrnan(model):
+    """raise exception if lambda_range has NaN values"""
     try:
         model.fit(lambda_range=np.asarray([0, np.nan]))
     except ValueError:
@@ -177,8 +188,8 @@ def test_rf_lrnan(model):
         raise AssertionError
 
 
-# lambda_range is not in ascending order
 def test_rf_lrnotsorted(model):
+    """raise exception if lambda_range is out of order"""
     try:
         model.fit(lambda_range=np.asarray([1., 0.]))
     except ValueError:
@@ -188,11 +199,8 @@ def test_rf_lrnotsorted(model):
 
 
 # Covariance matrix options
-# cov_type optional argument
-# Only default value ("nonrobust") is currently supported
-
-# vceadj optional argument
 def test_rf_vceadj(model):
+    """use vceadj to modify covariance matrix"""
     truecov = np.asarray([[2.20136553e+00,  8.40455283e-01,  7.43016985e+00,
                            1.31081775e-02,  7.40528497e-03],
                           [8.40455283e-01,  4.68408037e+02, -1.65277247e+03,
@@ -207,8 +215,8 @@ def test_rf_vceadj(model):
     assert results.cov_params == pytest.approx(truecov)
 
 
-# cov_type is unsupported
 def test_rf_ctunsup(model):
+    """raise exception if cov_type is unsupported"""
     try:
         model.fit(cov_type="unsupported")
     except ValueError:
@@ -217,8 +225,8 @@ def test_rf_ctunsup(model):
         raise AssertionError
 
 
-# vceadj is non-numeric
 def test_rf_vcestr(model):
+    """raise exception if vceadj is non-numeric"""
     try:
         model.fit(vceadj="a string")
     except TypeError:
@@ -227,8 +235,8 @@ def test_rf_vcestr(model):
         raise AssertionError
 
 
-# vceadj is not a scalar
 def test_rf_vcearr(model):
+    """raise exception if vceadj is non-scalar"""
     try:
         model.fit(vceadj=np.asarray([1.0, 2.0]))
     except TypeError:
@@ -237,8 +245,8 @@ def test_rf_vcearr(model):
         raise AssertionError
 
 
-# vceadj is negative
 def test_rf_vceneg(model):
+    """raise exception if vceadj is negative"""
     try:
         model.fit(vceadj=-1.)
     except ValueError:
@@ -247,8 +255,8 @@ def test_rf_vceneg(model):
         raise AssertionError
 
 
-# weights
 def test_rf_weighted(endog, exog, weights):
+    """estimate with weights"""
     msk = (weights > 0.5)
     model0 = RCR(endog[msk], exog[msk])
     model1 = RCR(endog, exog, weights=weights)
@@ -266,8 +274,8 @@ def test_rf_weighted(endog, exog, weights):
     assert res2.nobs == res0.nobs
 
 
-# cluster-robust standard error
 def test_rf_cluster(endog, exog, cluster):
+    """estimate with cluster-robust standard errors"""
     model = RCR(endog,
                 exog,
                 cov_type="cluster",
@@ -287,8 +295,8 @@ def test_rf_cluster(endog, exog, cluster):
     assert result.cov_params == pytest.approx(truecov)
 
 
-# clusters and weights
 def test_rf_clust_and_wt(endog, exog, cluster, weights):
+    """estimate with weights and clusters"""
     model = RCR(endog,
                 exog,
                 cov_type="cluster",

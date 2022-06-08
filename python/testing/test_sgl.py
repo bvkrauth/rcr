@@ -7,12 +7,14 @@ import numpy as np
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import get_logfile, set_logfile
+from rcr import get_logfile, \
+    set_logfile  # pylint: disable=wrong-import-position
 
 
 # set_logfile(str) sets the global variable logfile to str
 # get_logfile() retrieves the value of the global variable logfile
 def test_sgl():
+    """get and set the global variable logfile"""
     tmp = get_logfile()
     set_logfile("any string")
     assert get_logfile() == "any string"
@@ -21,8 +23,8 @@ def test_sgl():
     set_logfile(tmp)
 
 
-# set_logfile should accept a string or None
 def test_sgl_none():
+    """set_logfile accepts strings or None"""
     tmp = get_logfile()
     set_logfile(None)
     assert get_logfile() is None
@@ -30,9 +32,8 @@ def test_sgl_none():
 
 
 # set_logfile should ignore all other inputs
-# Boolean
-# Should leave logfile unchanged
 def test_sgl_bool():
+    """ignore logical arguments"""
     tmp = get_logfile()
     set_logfile("a string")
     set_logfile(True)
@@ -40,9 +41,8 @@ def test_sgl_bool():
     set_logfile(tmp)
 
 
-# Integer
-# Should leave logfile unchanged
 def test_sgl_int():
+    """ignore integer arguments"""
     tmp = get_logfile()
     set_logfile("a string")
     set_logfile(0)
@@ -50,9 +50,8 @@ def test_sgl_int():
     set_logfile(tmp)
 
 
-# Real
-# Should leave logfile unchanged
 def test_sgl_real():
+    """ignore real arguments"""
     tmp = get_logfile()
     set_logfile("a string")
     set_logfile(0.)
@@ -60,9 +59,8 @@ def test_sgl_real():
     set_logfile(tmp)
 
 
-# List
-# Should leave logfile unchanged
 def test_sgl_list():
+    """ignore list arguments"""
     tmp = get_logfile()
     set_logfile("a string")
     set_logfile(["another string"])
@@ -70,9 +68,8 @@ def test_sgl_list():
     set_logfile(tmp)
 
 
-# Tuple
-# Should leave logfile unchanged
 def test_sgl_tuple():
+    """ignore tuple arguments"""
     tmp = get_logfile()
     set_logfile("a string")
     set_logfile(("another string", "a third string"))
@@ -80,9 +77,8 @@ def test_sgl_tuple():
     set_logfile(tmp)
 
 
-# Array
-# Should leave logfile unchanged
 def test_sgl_array():
+    """ignore array arguments"""
     tmp = get_logfile()
     set_logfile("a string")
     set_logfile(np.zeros(2))
@@ -90,7 +86,6 @@ def test_sgl_array():
     set_logfile(tmp)
 
 
-# When set_logfile() has not been called yet, logfile is undefined
-# get_logfile() should return None
 def test_sgl_undef():
+    """initial value is None"""
     assert get_logfile() is None

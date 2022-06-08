@@ -9,42 +9,36 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import write_results, read_data
+from rcr import write_results, \
+    read_data  # pylint: disable=wrong-import-position
 
 
-# Basic fnctionality
-# Write the specified array to the specified text file
+# Basic functionality
 def test_wr_basic():
-    n_moments, n_lambda, external_big_number, moment_vector, \
-        lambda_range = read_data("testing/testin1.txt")
+    """write the specified array to the specified text file"""
+    moment_vector = read_data("testing/testin1.txt")[3]
     with tempfile.TemporaryDirectory() as tmp:
         outfile = os.path.join(tmp, 'pout.txt')
         write_results(moment_vector, outfile)
 
 
 # Exceptions to handle
-# Read-only file
-# Issue a warning
 def test_wr_readonly():
-    n_moments, n_lambda, external_big_number, moment_vector, \
-        lambda_range = read_data("testing/testin1.txt")
+    """warn and continue if file is read-only"""
+    moment_vector = read_data("testing/testin1.txt")[3]
     with pytest.warns(UserWarning, match="Cannot write"):
         write_results(moment_vector, "testing/read-only-file.txt")
 
 
-# Nonexistent folder name
-# Issue a warning
 def test_wr_badfolder():
-    n_moments, n_lambda, external_big_number, moment_vector, \
-        lambda_range = read_data("testing/testin1.txt")
+    """warn and continue if folder does not exist"""
+    moment_vector = read_data("testing/testin1.txt")[3]
     with pytest.warns(UserWarning, match="Cannot write"):
         write_results(moment_vector, "nonexistent-path-name/pout.txt")
 
 
-# Illegal file name
-# Issue a warning
 def test_wr_illegalname():
-    n_moments, n_lambda, external_big_number, moment_vector, \
-        lambda_range = read_data("testing/testin1.txt")
+    """warn and continue if file name is illegal"""
+    moment_vector = read_data("testing/testin1.txt")[3]
     with pytest.warns(UserWarning, match="Cannot write"):
         write_results(moment_vector, "?")

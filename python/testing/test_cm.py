@@ -8,23 +8,26 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import check_moments, read_data
+from rcr import check_moments, \
+    read_data  # pylint: disable=wrong-import-position
 
 
-# Test with simple data
 def test_cm_basic():
+    """check moments with simple valid data"""
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
     assert check_moments(mv1) == (True, True)
 
 
 # Test with real data
 def test_cm_realdata():
-    (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data("testing/testin1.txt")
+    """check moments from real data"""
+    moment_vector = read_data("testing/testin1.txt")[3]
     assert check_moments(moment_vector) == (True, True)
 
 
 def random_mv():
+    """generate random moment_vector"""
+    # pylint: disable=too-many-locals
     exyz = np.random.randn(3)
     vxyz = abs(np.random.randn(3))
     corxyz = np.random.uniform(-1, 1, 3)
@@ -52,17 +55,16 @@ def random_mv():
 
 
 def test_cm_randomdata():
-    # Test with randomly-generated data
-    for i in range(10):
-        mvi, true_smi = random_mv()
+    """ check moments with randomly-generated data"""
+    for _ in range(10):
+        mvi = random_mv()[0]
         result = check_moments(mvi)
         assert result == (True, True)
 
 
 # Special cases
-# Invalid length
-# This should throw an exception
 def test_cm_wronglen():
+    """raise an exception if invalid length"""
     try:
         check_moments(np.zeros(8))
     except AssertionError:
@@ -71,43 +73,39 @@ def test_cm_wronglen():
         raise AssertionError("check_moments has accepted invalid input")
 
 
-# All zeros
-# This should return a mix of zero and NaN
 def test_cm_allzeros():
+    """return mics of zero and NaN if all zeros"""
     mv = np.zeros(9)
     with pytest.warns(UserWarning, match="Invalid data: nonsingular"):
         result = check_moments(mv)
     assert result == (False, False)
 
 
-# Integer data
 def test_cm_integer():
+    """check moments with integer data"""
     mv = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
     result = check_moments(mv)
     assert result == (True, True)
 
 
-# var(x) = 0
-# Should return NaN
 def test_cm_varx0():
+    """return NaN if var(x) = 0"""
     mv = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data: nonsingular"):
         result = check_moments(mv)
     assert result == (False, False)
 
 
-# var(x) < 0
-# Should return numeric values
 def test_cm_varxneg():
+    """return numeric values if var(x) < 0"""
     mv = np.array([0, 0, 0, -1, 0.5, 0.5, 1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
         result = check_moments(mv)
     assert result == (False, False)
 
 
-# var(y) <= 0
-# Should return numeric values
 def test_cm_varyneg():
+    """return numeric values if var(y) <= 0"""
     mv = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
         result = check_moments(mv)
@@ -118,9 +116,8 @@ def test_cm_varyneg():
     assert result == (False, False)
 
 
-# var(z) <= 0
-# Should return numeric values
 def test_cm_varzneg():
+    """return numeric values if var(z) <= 0"""
     mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
     with pytest.warns(UserWarning, match="Invalid data:"):
         result = check_moments(mv)

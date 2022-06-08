@@ -9,11 +9,13 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import write_to_logfile, set_logfile, get_logfile
+from rcr import write_to_logfile, set_logfile, \
+    get_logfile  # pylint: disable=wrong-import-position
 
 
-# Basic functionality - create the log file (if mode = "w") and write to it
+# Basic functionality
 def test_wtl_basic():
+    """create the log file and write to it"""
     oldlogfile = get_logfile()
     with tempfile.TemporaryDirectory() as tmp:
         logfile = os.path.join(tmp, 'log.txt')
@@ -26,8 +28,8 @@ def test_wtl_basic():
     set_logfile(oldlogfile)
 
 
-# If the logfile is None, it should do nothing
 def test_wtl_none():
+    """do nothing if logfile = None"""
     oldlogfile = get_logfile()
     set_logfile(None)
     write_to_logfile("Line 1\n", mode="w")
@@ -36,9 +38,8 @@ def test_wtl_none():
 
 
 # Exceptions to handle
-# Read-only file
-# Issue a warning but continue
 def test_wtl_readonly():
+    """warn and continue if file is read-only"""
     oldlogfile = get_logfile()
     set_logfile("testing/read-only-file.txt")
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
@@ -47,9 +48,8 @@ def test_wtl_readonly():
     set_logfile(oldlogfile)
 
 
-# Nonexistent folder name
-# Issue a warning but continue
 def test_wtl_badfolder():
+    """warn and continue if folder does not exist"""
     oldlogfile = get_logfile()
     set_logfile("nonexistent-folder/log.txt")
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
@@ -58,9 +58,8 @@ def test_wtl_badfolder():
     set_logfile(oldlogfile)
 
 
-# Illegal file name
-# Issue a warning but continue
 def test_wtl_badfilename():
+    """warn and continue if file name is illegal"""
     oldlogfile = get_logfile()
     set_logfile("?/:")
     with pytest.warns(UserWarning, match="Cannot write to logfile"):

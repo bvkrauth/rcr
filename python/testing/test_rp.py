@@ -10,17 +10,19 @@ import patsy
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR
+from rcr import RCR  # pylint: disable=wrong-import-position
 
 
 @pytest.fixture
 def dat():
+    """get test data from web page"""
     fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
     return pd.read_stata(fname)
 
 
 @pytest.fixture
 def rcr_formula():
+    """construct formula for test example"""
     rcr_left = "SAT + Small_Class ~ "
     rcr_right1 = "White_Asian + Girl + Free_Lunch + White_Teacher + "
     rcr_right2 = "Teacher_Experience + Masters_Degree"
@@ -29,31 +31,33 @@ def rcr_formula():
 
 @pytest.fixture
 def endog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    endog = patsy.dmatrices(rcr_formula, dat)[0]
     return endog
 
 
 @pytest.fixture
 def exog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    exog = patsy.dmatrices(rcr_formula, dat)[1]
     return exog
 
 
 @pytest.fixture
 def model(endog, exog):
+    """construct RCR mdodel"""
     return RCR(endog, exog)
 
 
 @pytest.fixture
 def results(model):
+    """fit RCR mdodel"""
     return model.fit()
 
 
 # Basic functionality
 def test_rp_basic(results):
-    """
-    Test rcrplot with default arguments
-    """
+    """plot rcr function with default arguments"""
     lambdavals, thetavals = results.model.lambdavals(add_thetastar=True)
     ax = results.rcrplot()
     assert type(ax).__name__ == "AxesSubplot"
@@ -72,9 +76,7 @@ def test_rp_basic(results):
 
 
 def test_rp_xlim1(results):
-    """
-    Test rcrplot with alternate xlim pair
-    """
+    """plot rcr function with alternate xlim (pair)"""
     xlim = (0, 6)
     thetavals = np.linspace(xlim[0], xlim[1], 100)
     lambdavals, thetavals = results.model.lambdavals(thetavals,
@@ -87,9 +89,7 @@ def test_rp_xlim1(results):
 
 
 def test_rp_xlim2(results):
-    """
-    Test rcrplot with alternate xlim sequence
-    """
+    """plot rcr function with alternate xlim (sequence)"""
     xlim = (0, 5, 6)
     thetavals = np.asarray(xlim)
     lambdavals, thetavals = results.model.lambdavals(thetavals,
@@ -102,9 +102,7 @@ def test_rp_xlim2(results):
 
 
 def test_rp_tsline(results):
-    """
-    Test rcrplot with added thetastar line
-    """
+    """plot rcr function with optional thetastar line"""
     ax = results.rcrplot(tsline=True)
     assert ax.get_legend_handles_labels()[1][1] == '$\\beta_x^{\\infty}$'
     assert ax.get_lines()[1].get_xdata() == [results.params[1]] * 2
@@ -113,9 +111,7 @@ def test_rp_tsline(results):
 
 
 def test_rp_lsline(results):
-    """
-    Test rcrplot with added lambdastar line
-    """
+    """plot rcr function with optional lambdastar line"""
     ax = results.rcrplot(lsline=True)
     assert ax.get_legend_handles_labels()[1][1] == '$\\lambda^{\\infty}$'
     assert np.all(ax.get_lines()[1].get_xdata() == [0, 1])
@@ -124,18 +120,14 @@ def test_rp_lsline(results):
 
 
 def test_rp_idset(results):
-    """
-    Test rcrplot with added polygons showing the identified set
-    """
+    """plot rcr function with optional identified set polygon`"""
     ax = results.rcrplot(idset=True)
     # I don't know how to check polygons, so we will only make sure it runs
     ax.clear()
 
 
 def test_rp_setlab(results):
-    """
-    Test rcrplot with various labels set by hand
-    """
+    """plot rcr function with labels set by hand"""
     ax = results.rcrplot(tsline=True,
                          lsline=True,
                          idset=True,

@@ -10,17 +10,19 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR
+from rcr import RCR  # pylint: disable=wrong-import-position
 
 
 @pytest.fixture
 def dat():
+    """get test data from web page"""
     fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
     return pd.read_stata(fname)
 
 
 @pytest.fixture
 def rcr_formula():
+    """construct formula for test example"""
     rcr_left = "SAT + Small_Class ~ "
     rcr_right1 = "White_Asian + Girl + Free_Lunch + White_Teacher + "
     rcr_right2 = "Teacher_Experience + Masters_Degree"
@@ -29,18 +31,21 @@ def rcr_formula():
 
 @pytest.fixture
 def endog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    endog = patsy.dmatrices(rcr_formula, dat)[0]
     return endog
 
 
 @pytest.fixture
 def exog(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    """get endogenous variables"""
+    exog = patsy.dmatrices(rcr_formula, dat)[1]
     return exog
 
 
 @pytest.fixture
 def weights(dat):
+    """get weights"""
     wt = np.mod(dat["TCHID"], 2)
     wt.name = "TCHID_wt"
     return wt
@@ -48,6 +53,7 @@ def weights(dat):
 
 @pytest.fixture
 def clusters(dat):
+    """get cluster IDs"""
     clust = dat["TCHID"]
     return clust
 
@@ -55,6 +61,7 @@ def clusters(dat):
 # Basic functionality
 # Patsy design matrices
 def test_rc_patsy(dat, rcr_formula):
+    """construct RCR model object using Patsy design matrices"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(endog, exog)
     assert isinstance(model, RCR)
@@ -89,6 +96,7 @@ def test_rc_patsy(dat, rcr_formula):
 
 # Data frames (with Patsy design_info)
 def test_rc_patsy_df(dat, rcr_formula):
+    """construct RCR model object using Patsy data frames"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(endog, exog)
     assert isinstance(model.endog, np.ndarray)
@@ -117,6 +125,7 @@ def test_rc_patsy_df(dat, rcr_formula):
 
 # Data frames (without Patsy design_info)
 def test_rc_dataframe(dat, rcr_formula):
+    """construct RCR model object using data frames without design infom"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(pd.DataFrame(endog), pd.DataFrame(exog))
     assert isinstance(model.endog, np.ndarray)
@@ -145,6 +154,7 @@ def test_rc_dataframe(dat, rcr_formula):
 
 # Plain numpy arrays
 def test_rc_array(dat, rcr_formula):
+    """construct RCR model object using plain numpy arrays"""
     endog, exog = patsy.dmatrices(rcr_formula, dat)
     model = RCR(np.asarray(endog), np.asarray(exog))
     assert isinstance(model.endog, np.ndarray)
@@ -169,25 +179,23 @@ def test_rc_array(dat, rcr_formula):
     assert model.lambda_range[1] == 1.0
 
 
-# Set lambda_range
 def test_rc_setlr(endog, exog):
+    """set custom (finite) lambda range for RCR model object"""
     model = RCR(endog, exog, lambda_range=np.asarray([-1.0, 5.0]))
     assert model.lambda_range[0] == -1.0
     assert model.lambda_range[1] == 5.0
 
 
-# Set lambda_range
 def test_rc_setlrinf(endog, exog):
+    """set custom (non-finite) lambda range for RCR model object"""
     model = RCR(endog, exog, lambda_range=np.asarray([-np.inf, np.inf]))
     assert np.isneginf(model.lambda_range[0])
     assert np.isposinf(model.lambda_range[1])
 
 
 # Exceptions
-
-
-# endog is a 1-d array, should be a 2-d array
 def test_rc_endog1d(dat, rcr_formula):
+    """raise exception if endog is a 1-d array"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog)[:, 1], np.asarray(exog))
@@ -197,8 +205,8 @@ def test_rc_endog1d(dat, rcr_formula):
         raise AssertionError
 
 
-# endog has only 1 column, should have 2
 def test_rc_endog1c(dat, rcr_formula):
+    """raise exception if endog has only 1 column"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog)[:, 1:], np.asarray(exog))
@@ -208,9 +216,9 @@ def test_rc_endog1c(dat, rcr_formula):
         raise AssertionError
 
 
-# endog has more than 2 columns
 def test_rc_endog7c(dat, rcr_formula):
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
+    """raise exception if endog has more than 2 columns"""
+    exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")[1]
     try:
         RCR(np.asarray(exog), np.asarray(exog))
     except TypeError:
@@ -219,8 +227,8 @@ def test_rc_endog7c(dat, rcr_formula):
         raise AssertionError
 
 
-# exog is a 1-d array, should be a 2-d array
 def test_rc_exog1d(dat, rcr_formula):
+    """raise exception if exog is a 1-d array"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog), np.asarray(exog)[:, 1])
@@ -230,8 +238,8 @@ def test_rc_exog1d(dat, rcr_formula):
         raise AssertionError
 
 
-# exog has only 1 column, should have at least 2
 def test_rc_exog1c(dat, rcr_formula):
+    """raise exception if exog has only 1 column"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog), np.asarray(exog)[:, :1])
@@ -241,8 +249,8 @@ def test_rc_exog1c(dat, rcr_formula):
         raise AssertionError
 
 
-# endog and exog do not have the same number of rows
 def test_rc_nobsnoteq(dat, rcr_formula):
+    """raise exception if exog and endog have different # of rows"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(np.asarray(endog), np.asarray(exog)[0:100, ])
@@ -252,8 +260,8 @@ def test_rc_nobsnoteq(dat, rcr_formula):
         raise AssertionError
 
 
-# lambda_range is a 2-d array, should be 1-d
 def test_rc_lr2d(dat, rcr_formula):
+    """raise exception if lambda_range is a 2-d array"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.asarray(endog))
@@ -263,8 +271,8 @@ def test_rc_lr2d(dat, rcr_formula):
         raise AssertionError
 
 
-# lambda_range has the wrong number of elements
 def test_rc_lr1e(dat, rcr_formula):
+    """raise exception if lambda_range has wrong # of elements"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.zeros(1))
@@ -274,8 +282,8 @@ def test_rc_lr1e(dat, rcr_formula):
         raise AssertionError
 
 
-# lambda_range includes NaN values (inf values are OK)
 def test_rc_lrnan(dat, rcr_formula):
+    """raise exception if lambda_range includes NaN values (inf is OK)"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.asarray([0, np.nan]))
@@ -285,8 +293,8 @@ def test_rc_lrnan(dat, rcr_formula):
         raise AssertionError
 
 
-# lambda_range is not in weakly ascending order
 def test_rc_lrnotsorted(dat, rcr_formula):
+    """raise exception if lambda_range out of order"""
     endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
         RCR(endog, exog, lambda_range=np.asarray([1., 0.]))
@@ -296,40 +304,41 @@ def test_rc_lrnotsorted(dat, rcr_formula):
         raise AssertionError
 
 
-# weights
+# Add clusters and weights
 def test_rc_weights(endog, exog, weights):
+    """construct model with weights"""
     model = RCR(endog, exog, weights=weights)
     assert all(model.weights == weights)
     assert model.weights_name == "TCHID_wt"
     assert model.nobs == 3325
 
 
-# weights - no variable name
 def test_rc_weights_noname(endog, exog, weights):
+    """construct model with weights (no variable name)"""
     model = RCR(endog, exog, weights=np.asarray(weights))
     assert all(model.weights == weights)
     assert model.weights_name == "(no name)"
     assert model.nobs == 3325
 
 
-# cluster
 def test_rc_clusters(endog, exog, clusters):
+    """construct model with clusters"""
     model = RCR(endog, exog, groupvar=clusters)
     assert all(model.groupvar == clusters)
     assert model.groupvar_name == "TCHID"
     assert model.ngroups == 323
 
 
-# clusters - no variable name
 def test_rc_clusters_noname(endog, exog, clusters):
+    """construct model with clusters (no variable name)"""
     model = RCR(endog, exog, groupvar=np.asarray(clusters))
     assert all(model.groupvar == clusters)
     assert model.groupvar_name == "(no name)"
     assert model.ngroups == 323
 
 
-# clusters and wieghts
 def test_rc_clust_and_wt(endog, exog, clusters, weights):
+    """construct model with weights and clusters"""
     model = RCR(endog, exog, weights=weights, groupvar=clusters)
     assert all(model.weights == weights)
     assert all(model.groupvar == clusters)

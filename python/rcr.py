@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 # Local application imports
 # (none)
 
-logfile = None
+LOGFILE = None
 
 
 # I/O and system functions
@@ -68,19 +68,19 @@ def get_command_arguments(args):
 
 def set_logfile(fname):
     """Set name of log file"""
-    global logfile
+    global LOGFILE # pylint: disable=global-statement
     if isinstance(fname, str) or fname is None:
-        logfile = fname
+        LOGFILE = fname
     else:
         pass
 
 
 def get_logfile():
     """Retrieve name of log file.  If undefined, return None"""
-    global logfile
-    if "logfile" not in globals():
-        logfile = None
-    return logfile
+    global LOGFILE # pylint: disable=global-statement
+    if "LOGFILE" not in globals():
+        LOGFILE = None
+    return LOGFILE
 
 
 def write_to_logfile(msg, mode="a"):

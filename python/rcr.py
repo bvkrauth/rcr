@@ -156,31 +156,39 @@ def read_data(infile):
         write_to_logfile("Line 3: lambda_range = {0}.\n".format(lambda_range))
         write_to_logfile("For calculations, lambda_range,...\n")
     write_to_logfile("Data successfully loaded from file {0}\n".format(infile))
-    # Check to make sure n_lambda is a valid (i.e., positive) value
+
     n_lambda = int(n_lambda)
-    #   1. It should be twice as long as lambda_range. if not, just reset it
-    if len(lambda_range) != 2*n_lambda:
-        msg = "n_lambda reset from {0} to len(lambda_range)/2 = {1}."
-        warn(msg.format(n_lambda, int(len(lambda_range)/2)))
-        n_lambda = int(len(lambda_range) / 2)
-    #   2. It should be positive.
-    assert n_lambda > 0
-    #   3. For now, it should be one.
-    assert n_lambda == 1
-    # Check to make sure n_moments is a valid value
     n_moments = int(n_moments)
-    #   1. It should be the same as the length of moment_vector.  if not,
-    #      just reset it.
+    # reset n_moments and n_lambda if needed
     if n_moments != len(moment_vector):
         msg = "n_moments reset from {0} to len(moment_vector) = {1}."
         warn(msg.format(n_moments, len(moment_vector)))
         n_moments = len(moment_vector)
+    if len(lambda_range) != 2*n_lambda:
+        msg = "n_lambda reset from {0} to len(lambda_range)/2 = {1}."
+        warn(msg.format(n_lambda, int(len(lambda_range)/2)))
+        n_lambda = int(len(lambda_range) / 2)
+    check_input_values(n_moments, n_lambda, external_big_number)
+    return n_moments, n_lambda, external_big_number, \
+        moment_vector, lambda_range
+
+
+def check_input_values(n_moments, n_lambda, external_big_number):
+    """make sure read_data read in valid data"""
+    # Check to make sure n_moments is a valid value
+    #   1. It should be the same as the length of moment_vector.  if not,
+    #      just reset it.
     #   2. It must be at least 9 (i.e., there must be at least one explanatory
     #      variable)
     assert n_moments >= 9
     #   3. The number of implied explanatory variables must be an integer
     k = int((np.sqrt(9 + 8 * n_moments) - 1) / 2)
     assert (2 * (n_moments + 1)) == int(k ** 2 + k)
+    # Check to make sure n_lambda is a valid (i.e., positive) value
+    #   1. It should be positive.
+    assert n_lambda > 0
+    #   2. For now, it should be one.
+    assert n_lambda == 1
     # Check to make sure external_big_number is a valid value
     assert external_big_number > 0.0
     # If external_big_number is bigger than sys.float_info.max, then issue a
@@ -188,8 +196,6 @@ def read_data(infile):
     if external_big_number > sys.float_info.max:
         msg = "Largest Python real ({0}) is less than largest in Stata {1}"
         warn(msg.format(sys.float_info.max, external_big_number))
-    return n_moments, n_lambda, external_big_number, \
-        moment_vector, lambda_range
 
 
 def write_results(result_matrix, outfile):

@@ -1652,13 +1652,13 @@ class RCRResults:
         asymptotic p-values for param.
     ci(cilevel=95)
         (cilevel)% confidence intervals for param.
-    betaxCI_conservative(cilevel=95)
+    betax_ci_conservative(cilevel=95)
         conservative confidence interval for the causal effect.
-    betaxCI_upper(cilevel=95)
+    betax_ci_upper(cilevel=95)
         upper confidence interval for the causal effect.
-    betaxCI_lower(cilevel=95)
+    betax_ci_lower(cilevel=95)
         lower confidence interval for the causal effect.
-    betaxCI_imbensmanski(cilevel=95)
+    betax_ci_imbensmanski(cilevel=95)
         Imbens-Manski confidence interval for the causal effect.
     summary()
         Summary of results.
@@ -1740,7 +1740,7 @@ class RCRResults:
         return np.array([self.params - crit * self.se(),
                          self.params + crit * self.se()])
 
-    def betaxCI(self,
+    def betax_ci(self,
                 cilevel=None,
                 citype="conservative"):
         """
@@ -1748,51 +1748,51 @@ class RCRResults:
         """
 
         if citype == "conservative":
-            betaxCI = self.betaxCI_conservative(cilevel=cilevel)
+            betax_ci = self.betax_ci_conservative(cilevel=cilevel)
         elif citype == "upper":
-            betaxCI = self.betaxCI_upper(cilevel=cilevel)
+            betax_ci = self.betax_ci_upper(cilevel=cilevel)
         elif citype == "lower":
-            betaxCI = self.betaxCI_lower(cilevel=cilevel)
+            betax_ci = self.betax_ci_lower(cilevel=cilevel)
         elif citype == "Imbens-Manski":
-            betaxCI = self.betaxCI_imbensmanski(cilevel=cilevel)
+            betax_ci = self.betax_ci_imbensmanski(cilevel=cilevel)
         else:
-            betaxCI = np.array([np.nan, np.nan])
-        return betaxCI
+            betax_ci = np.array([np.nan, np.nan])
+        return betax_ci
 
-    def betaxCI_conservative(self, cilevel=None):
+    def betax_ci_conservative(self, cilevel=None):
         """
         conservative asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
             cilevel = self.cilevel
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
-        betaxCI_L = self.params[3] - crit * self.se()[3]
-        betaxCI_H = self.params[4] + crit * self.se()[4]
-        return np.array([betaxCI_L, betaxCI_H])
+        ci_lb = self.params[3] - crit * self.se()[3]
+        ci_ub = self.params[4] + crit * self.se()[4]
+        return np.array([ci_lb, ci_ub])
 
-    def betaxCI_upper(self, cilevel=None):
+    def betax_ci_upper(self, cilevel=None):
         """
         upper asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
             cilevel = self.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
-        betaxCI_L = self.params[3] - crit * self.se()[3]
-        betaxCI_H = np.inf
-        return np.array([betaxCI_L, betaxCI_H])
+        ci_lb = self.params[3] - crit * self.se()[3]
+        ci_ub = np.inf
+        return np.array([ci_lb, ci_ub])
 
-    def betaxCI_lower(self, cilevel=None):
+    def betax_ci_lower(self, cilevel=None):
         """
         lower asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
             cilevel = self.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
-        betaxCI_L = -np.inf
-        betaxCI_H = self.params[4] + crit * self.se()[4]
-        return np.array([betaxCI_L, betaxCI_H])
+        ci_lb = -np.inf
+        ci_ub = self.params[4] + crit * self.se()[4]
+        return np.array([ci_lb, ci_ub])
 
-    def betaxCI_imbensmanski(self, cilevel=None):
+    def betax_ci_imbensmanski(self, cilevel=None):
         """
         Imbens-Manski confidence interval for causal effect.
         """
@@ -1812,14 +1812,14 @@ class RCRResults:
                 else:
                     cv_max = cv
         if se[3] > 0:
-            betaxCI_L = self.params[3]-(cv * se[3])
+            ci_lb = self.params[3]-(cv * se[3])
         else:
-            betaxCI_L = -np.inf
+            ci_lb = -np.inf
         if se[4] > 0:
-            betaxCI_H = self.params[4]+(cv * se[4])
+            ci_ub = self.params[4]+(cv * se[4])
         else:
-            betaxCI_H = np.inf
-        return np.array([betaxCI_L, betaxCI_H])
+            ci_ub = np.inf
+        return np.array([ci_lb, ci_ub])
 
     def lambdavals(self,
                    thetavals=np.linspace(-50, 50, 100),
@@ -1858,7 +1858,7 @@ class RCRResults:
         else:
             while (high - low) > 0.00001:
                 mid = (high + low) / 2.0
-                ci = self.betaxCI_imbensmanski(cilevel=mid)
+                ci = self.betax_ci_imbensmanski(cilevel=mid)
                 if ci[0] <= h0 <= ci[1]:
                     high = mid
                 else:
@@ -1988,7 +1988,7 @@ class RCRResults:
         ci = self.ci(cilevel=cilevel)
         outmat["ciL"] = ci[0, :]
         outmat["ciH"] = ci[1, :]
-        betaxCI = self.betaxCI(cilevel=cilevel, citype=citype)
+        betax_ci = self.betax_ci(cilevel=cilevel, citype=citype)
         ncontrols = self.model.exog.shape[1] - 1
         table1data = [[self.model.depvar,
                        self.model.treatvar],
@@ -2036,8 +2036,8 @@ class RCRResults:
                                       headers=table2headers,
                                       stubs=table2stubs,
                                       data_fmts=tableformats)
-        table3data = [[betaxCI[0], betaxCI[1]]]
-        table3stubs = ["betaxCI (" +
+        table3data = [[betax_ci[0], betax_ci[1]]]
+        table3stubs = ["betax_ci (" +
                        citype +
                        ")                            "]
         table3 = si.table.SimpleTable(table3data,

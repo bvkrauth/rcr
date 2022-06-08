@@ -119,38 +119,38 @@ def test_rr_cineg(results):
         raise AssertionError
 
 
-# betaxCI_conservative() method, default options
+# betax_ci_conservative() method, default options
 def test_rr_bciconservative(results):
     trueci = np.asarray([3.25948071, 6.48808526])
-    ci1 = results.betaxCI_conservative()
-    ci2 = results.betaxCI(citype="conservative")
+    ci1 = results.betax_ci_conservative()
+    ci2 = results.betax_ci(citype="conservative")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
 
-# betaxCI_upper() method, default options
+# betax_ci_upper() method, default options
 def test_rr_bciupper(results):
     trueci = np.asarray([3.56102163, np.inf])
-    ci1 = results.betaxCI_upper()
-    ci2 = results.betaxCI(citype="upper")
+    ci1 = results.betax_ci_upper()
+    ci2 = results.betax_ci(citype="upper")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
 
-# betaxCI_upper() method, default options
+# betax_ci_upper() method, default options
 def test_rr_bcilower(results):
     trueci = np.asarray([-np.inf, 6.281236804882139])
-    ci1 = results.betaxCI_lower()
-    ci2 = results.betaxCI(citype="lower")
+    ci1 = results.betax_ci_lower()
+    ci2 = results.betax_ci(citype="lower")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
 
-# betaxCI_imbensmanski() method, default options
+# betax_ci_imbensmanski() method, default options
 def test_rr_bciimbensmanski(results):
     trueci = np.asarray([3.29158006, 6.46606603])
-    ci1 = results.betaxCI_imbensmanski()
-    ci2 = results.betaxCI(citype="Imbens-Manski")
+    ci1 = results.betax_ci_imbensmanski()
+    ci2 = results.betax_ci(citype="Imbens-Manski")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
@@ -188,11 +188,11 @@ def test_rr_noid(model):
     assert all(results.pz()[3:] == 0.0)
     assert all(np.isneginf(results.ci()[:, 3]))
     assert all(np.isposinf(results.ci()[:, 4]))
-    assert np.isneginf(results.betaxCI_conservative()[0])
-    assert np.isposinf(results.betaxCI_conservative()[1])
-    assert np.isneginf(results.betaxCI_upper()[0])
-    assert np.isposinf(results.betaxCI_upper()[1])
-    assert np.isneginf(results.betaxCI_lower()[0])
-    assert np.isposinf(results.betaxCI_lower()[1])
-    assert np.isneginf(results.betaxCI_imbensmanski()[0])
-    assert np.isposinf(results.betaxCI_imbensmanski()[1])
+    assert np.isneginf(results.betax_ci_conservative()[0])
+    assert np.isposinf(results.betax_ci_conservative()[1])
+    assert np.isneginf(results.betax_ci_upper()[0])
+    assert np.isposinf(results.betax_ci_upper()[1])
+    assert np.isneginf(results.betax_ci_lower()[0])
+    assert np.isposinf(results.betax_ci_lower()[1])
+    assert np.isneginf(results.betax_ci_imbensmanski()[0])
+    assert np.isposinf(results.betax_ci_imbensmanski()[1])

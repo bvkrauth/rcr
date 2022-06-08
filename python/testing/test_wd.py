@@ -42,7 +42,7 @@ def test_wd_readonly():
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with pytest.warns(UserWarning, match="Cannot write"):
-        write_details(thetavec, lambdavec, "read-only-file.txt")
+        write_details(thetavec, lambdavec, "testing/read-only-file.txt")
 
 
 # Nonexistent folder name

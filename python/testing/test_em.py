@@ -15,7 +15,7 @@ from rcr import read_data, estimate_model
 @pytest.fixture
 def moment_vector():
     (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data("testin1.txt")
+        lambda_range) = read_data("testing/testin1.txt")
     return moment_vector
 
 
@@ -25,7 +25,7 @@ def test_em_realdata(moment_vector):
     lambda_range = np.array([0.0, 1.0])
     true_em1 = np.array([12.31059909,  8.16970996, 28.93548917,
                          5.13504376,  5.20150257])
-    true_result = np.asarray(pd.read_csv("testout1.txt",
+    true_result = np.asarray(pd.read_csv("testing/testout1.txt",
                                          delimiter=" ",
                                          header=None,
                                          skipinitialspace=True))

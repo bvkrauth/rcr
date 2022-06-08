@@ -20,7 +20,7 @@ def test_cm_basic():
 # Test with real data
 def test_cm_realdata():
     (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data("testin1.txt")
+        lambda_range) = read_data("testing/testin1.txt")
     assert check_moments(moment_vector) == (True, True)
 
 

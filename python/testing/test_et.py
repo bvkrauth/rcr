@@ -14,7 +14,7 @@ from rcr import read_data, estimate_theta_segments, estimate_theta
 @pytest.fixture
 def moment_vector():
     (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data("testin1.txt")
+        lambda_range) = read_data("testing/testin1.txt")
     return moment_vector
 
 

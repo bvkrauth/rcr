@@ -15,7 +15,7 @@ from rcr import read_data
 # Should read data from the specified text file with the correct format
 def test_rd_basic():
     n_moments, n_lambda, external_big_number, moment_vector, \
-        lambda_range = read_data("testin1.txt")
+        lambda_range = read_data("testing/testin1.txt")
     assert n_moments == 44
     assert n_lambda == 1
     assert external_big_number.dtype == "float"
@@ -44,7 +44,7 @@ def test_rd_nonexistent():
 # Should raise an exception
 def test_rd_badfile():
     try:
-        read_data("out.txt")
+        read_data("testing/out.txt")
     except RuntimeError:
         pass
     else:
@@ -56,7 +56,7 @@ def test_rd_badfile():
 def test_rd_badnmoments():
     with pytest.warns(UserWarning, match="n_moments reset"):
         n_moments, n_lambda, external_big_number, moment_vector, \
-            lambda_range = read_data("badin1.txt")
+            lambda_range = read_data("testing/badin1.txt")
     assert n_moments == 44
 
 
@@ -65,7 +65,7 @@ def test_rd_badnmoments():
 def test_rd_badnlambda():
     with pytest.warns(UserWarning, match="n_lambda reset"):
         n_moments, n_lambda, external_big_number, moment_vector, \
-            lambda_range = read_data("badin2.txt")
+            lambda_range = read_data("testing/badin2.txt")
     assert n_lambda == 1
 
 
@@ -74,7 +74,7 @@ def test_rd_badnlambda():
 def test_rd_badmoments():
     try:
         n_moments, n_lambda, external_big_number, moment_vector, \
-            lambda_range = read_data("badin3.txt")
+            lambda_range = read_data("testing/badin3.txt")
     except AssertionError:
         pass
     else:
@@ -87,7 +87,7 @@ def test_rd_badmoments():
 def test_rd_badlambda():
     try:
         n_moments, n_lambda, external_big_number, moment_vector, \
-           lambda_range = read_data("badin4.txt")
+           lambda_range = read_data("testing/badin4.txt")
     except AssertionError:
         pass
     else:
@@ -99,7 +99,7 @@ def test_rd_badlambda():
 def test_rd_badbignum():
     try:
         n_moments, n_lambda, external_big_number, moment_vector, \
-            lambda_range = read_data("badin5.txt")
+            lambda_range = read_data("testing/badin5.txt")
     except AssertionError:
         pass
     else:

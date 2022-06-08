@@ -39,7 +39,7 @@ def test_slf_none():
 def test_slf_readonly():
     oldlogfile = get_logfile()
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
-        start_logfile("read-only-file.txt")
+        start_logfile("testing/read-only-file.txt")
     set_logfile(oldlogfile)
 
 

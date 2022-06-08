@@ -488,6 +488,7 @@ def estimate_theta(moment_vector,
                    lambda_range,
                    theta_segments):
     """Estimate theta"""
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     ntab = 10
     nmax = 10
     con = 1.4
@@ -784,6 +785,7 @@ def simplify_moments(moment_vector):
 
 def check_moments(moment_vector):
     """Check to ensure moment_vector is valid"""
+    # pylint: disable=too-many-branches
     sm = simplify_moments(moment_vector)
     # First make sure that moment_vector describes a valid covariance matrix
     valid = True
@@ -818,8 +820,6 @@ def check_moments(moment_vector):
         msg = "Invalid data: cov(yh,zh) = {0} > {1} sqrt(var(yh)*var(zh))"
         warn(msg.format(covyz, sdyz))
     # Next make sure that the identifying conditions are satisfied.
-    # Maybe these could be addressed with warnings rather than error
-    # messages?
     identified = valid
     if sm[0] == 0.0:
         identified = False
@@ -933,6 +933,7 @@ def lambda_minus_lambda(theta, simplified_moments_and_lambda):
 
 def estimate_parameter(func, moment_vector):
     """Estimate a parameter and its gradient"""
+    # pylint: disable=too-many-locals
     parameter_estimate = np.zeros(len(moment_vector) + 1)
     parameter_estimate[0] = func(moment_vector)
     nmax = 10
@@ -1019,6 +1020,7 @@ def estimate_parameter(func, moment_vector):
 
 def brent(ax, bx, cx, func, tol, xopt):
     """Maximize by Brent algorithm"""
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
     itmax = 1000
     cgold = 0.3819660
     zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
@@ -1101,6 +1103,8 @@ def brent(ax, bx, cx, func, tol, xopt):
 
 def zbrent(func, x1, x2, tol, xopt):
     """Find a root using the Brent algorithm"""
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+    # pylint: disable=consider-swap-variables
     itmax = 1000
     eps = np.finfo(float).eps   # in fortran was epsilon(x1)
     a = x1
@@ -1419,6 +1423,7 @@ class RCR:
     --------
     To be added.
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  endog,
                  exog,
@@ -1432,6 +1437,7 @@ class RCR:
         """
         Constructs the RCR object.
         """
+        # pylint: disable=too-many-arguments
         self.endog = np.asarray(endog)
         check_endog(self.endog)
         nrows = self.endog.shape[0]
@@ -1563,6 +1569,7 @@ class RCR:
         RCRResults
             the results container.
         """
+        # pylint: disable=too-many-arguments,too-many-locals
         if lambda_range is None:
             lambda_range = self.lambda_range
         else:
@@ -1693,6 +1700,7 @@ class RCRResults:
     --------
     To be added.
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  model,
                  params,
@@ -1709,6 +1717,7 @@ class RCRResults:
         """
         Constructs the RCRResults object.
         """
+        # pylint: disable=too-many-arguments
         self.model = model
         self.params = params
         self.param_names = ["lambdaInf",
@@ -1891,6 +1900,7 @@ class RCRResults:
         """
         Create plot of RCR estimation results
         """
+        # pylint: disable=too-many-arguments,too-many-locals
         xlim = np.sort(np.asarray(xlim))
         if len(xlim) == 2:
             xgrid = np.linspace(xlim[0], xlim[1], num=100)
@@ -1977,6 +1987,7 @@ class RCRResults:
         --------
         To be added.
         """
+        # pylint: disable=too-many-locals
         if tableformats is None:
             tableformats=["%9.4f", "%9.3f", "%9.3f",
                           "%9.3f", "%9.3f", "%9.3f"]

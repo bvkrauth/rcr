@@ -1,0 +1,14 @@
+[BASIC]
+# Good variable names which should always be accepted, separated by a comma.
+good-names=i,XX,XY,XZ,invXX
+
+
+# Good variable names regexes, separated by a comma. If names match any regex,
+# they will always be accepted
+good-names-rgxs=^[_a-z][_a-z0-9]?$
+
+[MESSAGES CONTROL]
+disable=too-many-lines
+
+[TYPECHECK]
+ignored-modules=patsy,rcr

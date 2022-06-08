@@ -126,9 +126,6 @@ def read_data(infile):
     except ValueError:
         msg = "Incorrect format in line 1 of infile {0}.\n".format(infile)
         die(msg)
-    except Exception:
-        msg = "Unknown problem with line 1 of infile {0}.\n".format(infile)
-        die(msg)
     else:
         msg1 = "Line 1: n_moments = {0}, n_lambda = {1}".format(n_moments,
                                                                 n_lambda)
@@ -143,9 +140,6 @@ def read_data(infile):
     except ValueError:
         msg = "Incorrect format in line 2 of infile {0}.\n".format(infile)
         die(msg)
-    except Exception:
-        msg = "Unknown problem with line 2 of infile {0}.\n".format(infile)
-        die(msg)
     else:
         msg = "Line 2: moment_vector = a vector of length {0}.\n"
         write_to_logfile(msg.format(len(moment_vector)))
@@ -157,9 +151,6 @@ def read_data(infile):
                                    header=None).values[0, ].astype(np.float64)
     except ValueError:
         msg = "Incorrect format in line 3 of infile {0}.\n".format(infile)
-        die(msg)
-    except Exception:
-        msg = "Unknown problem with line 3 of infile {0}.\n".format(infile)
         die(msg)
     else:
         write_to_logfile("Line 3: lambda_range = {0}.\n".format(lambda_range))

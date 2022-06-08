@@ -593,128 +593,129 @@ def estimate_theta(moment_vector,
     for j in range(1, 3):
         theta = theta_estimate[j-1, 0]
         # The gradient can only be calculated if theta is finite!
-        if np.isfinite(theta):
-            # Gradients are estimated using a simple finite central difference:
-            #            df/dx = (f(x+e)-f(x-e))/2e
-            # where e is some small step size.  The tricky part is getting the
-            # right step size.  The algorithm used here is an adaptation of
-            # dfridr in Numerical Recipes.  However, that algorithm needs an
-            # input initial step size h.
-            #
-            # http://www.fizyka.umk.pl/nrbook/c5-7.pdf: "As a function of input
-            # h, it is typical for the accuracy to get better as h is made
-            # larger, until a sudden point is reached where nonsensical
-            # extrapolation produces early return with a large error. You
-            # should therefore choose a fairly large value for h, but monitor
-            # the returned value err, decreasing h if it is not small. For
-            # functions whose characteristic x scale is of order unity, we
-            # typically take h to be a few tenths."
-            # So we try out starting values (h) until we get one that gives an
-            # acceptable estimated error.
-            for n in range(1, nmax+1):
-                # Our candidate initial stepsize is 0.1, 0.001, ...
-                h = 0.1 ** n
-                # Initialize errmax
-                errmax = 0.0
-                # Initialize the finite-difference vector
-                deps[:] = 0.0
-                # First, we calculate the scalar-as-vector (dlambda / dtheta)
-                # hh is the current step size.
+        if not np.isfinite(theta):
+            # If theta is infinite, then the gradient is zero.
+            theta_estimate[j - 1, 1:] = 0.0
+            continue
+
+        # Gradients are estimated using a simple finite central difference:
+        #            df/dx = (f(x+e)-f(x-e))/2e
+        # where e is some small step size.  The tricky part is getting the
+        # right step size.  The algorithm used here is an adaptation of
+        # dfridr in Numerical Recipes.  However, that algorithm needs an
+        # input initial step size h.
+        #
+        # http://www.fizyka.umk.pl/nrbook/c5-7.pdf: "As a function of input
+        # h, it is typical for the accuracy to get better as h is made
+        # larger, until a sudden point is reached where nonsensical
+        # extrapolation produces early return with a large error. You
+        # should therefore choose a fairly large value for h, but monitor
+        # the returned value err, decreasing h if it is not small. For
+        # functions whose characteristic x scale is of order unity, we
+        # typically take h to be a few tenths."
+        # So we try out starting values (h) until we get one that gives an
+        # acceptable estimated error.
+        for n in range(1, nmax+1):
+            # Our candidate initial stepsize is 0.1, 0.001, ...
+            h = 0.1 ** n
+            # Initialize errmax
+            errmax = 0.0
+            # Initialize the finite-difference vector
+            deps[:] = 0.0
+            # First, we calculate the scalar-as-vector (dlambda / dtheta)
+            # hh is the current step size.
+            hh = h
+            # Calculate an approximate derivative using stepsize hh
+            a[0, 0] = (lambdafast(theta + hh, simplified_moments) -
+                       lambdafast(theta - hh, simplified_moments)) / \
+                      (2.0 * hh)
+            # Set the error to very large
+            err = big
+            # Now we try progressively smaller stepsizes
+            for k in range(2, ntab + 1):
+                # The new stepsize hh is the old stepsize divided by 1.4
+                hh = hh / con
+                # Calculate an approximate derivative with the new
+                # stepsize
+                a[0, k-1] = ((lambdafast(theta + hh, simplified_moments) -
+                              lambdafast(theta - hh, simplified_moments)) /
+                             (2.0 * hh))
+                # Then use Neville's method to estimate the error
+                for m in range(2, k + 1):
+                    a[m - 1, k - 1] = ((a[m - 2, k - 1] *
+                                        fac[m - 2] -
+                                        a[m - 2, k - 2]) /
+                                       (fac[m - 2] - 1.0))
+                errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
+                                               a[0:k - 1, k - 1]),
+                                           abs(a[1:k, k - 1] -
+                                               a[0:k - 1, k - 2]))
+                ierrmin = np.nanargmin(errt[0:k - 1]) if \
+                    any(np.isfinite(errt[0:k - 1])) else 0
+                # If the approximation error is lower than any previous,
+                # use that value
+                if errt[ierrmin] <= err:
+                    err = errt[ierrmin]
+                    dfridr = a[1 + ierrmin, k - 1]
+                if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= (safe * err):
+                    break
+            # errmax is the biggest approximation error so far for the
+            # current value of h
+            errmax = max(errmax, err)
+            # Now we have a candidate derivative dlambda/dtheta
+            dtheta = dfridr
+            # Second, estimate the vector (dlambda / dmoment_vector)
+            for i in range(1, len(moment_vector) + 1):
                 hh = h
-                # Calculate an approximate derivative using stepsize hh
-                a[0, 0] = (lambdafast(theta + hh, simplified_moments) -
-                           lambdafast(theta - hh, simplified_moments)) / \
-                          (2.0 * hh)
-                # Set the error to very large
+                deps[i-1] = hh
+                a[0, 0] = ((lambdafun(moment_vector + deps, theta) -
+                            lambdafun(moment_vector - deps, theta)) /
+                           (2.0 * hh))
                 err = big
-                # Now we try progressively smaller stepsizes
                 for k in range(2, ntab + 1):
-                    # The new stepsize hh is the old stepsize divided by 1.4
                     hh = hh / con
-                    # Calculate an approximate derivative with the new
-                    # stepsize
-                    a[0, k-1] = ((lambdafast(theta + hh, simplified_moments) -
-                                  lambdafast(theta - hh, simplified_moments)) /
-                                 (2.0 * hh))
-                    # Then use Neville's method to estimate the error
+                    deps[i-1] = hh
+                    a[0, k - 1] = (lambdafun(moment_vector + deps,
+                                             theta) -
+                                   lambdafun(moment_vector - deps,
+                                             theta)) / (2.0 * hh)
                     for m in range(2, k + 1):
-                        a[m - 1, k - 1] = ((a[m - 2, k - 1] *
-                                            fac[m - 2] -
-                                            a[m - 2, k - 2]) /
-                                           (fac[m - 2] - 1.0))
+                        a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
+                                           a[m - 2, k - 2]) / \
+                                           (fac[m - 2] - 1.0)
                     errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
                                                    a[0:k - 1, k - 1]),
                                                abs(a[1:k, k - 1] -
                                                    a[0:k - 1, k - 2]))
                     ierrmin = np.nanargmin(errt[0:k - 1]) if \
                         any(np.isfinite(errt[0:k - 1])) else 0
-                    # If the approximation error is lower than any previous,
-                    # use that value
                     if errt[ierrmin] <= err:
                         err = errt[ierrmin]
                         dfridr = a[1 + ierrmin, k - 1]
-                    if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= (safe * err):
+                    if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= \
+                       (safe * err):
                         break
                 # errmax is the biggest approximation error so far for the
                 # current value of h
                 errmax = max(errmax, err)
-                # Now we have a candidate derivative dlambda/dtheta
-                dtheta = dfridr
-                # Second, estimate the vector (dlambda / dmoment_vector)
-                for i in range(1, len(moment_vector) + 1):
-                    hh = h
-                    deps[i-1] = hh
-                    a[0, 0] = ((lambdafun(moment_vector + deps, theta) -
-                                lambdafun(moment_vector - deps, theta)) /
-                               (2.0 * hh))
-                    err = big
-                    for k in range(2, ntab + 1):
-                        hh = hh / con
-                        deps[i-1] = hh
-                        a[0, k - 1] = (lambdafun(moment_vector + deps,
-                                                 theta) -
-                                       lambdafun(moment_vector - deps,
-                                                 theta)) / (2.0 * hh)
-                        for m in range(2, k + 1):
-                            a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
-                                               a[m - 2, k - 2]) / \
-                                               (fac[m - 2] - 1.0)
-                        errt[0:k - 1] = np.maximum(abs(a[1:k, k - 1] -
-                                                       a[0:k - 1, k - 1]),
-                                                   abs(a[1:k, k - 1] -
-                                                       a[0:k - 1, k - 2]))
-                        ierrmin = np.nanargmin(errt[0:k - 1]) if \
-                            any(np.isfinite(errt[0:k - 1])) else 0
-                        if errt[ierrmin] <= err:
-                            err = errt[ierrmin]
-                            dfridr = a[1 + ierrmin, k - 1]
-                        if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= \
-                           (safe * err):
-                            break
-                    # errmax is the biggest approximation error so far for the
-                    # current value of h
-                    errmax = max(errmax, err)
-                    dmoments[i - 1] = dfridr
-                    deps[i - 1] = 0.0
-                # At this point we have estimates of the derivatives stored in
-                # dtheta and dmoments. We also have the maximum approximation
-                # error for the current h stored in errmax. If that
-                # approximation error is "good enough" we are done and can
-                # exit the loop
-                if errmax < 0.01:
-                    break
-                # Otherwise we will try again with a smaller h
-                if n == nmax:
-                    msg1 = "Inaccurate SE for thetaL/H."
-                    msg2 = "Try normalizing variables."
-                    warn(msg1 + " " + msg2)
-            # Finally, we apply the implicit function theorem to calculate the
-            # gradient that we actually need:
-            #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
-            theta_estimate[j-1, 1:] = -dmoments / dtheta
-        else:
-            # If theta is infinite, then the gradient is zero.
-            theta_estimate[j - 1, 1:] = 0.0
+                dmoments[i - 1] = dfridr
+                deps[i - 1] = 0.0
+            # At this point we have estimates of the derivatives stored in
+            # dtheta and dmoments. We also have the maximum approximation
+            # error for the current h stored in errmax. If that
+            # approximation error is "good enough" we are done and can
+            # exit the loop
+            if errmax < 0.01:
+                break
+            # Otherwise we will try again with a smaller h
+            if n == nmax:
+                msg1 = "Inaccurate SE for thetaL/H."
+                msg2 = "Try normalizing variables."
+                warn(msg1 + " " + msg2)
+        # Finally, we apply the implicit function theorem to calculate the
+        # gradient that we actually need:
+        #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
+        theta_estimate[j-1, 1:] = -dmoments / dtheta
     return theta_estimate
 
 

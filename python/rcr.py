@@ -221,8 +221,8 @@ def write_details(thetavec, lambdavec, detail_file):
         try:
             with open(detail_file, mode="w") as df:
                 df.write("theta, lambda \n")
-                for i in range(0, len(thetavec)):
-                    df.write("{0}, {1} \n".format(thetavec[i], lambdavec[i]))
+                for i, theta in enumerate(thetavec):
+                    df.write("{0}, {1} \n".format(theta, lambdavec[i]))
         except OSError:
             warn("Cannot write to detail file {0}.".format(detail_file))
 

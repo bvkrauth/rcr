@@ -42,6 +42,8 @@ import matplotlib.pyplot as plt
 # Local application imports
 # (none)
 
+logfile = None
+
 
 # I/O and system functions
 
@@ -50,19 +52,18 @@ def get_command_arguments(args):
     """Retrieve command arguments, usually from sys.argv."""
     # ARGS should be a list of 1 to 5 strings like sys.argv
     if isinstance(args, list) and all([type(item) == str for item in args]):
-        if (len(args) > 5):
+        if len(args) > 5:
             msg = "Unused program arguments {0}".format(args[5:])
             warnings.warn(msg)
-            pass
     else:
         msg = "Invalid command arguments, using defaults: {0}".format(args)
         warnings.warn(msg)
         args = []
-    infile = args[1].strip() if len(args) > 1 else "in.txt"
-    outfile = args[2].strip() if len(args) > 2 else "pout.txt"
-    logfile = args[3].strip() if len(args) > 3 else "plog.txt"
-    detail_file = args[4].strip() if len(args) > 4 else ""
-    return infile, outfile, logfile, detail_file
+    _infile = args[1].strip() if len(args) > 1 else "in.txt"
+    _outfile = args[2].strip() if len(args) > 2 else "pout.txt"
+    _logfile = args[3].strip() if len(args) > 3 else "plog.txt"
+    _detail_file = args[4].strip() if len(args) > 4 else ""
+    return _infile, _outfile, _logfile, _detail_file
 
 
 def set_logfile(fname):
@@ -82,17 +83,17 @@ def get_logfile():
     return logfile
 
 
-def write_to_logfile(str, mode="a"):
+def write_to_logfile(msg, mode="a"):
     """Write a note to the log file."""
     logfile = get_logfile()
     if logfile is None:
-        return
+        return None
     try:
         with open(logfile, mode) as lf:
-            lf.write(str)
+            lf.write(msg)
     except OSError:
-        msg = "Cannot write to logfile {0}.".format(logfile)
-        warnings.warn(msg)
+        new_msg = "Cannot write to logfile {0}.".format(logfile)
+        warnings.warn(new_msg)
     return None
 
 
@@ -195,7 +196,7 @@ def read_data(infile):
     # If external_big_number is bigger than sys.float_info.max, then issue a
     # warning but don't stop program.
     # TODO: I'm not satisfied with this.
-    if (external_big_number > sys.float_info.max):
+    if external_big_number > sys.float_info.max:
         msg = "Largest Python real ({0}) is less than largest in Stata {1}"
         warn(msg.format(sys.float_info.max, external_big_number))
     return n_moments, n_lambda, external_big_number, \
@@ -217,9 +218,11 @@ def write_results(result_matrix, outfile):
 
 
 def write_details(thetavec, lambdavec, detail_file):
-    # If a detail_file has been specified, output thetavec and lambdavec to
-    # that file
-    if (len(detail_file) > 0):
+    """
+    If a detail_file has been specified, output thetavec and lambdavec to
+    that file
+    """
+    if len(detail_file) > 0:
         try:
             with open(detail_file, mode="w") as df:
                 df.write("theta, lambda \n")
@@ -299,7 +302,7 @@ def estimate_model(moment_vector, lambda_range):
         return result_matrix
     # If model is not identified, just stop there
     # TODO: some model elements may still be identified here
-    elif not identified:
+    if not identified:
         return result_matrix
     # We have closed forms for the global parameters lambda_star, theta_star,
     # and lambda(0), so we just estimate them directly.
@@ -346,12 +349,12 @@ def estimate_theta_segments(moment_vector):
     # Create a starting set of theta values at which to calculate lambda
     thetavec = np.sort(np.append(np.linspace(-50.0, 50.0, imax - 2),
                                  (thetamax, -thetamax)))
-    if (np.isfinite(theta_star)):
+    if np.isfinite(theta_star):
         # Figure out where theta_star lies in thetavec
         i = np.sum(thetavec < theta_star)
         # If i=0 or i=k, then theta_star is finite but outside of
         # [-thetamax,thetamax]. This is unlikely, but we should check.
-        if ((i > 0) and (i < imax)):
+        if 0 < i < imax:
             # Adjust i to ensure that -thetamax and thetamax are still
             # included in thetavec
             i = min(max(i, 2), imax - 2)
@@ -359,7 +362,7 @@ def estimate_theta_segments(moment_vector):
             # with two more carefully-chosen numbers.  See BRACKET_THETA_STAR
             # for details
             bracket = bracket_theta_star(moment_vector)
-            if (bracket is not None):
+            if bracket is not None:
                 thetavec[i-1: i+1] = bracket
             # TODO: There is a potential bug here.  The bracket_theta_star
             # function is used to take the two values in thetavec that are
@@ -390,9 +393,9 @@ def estimate_theta_segments(moment_vector):
     localmax = np.append(np.insert(localmax, [0], [False]), False)
     # Figure out where theta_star lies in THETAVEC.  We need to do this
     # calculation again because we sorted THETAVEC
-    if (np.isfinite(theta_star)):
+    if np.isfinite(theta_star):
         i = np.sum(thetavec < theta_star)
-        if ((i > 0) and (i < imax)):
+        if 0 < i < imax:
             # The two values bracketing theta_star are never local optima
             localmin[i-1:i+1] = False
             localmax[i-1:i+1] = False
@@ -415,7 +418,7 @@ def estimate_theta_segments(moment_vector):
                                   1.0e-10,
                                   simplify_moments(moment_vector))
     # Now we are ready to create THETA_SEGMENTS.
-    if (np.isfinite(theta_star) and (i > 0) and (i < imax)):
+    if np.isfinite(theta_star) and 0 < i < imax:
         # THETA_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
         # values that bracket theta_star, and any local optima
         theta_segments = np.append(np.concatenate([thetavec[i-1:i+1],
@@ -443,7 +446,7 @@ def bracket_theta_star(moment_vector):
     sm = simplify_moments(moment_vector)
     # If this condition holds, no need to find a bracket (and the code
     # below won't work anyway)
-    if (sm[2] == sm[5] * sm[1]/sm[4]):
+    if sm[2] == sm[5] * sm[1]/sm[4]:
         return None
     # We may want to use np.inf here
     # NOTE: the np.sign seems extraneous here.
@@ -472,7 +475,7 @@ def bracket_theta_star(moment_vector):
         #       indistingushable from zero (NaN), but sometimes the numerator
         #       will reach indistinguishable-from-zero faster (giving zero
         #       for the ratio).
-        if ((candidate[0] < theta_star) and (candidate[1] > theta_star)):
+        if candidate[0] < theta_star < candidate[1]:
             tmp2 = lambdafast(candidate, sm)
             if (np.isfinite(tmp2).all() and
                (tmp2[0]*np.sign(true_limit[0]) > 0.0) and
@@ -481,7 +484,7 @@ def bracket_theta_star(moment_vector):
                 bracket = candidate
             else:
                 continue
-    if (j == 0):
+    if j == 0:
         msg = "Unable to find a good bracket for theta_star"
         warn(msg)
     return bracket
@@ -510,7 +513,7 @@ def estimate_theta(moment_vector,
     theta_star = thetastar(moment_vector)
     # Check to make sure that lambda_star is not in lambda_range.  If so,
     # theta is completely unidentified.
-    if (lambda_range[0] <= lambda_star) and (lambda_star <= lambda_range[1]):
+    if lambda_range[0] <= lambda_star <= lambda_range[1]:
         theta_estimate[0, 0] = -np.inf
         theta_estimate[1, 0] = np.inf
         theta_estimate[:, 1:] = 0.0
@@ -568,10 +571,10 @@ def estimate_theta(moment_vector,
     # TODO: Make sure the tolerance is big enough for the error in zbrent.
     inrange = ((lambda_segments >= lambda_range[0]-0.001) &
                (lambda_segments <= lambda_range[1]+0.001))
-    if (k > 1):
+    if k > 1:
         inrange[0:k-1] = True
     # If no IMPORTANT_THETAS are in range, the identified set is empty
-    if (sum(inrange) == 0):
+    if sum(inrange) == 0:
         theta_estimate[0, 0] = np.nan
     # If the lowest value in IMPORTANT_THETAS is in range, then there is no
     # (finite) lower bound
@@ -582,7 +585,7 @@ def estimate_theta(moment_vector,
         # IMPORTANT_THETAS that is in range
         theta_estimate[0, 0] = min(important_thetas[inrange])
     # If no IMPORTANT_THETAS are in range, the identified set is empty
-    if (sum(inrange) == 0):
+    if sum(inrange) == 0:
         theta_estimate[1, 0] = np.nan
     # If the highest value in IMPORTANT_THETAS is in range, then there is no
     # (finite) upper bound
@@ -654,7 +657,7 @@ def estimate_theta(moment_vector,
                         any(np.isfinite(errt[0:k - 1])) else 0
                     # If the approximation error is lower than any previous,
                     # use that value
-                    if (errt[ierrmin] <= err):
+                    if errt[ierrmin] <= err:
                         err = errt[ierrmin]
                         dfridr = a[1 + ierrmin, k - 1]
                     if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= (safe * err):
@@ -689,7 +692,7 @@ def estimate_theta(moment_vector,
                                                        a[0:k - 1, k - 2]))
                         ierrmin = np.nanargmin(errt[0:k - 1]) if \
                             any(np.isfinite(errt[0:k - 1])) else 0
-                        if (errt[ierrmin] <= err):
+                        if errt[ierrmin] <= err:
                             err = errt[ierrmin]
                             dfridr = a[1 + ierrmin, k - 1]
                         if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= \
@@ -705,10 +708,10 @@ def estimate_theta(moment_vector,
                 # error for the current h stored in errmax. If that
                 # approximation error is "good enough" we are done and can
                 # exit the loop
-                if (errmax < 0.01):
+                if errmax < 0.01:
                     break
                 # Otherwise we will try again with a smaller h
-                if (n == nmax):
+                if n == nmax:
                     msg1 = "Inaccurate SE for thetaL/H."
                     msg2 = "Try normalizing variables."
                     warn(msg1 + " " + msg2)
@@ -893,8 +896,9 @@ def lambdafast(theta, simplified_moments):
     return lambda_fast
 
 
-def negative_lambdafast(theta, simplifiedMoments):
-    return -lambdafast(theta, simplifiedMoments)
+def negative_lambdafast(theta, simplified_moments):
+    """the negative of lambdafast()"""
+    return -lambdafast(theta, simplified_moments)
 
 
 def lambdafun(moment_vector, theta):
@@ -995,7 +999,7 @@ def estimate_parameter(func, moment_vector):
                         any(np.isfinite(errt[0:j - 1])) else 0
                     # If the error is smaller than the lowest previous error,
                     # use that hh
-                    if (errt[ierrmin] <= err):
+                    if errt[ierrmin] <= err:
                         err = errt[ierrmin]
                         dfridr = a[1 + ierrmin, j - 1]
                     # If the error is much larger than the lowest previous
@@ -1005,9 +1009,9 @@ def estimate_parameter(func, moment_vector):
                         break
                 errmax = max(errmax, err)
                 parameter_estimate[i] = dfridr
-            if (errmax < 0.01):
+            if errmax < 0.01:
                 break
-            if (n == nmax):
+            if n == nmax:
                 msg1 = "Inaccurate SE for {0}.".format(func.__name__)
                 msg2 = "Try normalizing variables."
                 warn(msg1 + " " + msg2)
@@ -1039,19 +1043,19 @@ def brent(ax, bx, cx, func, tol, xopt):
     # be reached in the first loop iteration, after which point d will be
     # defined.
     d = e
-    for iter in range(1, itmax + 1):
+    for i in range(1, itmax + 1):
         xm = 0.5 * (a + b)
         tol1 = tol * abs(x) + zeps
         tol2 = 2.0 * tol1
-        if (abs(x - xm) <= (tol2 - 0.5 * (b - a))):
+        if abs(x - xm) <= (tol2 - 0.5 * (b - a)):
             brent_solution = x
             break
-        if (abs(e) > tol1):
+        if abs(e) > tol1:
             r = (x - w) * (fx - fv)
             q = (x - v) * (fx - fw)
             p = (x - v) * q - (x - w) * r
             q = 2.0 * (q - r)
-            if (q > 0.0):
+            if q > 0.0:
                 p = -p
             q = abs(q)
             etemp = e
@@ -1071,8 +1075,8 @@ def brent(ax, bx, cx, func, tol, xopt):
             d = cgold * e
         u = (x + d) if (abs(d) >= tol1) else (x + tol1 * np.sign(d))
         fu = func(u, xopt)
-        if (fu <= fx):
-            if (u >= x):
+        if fu <= fx:
+            if u >= x:
                 a = x
             else:
                 b = x
@@ -1083,7 +1087,7 @@ def brent(ax, bx, cx, func, tol, xopt):
             fw = fx
             fx = fu
         else:
-            if (u < x):
+            if u < x:
                 a = u
             else:
                 b = u
@@ -1095,7 +1099,7 @@ def brent(ax, bx, cx, func, tol, xopt):
             elif (fu <= fv) or (v == x) or (v == w):
                 v = u
                 fv = fu
-    if (iter == itmax):
+    if i == itmax:
         brent_solution = x
         write_to_logfile("Brent exceeded maximum iterations.\n")
     return brent_solution
@@ -1114,13 +1118,13 @@ def zbrent(func, x1, x2, tol, xopt):
         # call die("root must be bracketed for zbrent") # UPDATE
     c = b
     fc = fb
-    for iter in range(1, itmax + 1):
+    for i in range(1, itmax + 1):
         if (((fb > 0.0) and (fc > 0.0)) or ((fb < 0.0) and (fc < 0.0))):
             c = a
             fc = fa
             d = b - a
             e = d
-        if (abs(fc) < abs(fb)):
+        if abs(fc) < abs(fb):
             a = b
             b = c
             c = a
@@ -1135,7 +1139,7 @@ def zbrent(func, x1, x2, tol, xopt):
             break
         if (abs(e) >= tol1) and (abs(fa) > abs(fb)):
             s = fb / fa
-            if (a == c):
+            if a == c:
                 p = 2.0 * xm * s
                 q = 1.0 - s
             else:
@@ -1143,10 +1147,10 @@ def zbrent(func, x1, x2, tol, xopt):
                 r = fb / fc
                 p = s * (2.0 * xm * q * (q - r) - (b - a) * (r - 1.0))
                 q = (q - 1.0) * (r - 1.0) * (s - 1.0)
-            if (p > 0.0):
+            if p > 0.0:
                 q = -q
             p = abs(p)
-            if (2.0 * p < min(3.0 * xm * q - abs(tol1 * q), abs(e * q))):
+            if 2.0 * p < min(3.0 * xm * q - abs(tol1 * q), abs(e * q)):
                 e = d
                 d = p / q
             else:
@@ -1159,7 +1163,7 @@ def zbrent(func, x1, x2, tol, xopt):
         fa = fb
         b = (b + d) if (abs(d) > tol1) else (b + tol1 * np.sign(xm))
         fb = func(b, xopt)
-    if (iter == itmax):
+    if i == itmax:
         zbrent_solution = b
         write_to_logfile("zbrent: exceeded maximum iterations")
     return zbrent_solution
@@ -1168,7 +1172,7 @@ def zbrent(func, x1, x2, tol, xopt):
 def geop(first, factor, n):
     """Create a geometric series"""
     g = np.zeros(n)
-    if (n > 0):
+    if n > 0:
         g[0] = first
     for k in range(1, n):
         g[k] = g[k - 1] * factor
@@ -1208,27 +1212,25 @@ def check_lambda(lambda_range):
         msg1 = "lambda_range should be a numpy array"
         msg2 = " and is a {}.".format(type(lambda_range))
         raise TypeError(msg1 + msg2)
-    elif lambda_range.ndim != 1:
+    if lambda_range.ndim != 1:
         msg1 = "lambda_range should be 1-d array"
         msg2 = " and is a {}-d array.".format(lambda_range.ndim)
         raise TypeError(msg1 + msg2)
-    elif lambda_range.shape[0] != 2:
+    if lambda_range.shape[0] != 2:
         msg1 = "lambda_range should have 2 elements"
         msg2 = " and has {} element(s).".format(lambda_range.shape[0])
         raise TypeError(msg1 + msg2)
-    elif lambda_range.shape[0] != 2:
+    if lambda_range.shape[0] != 2:
         msg1 = "lambda_range should have 2 elements"
         msg2 = " and has {} element(s).".format(lambda_range.shape[0])
         raise TypeError(msg1 + msg2)
-    elif any(np.isnan(lambda_range)):
+    if any(np.isnan(lambda_range)):
         msg = "lambda_range cannot be NaN."
         raise ValueError(msg)
-    elif lambda_range[0] > lambda_range[1]:
+    if lambda_range[0] > lambda_range[1]:
         msg1 = "elements of lambda_range ({0})".format(lambda_range)
         msg2 = " must be in (weakly) ascending order."
         raise ValueError(msg1 + msg2)
-    else:
-        return None
 
 
 def check_endog(endog):
@@ -1239,16 +1241,14 @@ def check_endog(endog):
         msg1 = "endog should be an array-like object"
         msg2 = " and is a {}.".format(type(endog))
         raise TypeError(msg1 + msg2)
-    elif endog.ndim != 2:
+    if endog.ndim != 2:
         msg1 = "endog should be 2-d array"
         msg2 = " and is a {}-d array.".format(endog.ndim)
         raise TypeError(msg1 + msg2)
-    elif endog.shape[1] != 2:
+    if endog.shape[1] != 2:
         msg1 = "endog should have 2 columns"
         msg2 = "and has {} column(s).".format(endog.shape[1])
         raise TypeError(msg1 + msg2)
-    else:
-        return None
 
 
 def check_exog(exog, nrows):
@@ -1259,22 +1259,20 @@ def check_exog(exog, nrows):
         msg1 = "exog should be an array-like object"
         msg2 = " and is a {}.".format(type(exog))
         raise TypeError(msg1 + msg2)
-    elif exog.ndim != 2:
+    if exog.ndim != 2:
         msg = "exog should be 2-d array; is a {}-d array.".format(exog.ndim)
         raise TypeError(msg)
-    elif exog.shape[1] < 2:
+    if exog.shape[1] < 2:
         msg1 = "exog should have at least 2 columns"
         msg2 = " and has {} column(s).".format(exog.shape[1])
         raise TypeError(msg1 + msg2)
-    elif exog.shape[0] != nrows:
+    if exog.shape[0] != nrows:
         msg1 = "endog has {} rows".format(nrows)
         msg2 = " and exog has {} rows.".format(exog.shape[0])
         raise TypeError(msg1 + msg2)
-    elif any(exog[:, 0] != 1.0):
+    if any(exog[:, 0] != 1.0):
         msg = "first column of exog must be an intercept"
         raise ValueError(msg)
-    else:
-        return None
 
 
 def check_covinfo(cov_type, vceadj):
@@ -1287,11 +1285,9 @@ def check_covinfo(cov_type, vceadj):
     if type(vceadj) not in (float, int):
         msg = "vceadj must be a number, is a {}.".format(type(vceadj))
         raise TypeError(msg)
-    elif vceadj < 0.:
+    if vceadj < 0.:
         msg = "vceadj = {}, must be non-negative.".format(vceadj)
         raise ValueError(msg)
-    else:
-        return None
 
 
 def check_ci(cilevel, citype=None):
@@ -1309,8 +1305,7 @@ def check_ci(cilevel, citype=None):
     elif citype not in ("conservative", "upper", "lower", "Imbens-Manski"):
         msg = "Unsupported CI type {}.".format(citype)
         raise ValueError(msg)
-    else:
-        return None
+    return None
 
 
 def check_weights(weights, nrows):
@@ -1338,13 +1333,15 @@ def check_weights(weights, nrows):
     elif sum(weights) <= 0:
         msg = "weights must sum to a positive number."
         raise ValueError(msg)
-    else:
-        return None
+    return None
 
 
 def robust_cov(x,
                groupvar=None,
                weights=None):
+    """
+    Estimate cluster-robust covariance metrix
+    """
     u = pd.DataFrame(x - np.average(x, weights=weights, axis=0))
     if weights is None:
         nobs = len(x)
@@ -1514,8 +1511,7 @@ class RCR:
                                     groupvar=groupvar,
                                     weights=weights)
             return mv, cov_mv
-        else:
-            return mv
+        return mv
 
     def fit(self,
             lambda_range=None,
@@ -1710,6 +1706,7 @@ class RCR_results:
         self.cov_params = cov_params
         self.details = details
         self.cov_type = cov_type
+        self.groupvar = groupvar
         self.vceadj = vceadj
         self.lambda_range = lambda_range
         self.cilevel = cilevel
@@ -1750,6 +1747,10 @@ class RCR_results:
     def betaxCI(self,
                 cilevel=None,
                 citype="conservative"):
+        """
+        asymptotic confidence interval for causal effect.
+        """
+
         if citype == "conservative":
             betaxCI = self.betaxCI_conservative(cilevel=cilevel)
         elif citype == "upper":
@@ -1807,7 +1808,7 @@ class RCR_results:
         delta = (self.params[4] - self.params[3]) / max(se[3], se[4])
         cv = cv_min
         if np.isfinite(delta):
-            while ((cv_max - cv_min) > 0.000001):
+            while (cv_max - cv_min) > 0.000001:
                 cv = (cv_min + cv_max) / 2.0
                 if (scipy.stats.norm.cdf(cv + delta) -
                    scipy.stats.norm.cdf(-cv)) < (cilevel / 100):
@@ -1834,7 +1835,7 @@ class RCR_results:
         ts = self.params[1]
         sm0 = simplify_moments(self.model._get_mv(weights=self.weights))
         lambdavals = lambdafast(thetavals, sm0)
-        if add_thetastar and ts >= min(thetavals) and ts <= max(thetavals):
+        if add_thetastar and min(thetavals) <= ts <= max(thetavals):
             thetavals = np.append(thetavals, [ts])
             lambdavals = np.append(lambdavals, [np.nan])
             msk = np.argsort(thetavals)
@@ -1856,13 +1857,13 @@ class RCR_results:
         low = 0.0
         high = 100.0
         mid = 50.0
-        if h0 >= self.params[3] and h0 <= self.params[4]:
+        if self.params[3] <= h0 <= self.params[4]:
             pvalue = 1.0
         else:
             while (high - low) > 0.00001:
                 mid = (high + low) / 2.0
                 ci = self.betaxCI_imbensmanski(cilevel=mid)
-                if h0 >= ci[0] and h0 <= ci[1]:
+                if ci[0] <= h0 <= ci[1]:
                     high = mid
                 else:
                     low = mid
@@ -1913,7 +1914,7 @@ class RCR_results:
             ax.set_ylim(ylim[0], ylim[1])
         if tsline is True:
             ts = self.params[1]
-            if ts >= xlim[0] and ts <= xlim[-1]:
+            if xlim[0] <= ts <= xlim[-1]:
                 ax.axvline(ts,
                            ls=tss,
                            color=tscolor,
@@ -2060,27 +2061,28 @@ class RCR_results:
 
 if __name__ == "__main__":
     # Load in arguments from call to program
-    (infile, outfile, logfile, detail_file) = get_command_arguments(sys.argv)
+    (infile0, outfile0, logfile0,
+        detail_file0) = get_command_arguments(sys.argv)
 
     # Start the log file
-    start_logfile(logfile)
+    start_logfile(logfile0)
 
     # Read in the data from INFILE
-    (n_moments, n_lambda, external_big_number, moment_vector,
-        lambda_range) = read_data(infile)
+    (n_moments0, n_lambda0, external_big_number0, moment_vector0,
+        lambda_range0) = read_data(infile0)
 
     # Perform the calculations and put the results in result_matrix
-    (result_matrix, thetavec, lambdavec) = estimate_model(moment_vector,
-                                                          lambda_range)
+    (result_matrix0, thetavec0, lambdavec0) = estimate_model(moment_vector0,
+                                                             lambda_range0)
 
     # Write out the data to OUTFILE
-    write_results(translate_result(result_matrix,
-                                   inf=external_big_number,
+    write_results(translate_result(result_matrix0,
+                                   inf=external_big_number0,
                                    nan=0.0),
-                  outfile)
+                  outfile0)
 
-    if detail_file != "":
-        write_details(thetavec, lambdavec, detail_file)
+    if detail_file0 != "":
+        write_details(thetavec0, lambdavec0, detail_file0)
 
     # Close the log file
     set_logfile(None)

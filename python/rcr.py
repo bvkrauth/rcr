@@ -90,11 +90,13 @@ def write_to_logfile(msg, mode="a"):
     if logfile is None:
         return None
     try:
-        with open(logfile, mode, encoding="utf-8") as lf:
-            lf.write(msg)
+        with open(logfile,
+                  mode,
+                  encoding="utf-8") as log_file:
+            log_file.write(msg)
     except OSError:
-        new_msg = f"Cannot write to logfile {logfile}."
-        warnings.warn(new_msg)
+        fail_msg = f"Cannot write to logfile {logfile}."
+        warnings.warn(fail_msg)
     return None
 
 
@@ -224,10 +226,12 @@ def write_details(thetavec, lambdavec, detail_file):
     """
     if len(detail_file) > 0:
         try:
-            with open(detail_file, mode="w", encoding="utf-8") as df:
-                df.write("theta, lambda \n")
+            with open(detail_file,
+                      mode="w",
+                      encoding="utf-8") as d_file:
+                d_file.write("theta, lambda \n")
                 for i, theta in enumerate(thetavec):
-                    df.write(f"{theta}, {lambdavec[i]} \n")
+                    d_file.write(f"{theta}, {lambdavec[i]} \n")
         except OSError:
             warn(f"Cannot write to detail file {detail_file}.")
 
@@ -336,12 +340,15 @@ def estimate_model(moment_vector, lambda_range):
 def estimate_theta_segments(moment_vector):
     """Divide real line into segments over which lambda(theta) is monotonic"""
     imax = 30000   # A bigger number produces an FP overflow in fortran
-    sm = simplify_moments(moment_vector)
+    simplified_moments = simplify_moments(moment_vector)
     theta_star = thetastar(moment_vector)
     # THETAMAX is the largest value of theta for which we can calculate both
     # lambda(theta) and lambda(-theta) without generating a floating point
     # exception.
-    thetamax = np.sqrt(sys.float_info.max / max(1.0, sm[4], sm[1] - sm[4]))
+    thetamax = np.sqrt(sys.float_info.max /
+                       max(1.0,
+                           simplified_moments[4],
+                           simplified_moments[1] - simplified_moments[4]))
     # The calculation above seems clever, but it turns out not to always work.
     # So I've put in a hard limit as well
     thetamax = min(1.0e100, thetamax)
@@ -442,15 +449,20 @@ def bracket_theta_star(moment_vector):
     theta_star = thetastar(moment_vector)
     # Get the limit of lambda(theta) as theta approaches theta_star,from below
     # and from above. These limits are generally not finite.
-    sm = simplify_moments(moment_vector)
+    simplified_moments = simplify_moments(moment_vector)
     # If this condition holds, no need to find a bracket (and the code
     # below won't work anyway)
-    if sm[2] == sm[5] * sm[1]/sm[4]:
+    if simplified_moments[2] == (simplified_moments[5] *
+                                simplified_moments[1] /
+                                simplified_moments[4]):
         return None
     # We may want to use np.inf here
     # NOTE: the np.sign seems extraneous here.
     true_limit = (np.array((1.0, -1.0)) *
-                  np.sign(sm[2] - sm[5] * sm[1]/sm[4]) *
+                  np.sign(simplified_moments[2] -
+                          simplified_moments[5] *
+                          simplified_moments[1] /
+                          simplified_moments[4]) *
                   sys.float_info.max)
     # Pick a default value
     bracket = None
@@ -475,7 +487,7 @@ def bracket_theta_star(moment_vector):
         #       will reach indistinguishable-from-zero faster (giving zero
         #       for the ratio).
         if candidate[0] < theta_star < candidate[1]:
-            tmp2 = lambdafast(candidate, sm)
+            tmp2 = lambdafast(candidate, simplified_moments)
             if (np.isfinite(tmp2).all() and
                (tmp2[0]*np.sign(true_limit[0]) > 0.0) and
                (tmp2[1]*np.sign(true_limit[1]) > 0.0)):
@@ -494,6 +506,7 @@ def estimate_theta(moment_vector,
                    theta_segments):
     """Estimate theta"""
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    # pylint: disable=invalid-name
     ntab = 10
     nmax = 10
     con = 1.4
@@ -728,6 +741,7 @@ def estimate_theta(moment_vector,
 def simplify_moments(moment_vector):
     """Convert moment_vector into the six moments needed for the model"""
     # Get sizes
+    # pylint: disable=invalid-name
     m = len(moment_vector)
     k = int((np.sqrt(1 + 8 * m) + 1) / 2)
     assert 2*(m + 1) == k ** 2 + k
@@ -791,53 +805,56 @@ def simplify_moments(moment_vector):
 def check_moments(moment_vector):
     """Check to ensure moment_vector is valid"""
     # pylint: disable=too-many-branches
-    sm = simplify_moments(moment_vector)
+    simplified_moments = simplify_moments(moment_vector)
     # First make sure that moment_vector describes a valid covariance matrix
     valid = True
-    if not all(np.isfinite(sm)):
+    if not all(np.isfinite(simplified_moments)):
         valid = False
-        if all(np.isfinite(sm[0:3])) and all(np.isnan(sm[4:7])):
+        if (all(np.isfinite(simplified_moments[0:3])) and
+            all(np.isnan(simplified_moments[4:7]))):
             warn("Invalid data: nonsingular X'X matrix.")
         else:
             warn("Invalid data: unknown issue")
-    if sm[0] < 0.0:
+    if simplified_moments[0] < 0.0:
         valid = False
-        warn(f"Invalid data: var(y) = {sm[0]} < 0")
-    if sm[1] < 0.0:
+        warn(f"Invalid data: var(y) = {simplified_moments[0]} < 0")
+    if simplified_moments[1] < 0.0:
         valid = False
-        warn(f"Invalid data: var(z) = {sm[1]} < 0")
-    if sm[3] < 0.0:
+        warn(f"Invalid data: var(z) = {simplified_moments[1]} < 0")
+    if simplified_moments[3] < 0.0:
         valid = False
-        warn(f"Invalid data: var(yhat) = {sm[3]} < 0")
-    if sm[4] < 0.0:
+        warn(f"Invalid data: var(yhat) = {simplified_moments[3]} < 0")
+    if simplified_moments[4] < 0.0:
         valid = False
-        warn(f"Invalid data: var(zhat) = {sm[4]} < 0")
-    if np.abs(sm[2]) > np.sqrt(sm[0] * sm[1]):
+        warn(f"Invalid data: var(zhat) = {simplified_moments[4]} < 0")
+    if (np.abs(simplified_moments[2]) >
+        np.sqrt(simplified_moments[0] * simplified_moments[1])):
         valid = False
-        covyz = np.abs(sm[2])
-        sdyz = np.sqrt(sm[0] * sm[1])
+        covyz = np.abs(simplified_moments[2])
+        sdyz = np.sqrt(simplified_moments[0] * simplified_moments[1])
         msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
         msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
         warn(msg1 + msg2)
-    if np.abs(sm[5]) > np.sqrt(sm[3] * sm[4]):
+    if np.abs(simplified_moments[5]) > np.sqrt(simplified_moments[3] *
+                                               simplified_moments[4]):
         valid = False
-        covyz = np.abs(sm[5])
-        sdyz = np.sqrt(sm[3] * sm[4])
+        covyz = np.abs(simplified_moments[5])
+        sdyz = np.sqrt(simplified_moments[3] * simplified_moments[4])
         msg1 = f"Invalid data: cov(yh,zh) = {covyz}"
         msg2 = f" > {sdyz} sqrt(var(yh)*var(zh))"
         warn(msg1 + msg2)
     # Next make sure that the identifying conditions are satisfied.
     identified = valid
-    if sm[0] == 0.0:
+    if simplified_moments[0] == 0.0:
         identified = False
         warn("Model not identified: var(y) = 0")
-    if sm[1] == 0.0:
+    if simplified_moments[1] == 0.0:
         identified = False
         warn("Model not identified: var(z) = 0")
-    if sm[3] == 0.0:
+    if simplified_moments[3] == 0.0:
         identified = False
         warn("Model not identified: var(yhat) = 0")
-    if sm[3] == sm[0]:
+    if simplified_moments[3] == simplified_moments[0]:
         identified = False
         warn("Model not identified: y is an exact linear function of X")
     # We may also want to check for var(zhat)=0.
@@ -848,31 +865,34 @@ def check_moments(moment_vector):
 
 def lambdastar(moment_vector):
     """Calculate lambda_star"""
-    sm = simplify_moments(moment_vector)
+    simplified_moments = simplify_moments(moment_vector)
     # lambda_star is defined as sqrt( var(z)/var(zhat) - 1)
     # The check_moments subroutine should ensure that
     #   var(z) > 0 and that var(z) >= var(zhat) >= 0.
     # This implies that lambda_star >= 0.
     # Special values: If var(zhat) = 0, then lambda_star = +Infinity
-    lambda_star = np.inf if sm[4] == 0.0 else \
-        np.sqrt(np.maximum(sm[1] / sm[4], 1.0) - 1.0)
+    lambda_star = np.inf if simplified_moments[4] == 0.0 else \
+        np.sqrt(np.maximum(simplified_moments[1] /
+                           simplified_moments[4], 1.0) - 1.0)
     return lambda_star
 
 
 def thetastar(moment_vector):
     """Calculate theta_star"""
-    sm = simplify_moments(moment_vector)
+    simplified_moments = simplify_moments(moment_vector)
     # theta_star is defined as
     #   cov(yhat,zhat)/var(zhat)
     # The check_moments subroutine should ensure that
     # var(zhat) >= 0 and that if var(zhat)=0 -> cov(yhat,zhat)=0.
     # Special values: If var(zhat)=0, then theta_star = 0/0 = NaN.
-    theta_star = np.nan if sm[4] == 0.0 else sm[5] / sm[4]
+    theta_star = np.nan if simplified_moments[4] == 0.0 else \
+                           simplified_moments[5] / simplified_moments[4]
     return theta_star
 
 
 def lambdafast(theta, simplified_moments):
     """Calculate lambda for each theta in the given array"""
+    # pylint: disable=invalid-name
     y = simplified_moments[0]
     z = simplified_moments[1]
     yz = simplified_moments[2]
@@ -904,8 +924,8 @@ def negative_lambdafast(theta, simplified_moments):
 
 def lambdafun(moment_vector, theta):
     """Calculate lambda for the given theta"""
-    lf = lambdafast(theta, simplify_moments(moment_vector))
-    return lf
+    lambda_fast = lambdafast(theta, simplify_moments(moment_vector))
+    return lambda_fast
 
 
 def lambda0_fun(moment_vector):
@@ -919,16 +939,16 @@ def lambda0_fun(moment_vector):
     #   be +Infinity, -Infinity, or NaN depending on the sign
     #   of cov(y,z).
     simplified_moments = simplify_moments(moment_vector)
-    y = simplified_moments[0]
-    yz = simplified_moments[2]
-    yhat = simplified_moments[3]
-    yzhat = simplified_moments[5]
-    msk = ((y != yhat) &
-           (yzhat != 0.0) &
-           (np.sign(yhat) == np.sign((y - yhat))))
-    lf0 = (((yz - yzhat)/yzhat) *
-           np.sqrt(yhat/(y - yhat))) if msk else np.nan
-    return lf0
+    var_y = simplified_moments[0]
+    cov_yz = simplified_moments[2]
+    var_yhat = simplified_moments[3]
+    cov_yzhat = simplified_moments[5]
+    msk = ((var_y != var_yhat) &
+           (cov_yzhat != 0.0) &
+           (np.sign(var_yhat) == np.sign((var_y - var_yhat))))
+    lambdaval = (((cov_yz - cov_yzhat)/cov_yzhat) *
+                   np.sqrt(var_yhat/(var_y - var_yhat))) if msk else np.nan
+    return lambdaval
 
 
 def lambda_minus_lambda(theta, simplified_moments_and_lambda):
@@ -940,7 +960,7 @@ def lambda_minus_lambda(theta, simplified_moments_and_lambda):
 
 def estimate_parameter(func, moment_vector):
     """Estimate a parameter and its gradient"""
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,invalid-name
     parameter_estimate = np.zeros(len(moment_vector) + 1)
     parameter_estimate[0] = func(moment_vector)
     nmax = 10
@@ -1029,6 +1049,7 @@ def brent(ax, bx, cx, func, tol, xopt):
     """Maximize by Brent algorithm"""
     # pylint: disable=too-many-arguments,too-many-locals
     # pylint: disable=too-many-branches,too-many-statements
+    # pylint: disable=invalid-name
     itmax = 1000
     cgold = 0.3819660
     zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
@@ -1114,6 +1135,7 @@ def zbrent(func, x1, x2, tol, xopt):
     # pylint: disable=too-many-arguments,too-many-locals
     # pylint: disable=too-many-branches,too-many-statements
     # pylint: disable=consider-swap-variables
+    # pylint: disable=invalid-name
     itmax = 1000
     eps = np.finfo(float).eps   # in fortran was epsilon(x1)
     a = x1
@@ -1176,14 +1198,14 @@ def zbrent(func, x1, x2, tol, xopt):
     return zbrent_solution
 
 
-def geop(first, factor, n):
+def geop(first, factor, nobs):
     """Create a geometric series"""
-    g = np.zeros(n)
-    if n > 0:
-        g[0] = first
-    for k in range(1, n):
-        g[k] = g[k - 1] * factor
-    return g
+    geometric_series = np.zeros(nobs)
+    if nobs > 0:
+        geometric_series[0] = first
+    for obs in range(1, nobs):
+        geometric_series[obs] = geometric_series[obs - 1] * factor
+    return geometric_series
 
 
 def get_column_names(arr, default_names=None):
@@ -1342,30 +1364,30 @@ def check_weights(weights, nrows):
     return None
 
 
-def robust_cov(x,
+def robust_cov(dat,
                groupvar=None,
                weights=None):
     """
     Estimate cluster-robust covariance metrix
     """
-    u = pd.DataFrame(x - np.average(x, weights=weights, axis=0))
+    resid = pd.DataFrame(dat - np.average(dat, weights=weights, axis=0))
     if weights is None:
-        nobs = len(x)
+        nobs = len(dat)
         weights = np.ones(nobs)/nobs
     else:
         nobs = sum(weights > 0.)
         weights = weights/sum(weights)
-    umat = (np.asarray(u).T * weights).T
+    umat = (np.asarray(resid).T * weights).T
     if groupvar is None:
         ubarmat = umat
         dofadj = nobs/(nobs-1)
     else:
-        ubar = u.groupby(groupvar).sum()
+        ubar = resid.groupby(groupvar).sum()
         ngroups = sum(pd.Series(weights).groupby(groupvar).sum() > 0)
-        bothu = u.join(ubar,
-                       on=groupvar,
-                       how="right",
-                       rsuffix=".ubar").sort_index()
+        bothu = resid.join(ubar,
+                           on=groupvar,
+                           how="right",
+                           rsuffix=".ubar").sort_index()
         ubarmat = np.asarray(bothu.loc[:,
                                        bothu.columns.str.endswith('.ubar')])
         ubarmat = (ubarmat.T * weights).T
@@ -1502,7 +1524,7 @@ class RCR:
                 groupvar=None):
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
-        mv = np.average(xyzzyx, axis=0, weights=weights)
+        moment_vector = np.average(xyzzyx, axis=0, weights=weights)
         if estimate_cov:
             if weights is None and groupvar is None:
                 fac = 1/self.nobs
@@ -1518,8 +1540,8 @@ class RCR:
                 cov_mv = robust_cov(xyzzyx,
                                     groupvar=groupvar,
                                     weights=weights)
-            return mv, cov_mv
-        return mv
+            return moment_vector, cov_mv
+        return moment_vector
 
     def lambdavals(self,
                    thetavals=np.linspace(-50, 50, 100),
@@ -1528,12 +1550,12 @@ class RCR:
         Estimate lambda for a set of theta values
         """
         thetavals = np.asarray(thetavals).flatten()
-        mv = self._get_mv(weights=self.weights)
-        sm0 = simplify_moments(mv)
-        ts = thetastar(mv)
-        lambdavals = lambdafast(thetavals, sm0)
-        if add_thetastar and min(thetavals) <= ts <= max(thetavals):
-            thetavals = np.append(thetavals, [ts])
+        moment_vector = self._get_mv(weights=self.weights)
+        simplified_moments = simplify_moments(moment_vector)
+        theta_star = thetastar(moment_vector)
+        lambdavals = lambdafast(thetavals, simplified_moments)
+        if add_thetastar and min(thetavals) <= theta_star <= max(thetavals):
+            thetavals = np.append(thetavals, [theta_star])
             lambdavals = np.append(lambdavals, [np.nan])
             msk = np.argsort(thetavals)
             lambdavals = lambdavals[msk]
@@ -1602,11 +1624,12 @@ class RCR:
             nobs = self.nobs
         else:
             nobs = sum(weights > 0.)
-        mv, cov_mv = self._get_mv(estimate_cov=True,
-                                  weights=weights,
-                                  cov_type=cov_type,
-                                  groupvar=groupvar)
-        (result_matrix, thetavec, lambdavec) = estimate_model(mv, lambda_range)
+        moment_vector, cov_mv = self._get_mv(estimate_cov=True,
+                                             weights=weights,
+                                             cov_type=cov_type,
+                                             groupvar=groupvar)
+        (result_matrix, thetavec, lambdavec) = \
+            estimate_model(moment_vector, lambda_range)
         params = result_matrix[:, 0]
         cov_params = (vceadj *
                       result_matrix[:, 1:] @
@@ -1760,8 +1783,8 @@ class RCRResults:
         """
         asymptotic p-values for RCR parameter estimates
         """
-        a = scipy.stats.norm.cdf(np.abs(self.params / self.se()))
-        return 2 * (1.0 - a)
+        alpha = scipy.stats.norm.cdf(np.abs(self.params / self.se()))
+        return 2 * (1.0 - alpha)
 
     def ci(self, cilevel=None):
         """
@@ -1833,24 +1856,25 @@ class RCRResults:
         if cilevel is None:
             cilevel = self.cilevel
         cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
+        cv_mid = cv_min
         cv_max = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 200.0))
-        se = self.se()
-        delta = (self.params[4] - self.params[3]) / max(se[3], se[4])
-        cv = cv_min
+        params_se = self.se()
+        delta = ((self.params[4] - self.params[3]) /
+                  max(params_se[3], params_se[4]))
         if np.isfinite(delta):
             while (cv_max - cv_min) > 0.000001:
-                cv = (cv_min + cv_max) / 2.0
-                if (scipy.stats.norm.cdf(cv + delta) -
-                   scipy.stats.norm.cdf(-cv)) < (cilevel / 100):
-                    cv_min = cv
+                cv_mid = (cv_min + cv_max) / 2.0
+                if (scipy.stats.norm.cdf(cv_mid + delta) -
+                   scipy.stats.norm.cdf(-cv_mid)) < (cilevel / 100):
+                    cv_min = cv_mid
                 else:
-                    cv_max = cv
-        if se[3] > 0:
-            ci_lb = self.params[3]-(cv * se[3])
+                    cv_max = cv_mid
+        if params_se[3] > 0:
+            ci_lb = self.params[3]-(cv_mid * params_se[3])
         else:
             ci_lb = -np.inf
-        if se[4] > 0:
-            ci_ub = self.params[4]+(cv * se[4])
+        if params_se[4] > 0:
+            ci_ub = self.params[4]+(cv_mid * params_se[4])
         else:
             ci_ub = np.inf
         return np.array([ci_lb, ci_ub])
@@ -1874,8 +1898,8 @@ class RCRResults:
         else:
             while (high - low) > 0.00001:
                 mid = (high + low) / 2.0
-                ci = self.betax_ci_imbensmanski(cilevel=mid)
-                if ci[0] <= h0 <= ci[1]:
+                current_ci = self.betax_ci_imbensmanski(cilevel=mid)
+                if current_ci[0] <= h0 <= current_ci[1]:
                     high = mid
                 else:
                     low = mid
@@ -1926,16 +1950,16 @@ class RCRResults:
         if ylim is not None:
             ax.set_ylim(ylim[0], ylim[1])
         if tsline is True:
-            ts = self.params[1]
-            if xlim[0] <= ts <= xlim[-1]:
-                ax.axvline(ts,
+            theta_star = self.params[1]
+            if xlim[0] <= theta_star <= xlim[-1]:
+                ax.axvline(theta_star,
                            ls=tss,
                            color=tscolor,
                            label=tslabel)
         if lsline is True:
-            ls = self.params[0]
-            if any(lambdavals <= ls) and any(lambdavals >= ls):
-                ax.axhline(ls,
+            lambda_star = self.params[0]
+            if min(lambdavals) <= lambda_star <= max(lambdavals):
+                ax.axhline(lambda_star,
                            ls=lss,
                            color=lscolor,
                            label=lslabel)
@@ -2005,9 +2029,9 @@ class RCRResults:
         outmat["se"] = self.se()
         outmat["z"] = self.z()
         outmat["pz"] = self.pz()
-        ci = self.ci(cilevel=cilevel)
-        outmat["ciL"] = ci[0, :]
-        outmat["ciH"] = ci[1, :]
+        params_ci = self.ci(cilevel=cilevel)
+        outmat["ciL"] = params_ci[0, :]
+        outmat["ciH"] = params_ci[1, :]
         betax_ci = self.betax_ci(cilevel=cilevel, citype=citype)
         ncontrols = self.model.exog.shape[1] - 1
         table1data = [[self.model.depvar,

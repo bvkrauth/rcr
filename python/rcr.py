@@ -90,7 +90,7 @@ def write_to_logfile(msg, mode="a"):
     if logfile is None:
         return None
     try:
-        with open(logfile, mode) as lf:
+        with open(logfile, mode, encoding="utf-8") as lf:
             lf.write(msg)
     except OSError:
         new_msg = f"Cannot write to logfile {logfile}."
@@ -224,7 +224,7 @@ def write_details(thetavec, lambdavec, detail_file):
     """
     if len(detail_file) > 0:
         try:
-            with open(detail_file, mode="w") as df:
+            with open(detail_file, mode="w", encoding="utf-8") as df:
                 df.write("theta, lambda \n")
                 for i, theta in enumerate(thetavec):
                     df.write(f"{theta}, {lambdavec[i]} \n")

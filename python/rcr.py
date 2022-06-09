@@ -54,10 +54,10 @@ def get_command_arguments(args):
     # ARGS should be a list of 1 to 5 strings like sys.argv
     if isinstance(args, list) and all(isinstance(item, str) for item in args):
         if len(args) > 5:
-            msg = "Unused program arguments {0}".format(args[5:])
+            msg = f"Unused program arguments {args[5:]}"
             warnings.warn(msg)
     else:
-        msg = "Invalid command arguments, using defaults: {0}".format(args)
+        msg = f"Invalid command arguments, using defaults: {args}"
         warnings.warn(msg)
         args = []
     _infile = args[1].strip() if len(args) > 1 else "in.txt"
@@ -93,7 +93,7 @@ def write_to_logfile(msg, mode="a"):
         with open(logfile, mode) as lf:
             lf.write(msg)
     except OSError:
-        new_msg = "Cannot write to logfile {0}.".format(logfile)
+        new_msg = f"Cannot write to logfile {logfile}."
         warnings.warn(new_msg)
     return None
 
@@ -101,15 +101,16 @@ def write_to_logfile(msg, mode="a"):
 def start_logfile(logfile):
     """Start the log file."""
     set_logfile(logfile)
-    write_to_logfile("Log file {0} for RCR version 1.0\n".format(logfile),
+    write_to_logfile(f"Log file {logfile} for RCR version 1.0\n",
                      mode="w")
     start_time = datetime.now().strftime("%H:%M on %m/%d/%y")
-    write_to_logfile("Run at {0}.\n".format(start_time))
+    write_to_logfile(f"Run at {start_time}.\n")
 
 
 def read_data(infile):
     """Read RCR data from input file"""
-    write_to_logfile("Reading data from input file {0}.\n".format(infile))
+    # pylint: disable=too-many-statements
+    write_to_logfile(f"Reading data from input file {infile}.\n")
     # infile argument should be a single string
     if not isinstance(infile, str):
         msg = "Infile should be a single string"
@@ -122,15 +123,14 @@ def read_data(infile):
                             header=None).values[0, ]
         n_moments, n_lambda, external_big_number = tuple(line1)
     except FileNotFoundError:
-        msg = "infile {0} not found.\n".format(infile)
+        msg = f"infile {infile} not found.\n"
         die(msg)
     except ValueError:
-        msg = "Incorrect format in line 1 of infile {0}.\n".format(infile)
+        msg = f"Incorrect format in line 1 of infile {infile}.\n"
         die(msg)
     else:
-        msg1 = "Line 1: n_moments = {0}, n_lambda = {1}".format(n_moments,
-                                                                n_lambda)
-        msg2 = "external_big_number = {0}.\n".format(external_big_number)
+        msg1 = f"Line 1: n_moments = {n_moments}, n_lambda = {n_lambda}"
+        msg2 = f"external_big_number = {external_big_number}.\n"
         write_to_logfile(msg1 + ", " + msg2)
     # Line 2 should be n_moments whitespace delimited numbers
     try:
@@ -139,11 +139,12 @@ def read_data(infile):
                                     skiprows=[0, 2],
                                     header=None).values[0, ].astype(np.float64)
     except ValueError:
-        msg = "Incorrect format in line 2 of infile {0}.\n".format(infile)
+        msg = f"Incorrect format in line 2 of infile {infile}.\n"
         die(msg)
     else:
-        msg = "Line 2: moment_vector = a vector of length {0}.\n"
-        write_to_logfile(msg.format(len(moment_vector)))
+        mv_len = len(moment_vector)
+        msg = f"Line 2: moment_vector = a vector of length {mv_len}.\n"
+        write_to_logfile(msg)
     # Lines 3+ should be two whitespace delimited numbers each
     try:
         lambda_range = pd.read_csv(infile,
@@ -151,24 +152,26 @@ def read_data(infile):
                                    skiprows=[0, 1],
                                    header=None).values[0, ].astype(np.float64)
     except ValueError:
-        msg = "Incorrect format in line 3 of infile {0}.\n".format(infile)
+        msg = f"Incorrect format in line 3 of infile {infile}.\n"
         die(msg)
     else:
-        write_to_logfile("Line 3: lambda_range = {0}.\n".format(lambda_range))
+        write_to_logfile(f"Line 3: lambda_range = {lambda_range}.\n")
         write_to_logfile("For calculations, lambda_range,...\n")
-    write_to_logfile("Data successfully loaded from file {0}\n".format(infile))
-
+    write_to_logfile(f"Data successfully loaded from file {infile}\n")
     n_lambda = int(n_lambda)
     n_moments = int(n_moments)
     # reset n_moments and n_lambda if needed
     if n_moments != len(moment_vector):
-        msg = "n_moments reset from {0} to len(moment_vector) = {1}."
-        warn(msg.format(n_moments, len(moment_vector)))
+        msg1 = f"n_moments reset from {n_moments} "
+        msg2 = f"to len(moment_vector) = {len(moment_vector)}."
+        warn(msg1 + msg2)
         n_moments = len(moment_vector)
     if len(lambda_range) != 2*n_lambda:
-        msg = "n_lambda reset from {0} to len(lambda_range)/2 = {1}."
-        warn(msg.format(n_lambda, int(len(lambda_range)/2)))
-        n_lambda = int(len(lambda_range) / 2)
+        true_n_lambda = int(len(lambda_range)/2)
+        msg1 = f"n_lambda reset from {n_lambda} "
+        msg2 = f"to len(lambda_range)/2 = {true_n_lambda}."
+        warn(msg1 + msg2)
+        n_lambda = true_n_lambda
     check_input_values(n_moments, n_lambda, external_big_number)
     return n_moments, n_lambda, external_big_number, \
         moment_vector, lambda_range
@@ -195,19 +198,20 @@ def check_input_values(n_moments, n_lambda, external_big_number):
     # If external_big_number is bigger than sys.float_info.max, then issue a
     # warning but don't stop program. I'm not satisfied with this.
     if external_big_number > sys.float_info.max:
-        msg = "Largest Python real ({0}) is less than largest in Stata {1}"
-        warn(msg.format(sys.float_info.max, external_big_number))
+        msg1 = f"Largest Python real ({sys.float_info.max}) "
+        msg2 = f"is less than largest in Stata {external_big_number}"
+        warn(msg1 + msg2)
 
 
 def write_results(result_matrix, outfile):
     """Write the results_matrix array to outfile."""
-    write_to_logfile("Writing results to output file {0}.\n".format(outfile))
+    write_to_logfile(f"Writing results to output file {outfile}.\n")
     write_to_logfile("Actual results = ...\n")
     try:
         with np.printoptions(threshold=np.inf, linewidth=np.inf):
             np.savetxt(outfile, result_matrix, delimiter=" ")
     except OSError:
-        msg = "Cannot write to output file {0}.".format(outfile)
+        msg = f"Cannot write to output file {outfile}."
         warn(msg)
     else:
         write_to_logfile("RCR successfully concluded.\n")
@@ -223,9 +227,9 @@ def write_details(thetavec, lambdavec, detail_file):
             with open(detail_file, mode="w") as df:
                 df.write("theta, lambda \n")
                 for i, theta in enumerate(thetavec):
-                    df.write("{0}, {1} \n".format(theta, lambdavec[i]))
+                    df.write(f"{theta}, {lambdavec[i]} \n")
         except OSError:
-            warn("Cannot write to detail file {0}.".format(detail_file))
+            warn(f"Cannot write to detail file {detail_file}.")
 
 
 def warn(msg):
@@ -368,8 +372,8 @@ def estimate_theta_segments(moment_vector):
             assert thetavec[i-2] < thetavec[i-1]
             assert thetavec[i] < thetavec[i+1]
         else:
-            msg = "theta_star (={0}) > thetamax (={1})."
-            warn(msg.format(theta_star, thetamax))
+            msg = f"theta_star (={theta_star}) > thetamax (={thetamax})."
+            warn(msg)
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
     # Calculate lambda for every theta in thetavec
@@ -798,28 +802,30 @@ def check_moments(moment_vector):
             warn("Invalid data: unknown issue")
     if sm[0] < 0.0:
         valid = False
-        warn("Invalid data: var(y) = {0} < 0".format(sm[0]))
+        warn(f"Invalid data: var(y) = {sm[0]} < 0")
     if sm[1] < 0.0:
         valid = False
-        warn("Invalid data: var(z) = {0} < 0".format(sm[1]))
+        warn(f"Invalid data: var(z) = {sm[1]} < 0")
     if sm[3] < 0.0:
         valid = False
-        warn("Invalid data: var(yhat) = {0} < 0".format(sm[3]))
+        warn(f"Invalid data: var(yhat) = {sm[3]} < 0")
     if sm[4] < 0.0:
         valid = False
-        warn("Invalid data: var(zhat) = {0} < 0".format(sm[4]))
+        warn(f"Invalid data: var(zhat) = {sm[4]} < 0")
     if np.abs(sm[2]) > np.sqrt(sm[0] * sm[1]):
         valid = False
         covyz = np.abs(sm[2])
         sdyz = np.sqrt(sm[0] * sm[1])
-        msg = "Invalid data: |cov(y,z)| = {0} > {1} sqrt(var(y)*var(z))"
-        warn(msg.format(covyz, sdyz))
+        msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
+        msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
+        warn(msg1 + msg2)
     if np.abs(sm[5]) > np.sqrt(sm[3] * sm[4]):
         valid = False
         covyz = np.abs(sm[5])
         sdyz = np.sqrt(sm[3] * sm[4])
-        msg = "Invalid data: cov(yh,zh) = {0} > {1} sqrt(var(yh)*var(zh))"
-        warn(msg.format(covyz, sdyz))
+        msg1 = f"Invalid data: cov(yh,zh) = {covyz}"
+        msg2 = f" > {sdyz} sqrt(var(yh)*var(zh))"
+        warn(msg1 + msg2)
     # Next make sure that the identifying conditions are satisfied.
     identified = valid
     if sm[0] == 0.0:
@@ -1008,7 +1014,7 @@ def estimate_parameter(func, moment_vector):
             if errmax < 0.01:
                 break
             if n == nmax:
-                msg1 = "Inaccurate SE for {0}.".format(func.__name__)
+                msg1 = f"Inaccurate SE for {func.__name__}."
                 msg2 = "Try normalizing variables."
                 warn(msg1 + " " + msg2)
     else:
@@ -1211,25 +1217,25 @@ def check_lambda(lambda_range):
     """
     if not isinstance(lambda_range, np.ndarray):
         msg1 = "lambda_range should be a numpy array"
-        msg2 = " and is a {}.".format(type(lambda_range))
+        msg2 = f" and is a {type(lambda_range)}."
         raise TypeError(msg1 + msg2)
     if lambda_range.ndim != 1:
         msg1 = "lambda_range should be 1-d array"
-        msg2 = " and is a {}-d array.".format(lambda_range.ndim)
+        msg2 = f" and is a {lambda_range.ndim}-d array."
         raise TypeError(msg1 + msg2)
     if lambda_range.shape[0] != 2:
         msg1 = "lambda_range should have 2 elements"
-        msg2 = " and has {} element(s).".format(lambda_range.shape[0])
+        msg2 = f" and has {lambda_range.shape[0]} element(s)."
         raise TypeError(msg1 + msg2)
     if lambda_range.shape[0] != 2:
         msg1 = "lambda_range should have 2 elements"
-        msg2 = " and has {} element(s).".format(lambda_range.shape[0])
+        msg2 = f" and has {lambda_range.shape[0]} element(s)."
         raise TypeError(msg1 + msg2)
     if any(np.isnan(lambda_range)):
         msg = "lambda_range cannot be NaN."
         raise ValueError(msg)
     if lambda_range[0] > lambda_range[1]:
-        msg1 = "elements of lambda_range ({0})".format(lambda_range)
+        msg1 = f"elements of lambda_range ({lambda_range})"
         msg2 = " must be in (weakly) ascending order."
         raise ValueError(msg1 + msg2)
 
@@ -1240,15 +1246,15 @@ def check_endog(endog):
     """
     if not isinstance(endog, np.ndarray):
         msg1 = "endog should be an array-like object"
-        msg2 = " and is a {}.".format(type(endog))
+        msg2 = f" and is a {type(endog)}."
         raise TypeError(msg1 + msg2)
     if endog.ndim != 2:
         msg1 = "endog should be 2-d array"
-        msg2 = " and is a {}-d array.".format(endog.ndim)
+        msg2 = f" and is a {endog.ndim}-d array."
         raise TypeError(msg1 + msg2)
     if endog.shape[1] != 2:
         msg1 = "endog should have 2 columns"
-        msg2 = "and has {} column(s).".format(endog.shape[1])
+        msg2 = f"and has {endog.shape[1]} column(s)."
         raise TypeError(msg1 + msg2)
 
 
@@ -1258,18 +1264,18 @@ def check_exog(exog, nrows):
     """
     if not isinstance(exog, np.ndarray):
         msg1 = "exog should be an array-like object"
-        msg2 = " and is a {}.".format(type(exog))
+        msg2 = f" and is a {type(exog)}."
         raise TypeError(msg1 + msg2)
     if exog.ndim != 2:
-        msg = "exog should be 2-d array; is a {}-d array.".format(exog.ndim)
+        msg = f"exog should be 2-d array; is a {exog.ndim}-d array."
         raise TypeError(msg)
     if exog.shape[1] < 2:
         msg1 = "exog should have at least 2 columns"
-        msg2 = " and has {} column(s).".format(exog.shape[1])
+        msg2 = f" and has {exog.shape[1]} column(s)."
         raise TypeError(msg1 + msg2)
     if exog.shape[0] != nrows:
-        msg1 = "endog has {} rows".format(nrows)
-        msg2 = " and exog has {} rows.".format(exog.shape[0])
+        msg1 = f"endog has {nrows} rows"
+        msg2 = f" and exog has {exog.shape[0]} rows."
         raise TypeError(msg1 + msg2)
     if any(exog[:, 0] != 1.0):
         msg = "first column of exog must be an intercept"
@@ -1281,13 +1287,13 @@ def check_covinfo(cov_type, vceadj):
     Check that the given cov_type and vceadj are valid
     """
     if cov_type not in ("nonrobust", "cluster"):
-        msg = "cov_type '{}' not yet supported.".format(cov_type)
+        msg = f"cov_type '{cov_type}' not yet supported."
         raise ValueError(msg)
     if type(vceadj) not in (float, int):
-        msg = "vceadj must be a number, is a {}.".format(type(vceadj))
+        msg = f"vceadj must be a number, is a {type(vceadj)}."
         raise TypeError(msg)
     if vceadj < 0.:
-        msg = "vceadj = {}, must be non-negative.".format(vceadj)
+        msg = f"vceadj = {vceadj}, must be non-negative."
         raise ValueError(msg)
 
 
@@ -1296,15 +1302,15 @@ def check_ci(cilevel, citype=None):
     Check that the given cilevel and citype are valid
     """
     if type(cilevel) not in (float, int):
-        msg = "cilevel must be a number, is a {}.".format(type(cilevel))
+        msg = f"cilevel must be a number, is a {type(cilevel)}."
         raise TypeError(msg)
     if cilevel < 0.:
-        msg = "cilevel = {}, should be between 0 and 100.".format(cilevel)
+        msg = f"cilevel = {cilevel}, should be between 0 and 100."
         raise ValueError(msg)
     if citype is None:
         return None
     if citype not in ("conservative", "upper", "lower", "Imbens-Manski"):
-        msg = "Unsupported CI type {}.".format(citype)
+        msg = f"Unsupported CI type {citype}."
         raise ValueError(msg)
     return None
 
@@ -1318,15 +1324,14 @@ def check_weights(weights, nrows):
     weights = np.asarray(weights)
     if weights.ndim != 1:
         msg1 = "weights must be a 1-d array"
-        msg2 = " but is a {}-d array.".format(weights.ndim)
+        msg2 = f" but is a {weights.ndim}-d array."
         raise TypeError(msg1 + msg2)
     if weights.dtype not in (float, int):
         msg1 = "weights must be an array of numbers"
-        msg2 = " but is an array of {}.".format(weights.dtype)
+        msg2 = f" but is an array of {weights.dtype}."
         raise TypeError(msg1 + msg2)
     if len(weights) != nrows:
-        msg = "len(weights) = {0} but nrows = {1}.".format(len(weights),
-                                                           nrows)
+        msg = f"len(weights) = {len(weights)} but nrows = {nrows}."
         raise TypeError(msg)
     if not all(np.isfinite(weights)):
         msg = "all weights must be finite."
@@ -2060,7 +2065,7 @@ class RCRResults:
                                       data_fmts=tableformats[5:])
         obj = su.Summary()
         obj.tables = [table1, table2, table3]
-        cstr = "Control Variables: {0}".format(self.model.controlvars)
+        cstr = f"Control Variables: {self.model.controlvars}"
         obj.add_extra_txt([cstr])
         return obj
 

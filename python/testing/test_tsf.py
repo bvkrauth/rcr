@@ -1,14 +1,12 @@
 """
 TEST_TSF.PY: Unit tests for thetastar()
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import thetastar, read_data  # pylint: disable=wrong-import-position
+from rcr import thetastar, read_data
 
 
 @pytest.fixture

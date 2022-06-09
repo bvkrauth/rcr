@@ -1,15 +1,12 @@
 """
 TEST_ETS.PY: Unit tests for estimate_theta_segments()
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import lambdafast, simplify_moments, \
-    estimate_theta_segments  # pylint: disable=wrong-import-position
+from rcr import lambdafast, simplify_moments, estimate_theta_segments
 
 
 # Basic functionality

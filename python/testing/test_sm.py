@@ -1,14 +1,12 @@
 """
 TEST_SM.PY: Unit tests for simplify_moments()
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import simplify_moments  # pylint: disable=wrong-import-position
+from rcr import simplify_moments
 
 
 # Basic functionality

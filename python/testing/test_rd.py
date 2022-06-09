@@ -2,13 +2,11 @@
 TEST_RD.PY Unit tests for read_data()
 """
 import os
-import sys
+
 
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import read_data  # pylint: disable=wrong-import-position
+from rcr import read_data
 
 
 # Basic functionality

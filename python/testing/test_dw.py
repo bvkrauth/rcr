@@ -1,14 +1,9 @@
 """
 TEST_DW.PY Unit tests for die() and warn()
 """
-import sys
-
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import warn, die, set_logfile, \
-    get_logfile  # pylint: disable=wrong-import-position
+from rcr import warn, die, set_logfile, get_logfile
 
 
 # Basic functionality of warn()

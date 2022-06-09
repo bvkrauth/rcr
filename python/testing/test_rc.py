@@ -1,15 +1,13 @@
 """
 TEST_RC.RC Unit tests for RCR(), not including the fit method
 """
-import sys
+
 
 import numpy as np
 import pandas as pd
 import patsy
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import RCR  # pylint: disable=wrong-import-position
+from rcr import RCR
 
 
 # Basic functionality

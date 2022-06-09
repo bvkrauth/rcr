@@ -1,15 +1,13 @@
 """
 TEST_EP.PY: Unit tests for estimate_parameter()
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
 from rcr import estimate_parameter, thetastar, lambdastar, \
-    simplify_moments  # pylint: disable=wrong-import-position
+    simplify_moments
 
 
 def vary(moment_vector):

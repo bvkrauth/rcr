@@ -3,14 +3,10 @@ TEST_WR.PY Unit tests for write_results()
 """
 import os
 import tempfile
-import sys
 
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import write_results, \
-    read_data  # pylint: disable=wrong-import-position
+from rcr import write_results, read_data
 
 
 # Basic functionality

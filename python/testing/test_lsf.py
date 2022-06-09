@@ -1,14 +1,12 @@
 """
 TEST_LSF.PY: Unit tests for lambdastar()
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import lambdastar  # pylint: disable=wrong-import-position
+from rcr import lambdastar
 
 
 # Basic functionality

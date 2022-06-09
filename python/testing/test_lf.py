@@ -1,15 +1,12 @@
 """
 TEST_LF.PY: Unit tests for lambdafast()
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import lambdafast, thetastar, lambdastar, \
-    simplify_moments  # pylint: disable=wrong-import-position
+from rcr import lambdafast, thetastar, lambdastar, simplify_moments
 
 
 # Basic functionality

@@ -3,14 +3,10 @@ TEST_WTL.PY Unit tests for write_to_logfile()
 """
 import os
 import tempfile
-import sys
 
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import write_to_logfile, set_logfile, \
-    get_logfile  # pylint: disable=wrong-import-position
+from rcr import write_to_logfile, set_logfile, get_logfile
 
 
 # Basic functionality

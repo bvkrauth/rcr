@@ -1,15 +1,12 @@
 """
 TEST_ET.PY: Unit tests for estimate_theta()
 """
-import sys
+
 
 import pytest
 import numpy as np
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import estimate_theta_segments, \
-    estimate_theta  # pylint: disable=wrong-import-position
+from rcr import estimate_theta_segments, estimate_theta
 
 
 # Basic functionality

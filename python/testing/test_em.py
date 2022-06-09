@@ -1,15 +1,11 @@
 """
 TEST_EM.PY: Unit tests for estimate_model()
 """
-import sys
-
 import pytest
 import numpy as np
 import pandas as pd
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import estimate_model  # pylint: disable=wrong-import-position
+from rcr import estimate_model
 
 
 # Basic functionality

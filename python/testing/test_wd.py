@@ -3,14 +3,12 @@ TEST_WD.PY Unit tests for write_details()
 """
 import os
 import tempfile
-import sys
+
 
 import pytest
 import numpy as np
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import write_details  # pylint: disable=wrong-import-position
+from rcr import write_details
 
 
 # Basic functionality

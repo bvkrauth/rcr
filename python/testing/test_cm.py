@@ -1,15 +1,10 @@
 """
 TEST_CM.PY: Unit tests for check_moments()
 """
-import sys
-
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import check_moments, \
-    read_data  # pylint: disable=wrong-import-position
+from rcr import check_moments, read_data
 
 
 def test_cm_basic():

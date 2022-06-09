@@ -1,14 +1,12 @@
 """
 TEST_GCA.PY Unit tests for get_command_arguments()
 """
-import sys
+
 
 import pytest
 import numpy as np
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import get_command_arguments  # pylint: disable=wrong-import-position
+from rcr import get_command_arguments
 
 # get_command_arguments() takes a list of 0+ strings
 # and returns a list of 4 strings.  Any strings not

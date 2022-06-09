@@ -1,14 +1,12 @@
 """
 TEST_RF.RC Unit tests for fit() method of RCR object
 """
-import sys
+
 
 import pytest
 import numpy as np
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import RCR, RCRResults  # pylint: disable=wrong-import-position
+from rcr import RCR, RCRResults
 
 
 # Basic functionality

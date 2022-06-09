@@ -3,14 +3,11 @@ TEST_SLF.PY Unit tests for start_logfile()
 """
 import os
 import tempfile
-import sys
+
 
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import get_logfile, set_logfile, \
-    start_logfile  # pylint: disable=wrong-import-position
+from rcr import get_logfile, set_logfile, start_logfile
 
 
 # Basic functionality

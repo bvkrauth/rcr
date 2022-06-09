@@ -1,14 +1,12 @@
 """
 TEST_RF.RR Unit tests for RCRResults object and its methods
 """
-import sys
+
 
 import numpy as np
 import pytest
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import RCRResults  # pylint: disable=wrong-import-position
+from rcr import RCRResults
 
 
 # Basic functionality

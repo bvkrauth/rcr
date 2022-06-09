@@ -1,14 +1,11 @@
 """
 TEST_SGL.PY Unit tests for set_logfile() and get_logfile()
 """
-import sys
+
 
 import numpy as np
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import get_logfile, \
-    set_logfile  # pylint: disable=wrong-import-position
+from rcr import get_logfile, set_logfile
 
 
 # set_logfile(str) sets the global variable logfile to str

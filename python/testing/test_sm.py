@@ -31,48 +31,6 @@ def test_sm_realdata(moment_vector):
                           np.sqrt(test_sm[3] * test_sm[4]))
 
 
-def random_mv():
-    """generate random moment_vector"""
-    # pylint: disable=too-many-locals
-    e_xyz = np.random.randn(3)
-    v_xyz = abs(np.random.randn(3))
-    cor_xyz = np.random.uniform(-1, 1, 3)
-    e_x = e_xyz[0]
-    e_y = e_xyz[1]
-    e_z = e_xyz[2]
-    v_x = v_xyz[0]
-    v_y = v_xyz[1]
-    v_z = v_xyz[2]
-    cov_xy = cor_xyz[0] * np.sqrt(v_x * v_y)
-    cov_xz = cor_xyz[1] * np.sqrt(v_x * v_z)
-    cov_yz = cor_xyz[2] * np.sqrt(v_y * v_z)
-    e_xx = v_x + e_x ** 2
-    e_yy = v_y + e_y ** 2
-    e_zz = v_z + e_z ** 2
-    e_xy = cov_xy + e_x * e_y
-    e_xz = cov_xz + e_x * e_z
-    e_yz = cov_yz + e_y * e_z
-    v_yhat = (cov_xy ** 2) / v_x
-    v_zhat = (cov_xz ** 2) / v_x
-    cov_hat = cov_xy * cov_xz / v_x
-    moment_vector = np.array([e_x, e_y, e_z,
-                              e_xx, e_xy, e_xz,
-                              e_yy, e_yz, e_zz])
-    simplified_moments = np.array([v_y, v_z, cov_yz,
-                                   v_yhat, v_zhat, cov_hat])
-    return moment_vector, simplified_moments
-
-
-def test_sm_randomdata():
-    """get simple moments from random test data"""
-    for _ in range(10):
-        moment_vector, true_smi = random_mv()
-        test_smi = simplify_moments(moment_vector)
-        assert test_smi == pytest.approx(true_smi)
-        assert test_smi[5] == (np.sign(test_smi[5]) *
-                               np.sqrt(test_smi[3] * test_smi[4]))
-
-
 # Special cases
 def test_sm_wronglen():
     """raise exception if wrong length"""

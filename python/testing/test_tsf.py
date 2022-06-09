@@ -6,14 +6,7 @@ TEST_TSF.PY: Unit tests for thetastar()
 import numpy as np
 import pytest
 
-from rcr import thetastar, read_data
-
-
-@pytest.fixture
-def moment_vector():
-    """get moment vector from test data file"""
-    mv = read_data("testing/testin1.txt")[3]
-    return mv
+from rcr import thetastar
 
 
 # Basic functionality

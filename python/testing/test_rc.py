@@ -10,7 +10,6 @@ from rcr import RCR
 
 
 # Basic functionality
-# Patsy design matrices
 def test_rc_patsy(endog, exog):
     """construct RCR model object using Patsy design matrices"""
     model = RCR(endog, exog)
@@ -44,7 +43,7 @@ def test_rc_patsy(endog, exog):
     assert model.weights is None
 
 
-# Data frames (with Patsy design_info)
+
 def test_rc_patsy_df(endog_df, exog_df):
     """construct RCR model object using Patsy data frames"""
     model = RCR(endog_df, exog_df)
@@ -72,9 +71,8 @@ def test_rc_patsy_df(endog_df, exog_df):
     assert model.lambda_range[1] == 1.0
 
 
-# Data frames (without Patsy design_info)
 def test_rc_dataframe(endog_df, exog_df):
-    """construct RCR model object using data frames without design infom"""
+    """construct RCR model object using data frames without design info"""
     model = RCR(pd.DataFrame(endog_df), pd.DataFrame(exog_df))
     assert isinstance(model.endog, np.ndarray)
     assert model.endog.shape == (5839, 2)
@@ -100,7 +98,6 @@ def test_rc_dataframe(endog_df, exog_df):
     assert model.lambda_range[1] == 1.0
 
 
-# Plain numpy arrays
 def test_rc_array(endog, exog):
     """construct RCR model object using plain numpy arrays"""
     model = RCR(np.asarray(endog), np.asarray(exog))
@@ -125,7 +122,8 @@ def test_rc_array(endog, exog):
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
 
-
+# pylint: disable=duplicate-code
+# lambda_range arguments
 def test_rc_setlr(endog, exog):
     """set custom (finite) lambda range for RCR model object"""
     model = RCR(endog, exog, lambda_range=np.asarray([-1.0, 5.0]))

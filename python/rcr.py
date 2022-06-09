@@ -1932,7 +1932,7 @@ class RCRResults:
         """
         Create plot of RCR estimation results
         """
-        # pylint: disable=too-many-arguments,too-many-locals
+        # pylint: disable=too-many-arguments,too-many-locals,invalid-name
         xlim = np.sort(np.asarray(xlim))
         if len(xlim) == 2:
             xgrid = np.linspace(xlim[0], xlim[1], num=100)

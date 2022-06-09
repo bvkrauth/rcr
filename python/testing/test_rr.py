@@ -1,8 +1,6 @@
 """
 TEST_RF.RR Unit tests for RCRResults object and its methods
 """
-
-
 import numpy as np
 import pytest
 
@@ -17,6 +15,7 @@ def test_rr_basic(model):
 
 
 # Methods
+# pylint: disable=duplicate-code
 def test_rr_se(results):
     """calculate standard errors with the se() method"""
     truese = np.asarray([2.09826858,  30.60745128, 108.51947421,   0.95693751,

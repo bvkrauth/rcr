@@ -12,15 +12,15 @@ from rcr import lambdafast, simplify_moments, estimate_theta_segments
 # Basic functionality
 def test_ets_realdata(moment_vector):
     """ estimate theta segments with real data"""
-    em_true = np.array([-1.00000000e+100,
+    ts_true = np.array([-1.00000000e+100,
                         -1.48223355e+001,
                         8.16970996e+000,
                         8.16970996e+000,
                         1.00000000e+100])
-    em, thetavec, lambdavec = estimate_theta_segments(moment_vector)
+    test_ts, thetavec, lambdavec = estimate_theta_segments(moment_vector)
     lambdavec_true = lambdafast(thetavec,
                                 simplify_moments(moment_vector))
-    assert em == pytest.approx(em_true)
+    assert test_ts == pytest.approx(ts_true)
     assert all(np.isfinite(thetavec))
     assert lambdavec == pytest.approx(lambdavec_true)
 

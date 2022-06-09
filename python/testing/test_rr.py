@@ -21,24 +21,24 @@ def test_rr_se(results):
     """calculate standard errors with the se() method"""
     truese = np.asarray([2.09826858,  30.60745128, 108.51947421,   0.95693751,
                          0.6564318])
-    se = results.se()
-    assert se == pytest.approx(truese)
+    test_se = results.params_se()
+    assert test_se == pytest.approx(truese)
 
 
 def test_rr_z(results):
     """calculate z-statistics with the z() method"""
     truez = np.asarray([5.86702731, 0.26691899, 0.26663868,
                         5.36612236, 7.92390398])
-    z = results.z()
-    assert z == pytest.approx(truez)
+    test_z = results.params_z()
+    assert test_z == pytest.approx(truez)
 
 
 def test_rr_pz(results):
     """calculate p-values with the pz() method"""
     truepz = np.asarray([4.43677606e-09, 7.89531535e-01, 7.89747372e-01,
                          8.04473756e-08, 2.22044605e-15])
-    pz = results.pz()
-    assert pz == pytest.approx(truepz)
+    test_pz = results.params_pvalue()
+    assert test_pz == pytest.approx(truepz)
 
 
 def test_rr_ci(results):
@@ -47,8 +47,8 @@ def test_rr_ci(results):
                           3.91491988],
                         [16.42312995, 68.15921213, 241.62975025, 7.01060682,
                          6.48808526]])
-    ci = results.ci()
-    assert ci == pytest.approx(trueci)
+    test_ci = results.params_ci()
+    assert test_ci == pytest.approx(trueci)
 
 
 def test_rr_ci90(results):
@@ -57,14 +57,14 @@ def test_rr_ci90(results):
                           4.12176834],
                          [15.76194378, 58.51448721, 207.43413992, 6.7090659,
                           6.2812368]])
-    ci = results.ci(cilevel=90)
-    assert ci == pytest.approx(trueci)
+    test_ci = results.params_ci(cilevel=90)
+    assert test_ci == pytest.approx(trueci)
 
 
 def test_rr_cistr(results):
     """raise exception if cilevel is non-numeric"""
     try:
-        results.ci(cilevel="this should be a number")
+        results.params_ci(cilevel="this should be a number")
     except TypeError:
         pass
     else:
@@ -74,7 +74,7 @@ def test_rr_cistr(results):
 def test_rr_cineg(results):
     """raise exception if cilevel is out of range"""
     try:
-        results.ci(cilevel=-50)
+        results.params_ci(cilevel=-50)
     except ValueError:
         pass
     else:
@@ -119,16 +119,17 @@ def test_rr_bciimbensmanski(results):
 
 def test_rr_testbetax(results):
     """test_betax() method with default options"""
-    t0 = results.test_betax()
-    t1 = results.test_betax(0.)
-    t2 = results.test_betax(5.2)
-    assert t0 == pytest.approx(1.1920928955078125e-07)
-    assert t1 == pytest.approx(1.1920928955078125e-07)
-    assert t2 == 1.0
+    test_t0 = results.test_betax()
+    test_t1 = results.test_betax(0.)
+    test_t2 = results.test_betax(5.2)
+    assert test_t0 == pytest.approx(1.1920928955078125e-07)
+    assert test_t1 == pytest.approx(1.1920928955078125e-07)
+    assert test_t2 == 1.0
 
 
 def test_rr_summary(results):
     """summary() method with default options"""
+    # pylint: disable=unidiomatic-typecheck
     summary = results.summary()
     assert type(summary).__name__ == "Summary"
     assert type(summary.tables) == list
@@ -144,12 +145,12 @@ def test_rr_noid(model):
     msk = np.full((5, 5), True)
     msk[0:3, 0:3] = False
     assert all(results.cov_params[msk] == 0.)
-    assert all(results.se()[3:] == 0)
-    assert np.isneginf(results.z()[3])
-    assert np.isposinf(results.z()[4])
-    assert all(results.pz()[3:] == 0.0)
-    assert all(np.isneginf(results.ci()[:, 3]))
-    assert all(np.isposinf(results.ci()[:, 4]))
+    assert all(results.params_se()[3:] == 0)
+    assert np.isneginf(results.params_z()[3])
+    assert np.isposinf(results.params_z()[4])
+    assert all(results.params_pvalue()[3:] == 0.0)
+    assert all(np.isneginf(results.params_ci()[:, 3]))
+    assert all(np.isposinf(results.params_ci()[:, 4]))
     assert np.isneginf(results.betax_ci_conservative()[0])
     assert np.isposinf(results.betax_ci_conservative()[1])
     assert np.isneginf(results.betax_ci_upper()[0])

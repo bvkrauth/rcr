@@ -16,8 +16,7 @@ from rcr import RCR, read_data  # pylint: disable=wrong-import-position
 @pytest.fixture(name="moment_vector")
 def fixture_moment_vector():
     """get moment vector from test data"""
-    mv = read_data("testing/testin1.txt")[3]
-    return mv
+    return read_data("testing/testin1.txt")[3]
 
 
 @pytest.fixture(name="dat")
@@ -85,9 +84,9 @@ def fixture_results(model):
 @pytest.fixture(name="weights")
 def fixture_weights(dat):
     """get weights"""
-    wt = np.mod(dat["TCHID"], 2)
-    wt.name = "TCHID_wt"
-    return wt
+    weight = np.mod(dat["TCHID"], 2)
+    weight.name = "TCHID_wt"
+    return weight
 
 
 @pytest.fixture(name="clusters")

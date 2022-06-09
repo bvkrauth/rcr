@@ -29,9 +29,9 @@ def test_rc_patsy(endog, exog):
                                 'Masters_Degree']
     assert model.depvar == "SAT"
     assert model.treatvar == "Small_Class"
-    cv = ("White_Asian Girl Free_Lunch White_Teacher " +
-          "Teacher_Experience Masters_Degree")
-    assert model.controlvars == cv
+    control_vars = ("White_Asian Girl Free_Lunch White_Teacher " +
+                    "Teacher_Experience Masters_Degree")
+    assert model.controlvars == control_vars
     assert model.nobs == 5839
     assert isinstance(model.lambda_range, np.ndarray)
     assert model.lambda_range.shape == (2, )
@@ -62,9 +62,9 @@ def test_rc_patsy_df(endog_df, exog_df):
                                 'Masters_Degree']
     assert model.depvar == "SAT"
     assert model.treatvar == "Small_Class"
-    cv = ("White_Asian Girl Free_Lunch White_Teacher " +
-          "Teacher_Experience Masters_Degree")
-    assert model.controlvars == cv
+    control_vars = ("White_Asian Girl Free_Lunch White_Teacher " +
+                    "Teacher_Experience Masters_Degree")
+    assert model.controlvars == control_vars
     assert model.nobs == 5839
     assert isinstance(model.lambda_range, np.ndarray)
     assert model.lambda_range.shape == (2, )

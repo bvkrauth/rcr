@@ -453,8 +453,8 @@ def bracket_theta_star(moment_vector):
     # If this condition holds, no need to find a bracket (and the code
     # below won't work anyway)
     if simplified_moments[2] == (simplified_moments[5] *
-                                simplified_moments[1] /
-                                simplified_moments[4]):
+                                 simplified_moments[1] /
+                                 simplified_moments[4]):
         return None
     # We may want to use np.inf here
     # NOTE: the np.sign seems extraneous here.
@@ -811,7 +811,7 @@ def check_moments(moment_vector):
     if not all(np.isfinite(simplified_moments)):
         valid = False
         if (all(np.isfinite(simplified_moments[0:3])) and
-            all(np.isnan(simplified_moments[4:7]))):
+           all(np.isnan(simplified_moments[4:7]))):
             warn("Invalid data: nonsingular X'X matrix.")
         else:
             warn("Invalid data: unknown issue")
@@ -828,7 +828,7 @@ def check_moments(moment_vector):
         valid = False
         warn(f"Invalid data: var(zhat) = {simplified_moments[4]} < 0")
     if (np.abs(simplified_moments[2]) >
-        np.sqrt(simplified_moments[0] * simplified_moments[1])):
+       np.sqrt(simplified_moments[0] * simplified_moments[1])):
         valid = False
         covyz = np.abs(simplified_moments[2])
         sdyz = np.sqrt(simplified_moments[0] * simplified_moments[1])
@@ -886,7 +886,7 @@ def thetastar(moment_vector):
     # var(zhat) >= 0 and that if var(zhat)=0 -> cov(yhat,zhat)=0.
     # Special values: If var(zhat)=0, then theta_star = 0/0 = NaN.
     theta_star = np.nan if simplified_moments[4] == 0.0 else \
-                           simplified_moments[5] / simplified_moments[4]
+        simplified_moments[5] / simplified_moments[4]
     return theta_star
 
 
@@ -947,7 +947,7 @@ def lambda0_fun(moment_vector):
            (cov_yzhat != 0.0) &
            (np.sign(var_yhat) == np.sign((var_y - var_yhat))))
     lambdaval = (((cov_yz - cov_yzhat)/cov_yzhat) *
-                   np.sqrt(var_yhat/(var_y - var_yhat))) if msk else np.nan
+                 np.sqrt(var_yhat/(var_y - var_yhat))) if msk else np.nan
     return lambdaval
 
 
@@ -1767,26 +1767,26 @@ class RCRResults:
         self.weights = weights
         self.nobs = nobs
 
-    def se(self):
+    def params_se(self):
         """
         Standard errors for RCR parameter estimates
         """
         return np.sqrt(np.diag(self.cov_params))
 
-    def z(self):
+    def params_z(self):
         """
         z-statistics for RCR parameter estimates
         """
-        return self.params / self.se()
+        return self.params / self.params_se()
 
-    def pz(self):
+    def params_pvalue(self):
         """
         asymptotic p-values for RCR parameter estimates
         """
-        alpha = scipy.stats.norm.cdf(np.abs(self.params / self.se()))
+        alpha = scipy.stats.norm.cdf(np.abs(self.params / self.params_se()))
         return 2 * (1.0 - alpha)
 
-    def ci(self, cilevel=None):
+    def params_ci(self, cilevel=None):
         """
         asymptotic confidence intervals for RCR parameter estimates
         """
@@ -1794,8 +1794,8 @@ class RCRResults:
             cilevel = self.cilevel
         check_ci(cilevel)
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
-        return np.array([self.params - crit * self.se(),
-                         self.params + crit * self.se()])
+        return np.array([self.params - crit * self.params_se(),
+                         self.params + crit * self.params_se()])
 
     def betax_ci(self,
                  cilevel=None,
@@ -1823,8 +1823,8 @@ class RCRResults:
         if cilevel is None:
             cilevel = self.cilevel
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
-        ci_lb = self.params[3] - crit * self.se()[3]
-        ci_ub = self.params[4] + crit * self.se()[4]
+        ci_lb = self.params[3] - crit * self.params_se()[3]
+        ci_ub = self.params[4] + crit * self.params_se()[4]
         return np.array([ci_lb, ci_ub])
 
     def betax_ci_upper(self, cilevel=None):
@@ -1834,7 +1834,7 @@ class RCRResults:
         if cilevel is None:
             cilevel = self.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
-        ci_lb = self.params[3] - crit * self.se()[3]
+        ci_lb = self.params[3] - crit * self.params_se()[3]
         ci_ub = np.inf
         return np.array([ci_lb, ci_ub])
 
@@ -1846,7 +1846,7 @@ class RCRResults:
             cilevel = self.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         ci_lb = -np.inf
-        ci_ub = self.params[4] + crit * self.se()[4]
+        ci_ub = self.params[4] + crit * self.params_se()[4]
         return np.array([ci_lb, ci_ub])
 
     def betax_ci_imbensmanski(self, cilevel=None):
@@ -1858,9 +1858,9 @@ class RCRResults:
         cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
         cv_mid = cv_min
         cv_max = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 200.0))
-        params_se = self.se()
+        params_se = self.params_se()
         delta = ((self.params[4] - self.params[3]) /
-                  max(params_se[3], params_se[4]))
+                 max(params_se[3], params_se[4]))
         if np.isfinite(delta):
             while (cv_max - cv_min) > 0.000001:
                 cv_mid = (cv_min + cv_max) / 2.0
@@ -1879,7 +1879,7 @@ class RCRResults:
             ci_ub = np.inf
         return np.array([ci_lb, ci_ub])
 
-    def test_betax(self, h0=0.0):
+    def test_betax(self, h0_value=0.0):
         """
         Perform a hypothesis test for betax
 
@@ -1893,13 +1893,13 @@ class RCRResults:
         low = 0.0
         high = 100.0
         mid = 50.0
-        if self.params[3] <= h0 <= self.params[4]:
+        if self.params[3] <= h0_value <= self.params[4]:
             pvalue = 1.0
         else:
             while (high - low) > 0.00001:
                 mid = (high + low) / 2.0
                 current_ci = self.betax_ci_imbensmanski(cilevel=mid)
-                if current_ci[0] <= h0 <= current_ci[1]:
+                if current_ci[0] <= h0_value <= current_ci[1]:
                     high = mid
                 else:
                     low = mid
@@ -2026,10 +2026,10 @@ class RCRResults:
         tableformats = (tableformats*6)[0:6]
         outmat = pd.DataFrame(index=self.param_names)
         outmat["b"] = self.params
-        outmat["se"] = self.se()
-        outmat["z"] = self.z()
-        outmat["pz"] = self.pz()
-        params_ci = self.ci(cilevel=cilevel)
+        outmat["se"] = self.params_se()
+        outmat["z"] = self.params_z()
+        outmat["pz"] = self.params_pvalue()
+        params_ci = self.params_ci(cilevel=cilevel)
         outmat["ciL"] = params_ci[0, :]
         outmat["ciH"] = params_ci[1, :]
         betax_ci = self.betax_ci(cilevel=cilevel, citype=citype)

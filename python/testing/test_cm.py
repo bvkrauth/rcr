@@ -23,37 +23,40 @@ def test_cm_realdata():
 def random_mv():
     """generate random moment_vector"""
     # pylint: disable=too-many-locals
-    exyz = np.random.randn(3)
-    vxyz = abs(np.random.randn(3))
-    corxyz = np.random.uniform(-1, 1, 3)
-    ex = exyz[0]
-    ey = exyz[1]
-    ez = exyz[2]
-    vx = vxyz[0]
-    vy = vxyz[1]
-    vz = vxyz[2]
-    cxy = corxyz[0] * np.sqrt(vx * vy)
-    cxz = corxyz[1] * np.sqrt(vx * vz)
-    cyz = corxyz[2] * np.sqrt(vy * vz)
-    exx = vx + ex ** 2
-    eyy = vy + ey ** 2
-    ezz = vz + ez ** 2
-    exy = cxy + ex * ey
-    exz = cxz + ex * ez
-    eyz = cyz + ey * ez
-    vyhat = (cxy ** 2) / vx
-    vzhat = (cxz ** 2) / vx
-    covhat = cxy * cxz / vx
-    mvi = np.array([ex, ey, ez, exx, exy, exz, eyy, eyz, ezz])
-    smi = np.array([vy, vz, cyz, vyhat, vzhat, covhat])
-    return mvi, smi
+    e_xyz = np.random.randn(3)
+    v_xyz = abs(np.random.randn(3))
+    cor_xyz = np.random.uniform(-1, 1, 3)
+    e_x = e_xyz[0]
+    e_y = e_xyz[1]
+    e_z = e_xyz[2]
+    v_x = v_xyz[0]
+    v_y = v_xyz[1]
+    v_z = v_xyz[2]
+    cov_xy = cor_xyz[0] * np.sqrt(v_x * v_y)
+    cov_xz = cor_xyz[1] * np.sqrt(v_x * v_z)
+    cov_yz = cor_xyz[2] * np.sqrt(v_y * v_z)
+    e_xx = v_x + e_x ** 2
+    e_yy = v_y + e_y ** 2
+    e_zz = v_z + e_z ** 2
+    e_xy = cov_xy + e_x * e_y
+    e_xz = cov_xz + e_x * e_z
+    e_yz = cov_yz + e_y * e_z
+    v_yhat = (cov_xy ** 2) / v_x
+    v_zhat = (cov_xz ** 2) / v_x
+    cov_hat = cov_xy * cov_xz / v_x
+    moment_vector = np.array([e_x, e_y, e_z,
+                              e_xx, e_xy, e_xz,
+                              e_yy, e_yz, e_zz])
+    simplified_moments = np.array([v_y, v_z, cov_yz,
+                                   v_yhat, v_zhat, cov_hat])
+    return moment_vector, simplified_moments
 
 
 def test_cm_randomdata():
     """ check moments with randomly-generated data"""
     for _ in range(10):
-        mvi = random_mv()[0]
-        result = check_moments(mvi)
+        moment_vector = random_mv()[0]
+        result = check_moments(moment_vector)
         assert result == (True, True)
 
 
@@ -70,54 +73,54 @@ def test_cm_wronglen():
 
 def test_cm_allzeros():
     """return mics of zero and NaN if all zeros"""
-    mv = np.zeros(9)
+    moment_vector = np.zeros(9)
     with pytest.warns(UserWarning, match="Invalid data: nonsingular"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)
 
 
 def test_cm_integer():
     """check moments with integer data"""
-    mv = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
-    result = check_moments(mv)
+    moment_vector = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
+    result = check_moments(moment_vector)
     assert result == (True, True)
 
 
 def test_cm_varx0():
     """return NaN if var(x) = 0"""
-    mv = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
+    moment_vector = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data: nonsingular"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)
 
 
 def test_cm_varxneg():
     """return numeric values if var(x) < 0"""
-    mv = np.array([0, 0, 0, -1, 0.5, 0.5, 1, 0.5, 1.0])
+    moment_vector = np.array([0, 0, 0, -1, 0.5, 0.5, 1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)
 
 
 def test_cm_varyneg():
     """return numeric values if var(y) <= 0"""
-    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)
-    mv = np.array([0, 0, 0, 1, 0.5, 0.5, -1, 0.5, 1.0])
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, -1, 0.5, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)
 
 
 def test_cm_varzneg():
     """return numeric values if var(z) <= 0"""
-    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)
-    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, -1])
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, -1])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        result = check_moments(mv)
+        result = check_moments(moment_vector)
     assert result == (False, False)

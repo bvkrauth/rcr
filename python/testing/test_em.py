@@ -9,15 +9,7 @@ import pandas as pd
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import read_data, \
-    estimate_model  # pylint: disable=wrong-import-position
-
-
-@pytest.fixture
-def moment_vector():
-    """read moment vector from test data file"""
-    mv = read_data("testing/testin1.txt")[3]
-    return mv
+from rcr import estimate_model  # pylint: disable=wrong-import-position
 
 
 # Basic functionality

@@ -4,55 +4,11 @@ TEST_RF.RR Unit tests for RCRResults object and its methods
 import sys
 
 import numpy as np
-import pandas as pd
-import patsy
 import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import RCR, RCRResults  # pylint: disable=wrong-import-position
-
-
-@pytest.fixture
-def dat():
-    """get test data from web page"""
-    fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
-    return pd.read_stata(fname)
-
-
-@pytest.fixture
-def rcr_formula():
-    """construct formula for test example"""
-    rcr_left = "SAT + Small_Class ~ "
-    rcr_right1 = "White_Asian + Girl + Free_Lunch + White_Teacher + "
-    rcr_right2 = "Teacher_Experience + Masters_Degree"
-    return rcr_left + rcr_right1 + rcr_right2
-
-
-@pytest.fixture
-def endog(dat, rcr_formula):
-    """get endogenous variables"""
-    endog = patsy.dmatrices(rcr_formula, dat)[0]
-    return endog
-
-
-@pytest.fixture
-def exog(dat, rcr_formula):
-    """get endogenous variables"""
-    exog = patsy.dmatrices(rcr_formula, dat)[1]
-    return exog
-
-
-@pytest.fixture
-def model(endog, exog):
-    """construct RCR mdodel"""
-    return RCR(endog, exog)
-
-
-@pytest.fixture
-def results(model):
-    """fit RCR mdodel"""
-    return model.fit()
+from rcr import RCRResults  # pylint: disable=wrong-import-position
 
 
 # Basic functionality

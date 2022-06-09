@@ -5,62 +5,10 @@ import sys
 
 import pytest
 import numpy as np
-import pandas as pd
-import patsy
 
 sys.path.append("./")
 sys.path.append("../")
 from rcr import RCR, RCRResults  # pylint: disable=wrong-import-position
-
-
-@pytest.fixture
-def dat():
-    """get test data from web page"""
-    fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
-    return pd.read_stata(fname)
-
-
-@pytest.fixture
-def rcr_formula():
-    """construct formula for test example"""
-    rcr_left = "SAT + Small_Class ~ "
-    rcr_right1 = "White_Asian + Girl + Free_Lunch + White_Teacher + "
-    rcr_right2 = "Teacher_Experience + Masters_Degree"
-    return rcr_left + rcr_right1 + rcr_right2
-
-
-@pytest.fixture
-def endog(dat, rcr_formula):
-    """get endogenous variables"""
-    endog = patsy.dmatrices(rcr_formula, dat)[0]
-    return endog
-
-
-@pytest.fixture
-def exog(dat, rcr_formula):
-    """get endogenous variables"""
-    exog = patsy.dmatrices(rcr_formula, dat)[1]
-    return exog
-
-
-@pytest.fixture
-def model(endog, exog):
-    """construct RCR mdodel"""
-    return RCR(endog, exog)
-
-
-@pytest.fixture
-def weights(dat):
-    """get weights"""
-    wt = np.mod(dat["TCHID"], 2)
-    return wt
-
-
-@pytest.fixture
-def cluster(dat):
-    """get cluster IDs"""
-    clust = dat["TCHID"]
-    return clust
 
 
 # Basic functionality
@@ -274,12 +222,12 @@ def test_rf_weighted(endog, exog, weights):
     assert res2.nobs == res0.nobs
 
 
-def test_rf_cluster(endog, exog, cluster):
+def test_rf_cluster(endog, exog, clusters):
     """estimate with cluster-robust standard errors"""
     model = RCR(endog,
                 exog,
                 cov_type="cluster",
-                groupvar=cluster)
+                groupvar=clusters)
     truecov = np.array([[6.91681472e+01,  1.26630806e+02, -1.21548954e+02,
                          -1.94406588e+00,  1.22940162e-01],
                         [1.26630806e+02,  1.90495752e+03, -6.12590889e+03,
@@ -295,12 +243,12 @@ def test_rf_cluster(endog, exog, cluster):
     assert result.cov_params == pytest.approx(truecov)
 
 
-def test_rf_clust_and_wt(endog, exog, cluster, weights):
+def test_rf_clust_and_wt(endog, exog, clusters, weights):
     """estimate with weights and clusters"""
     model = RCR(endog,
                 exog,
                 cov_type="cluster",
-                groupvar=cluster,
+                groupvar=clusters,
                 weights=weights)
     truecov = np.array([[6.50239759e+02,  1.07844382e+02, -9.32223483e+02,
                          -1.31757653e-01, -2.38992069e+01],

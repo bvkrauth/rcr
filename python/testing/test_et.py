@@ -8,15 +8,8 @@ import numpy as np
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import read_data, estimate_theta_segments, \
+from rcr import estimate_theta_segments, \
     estimate_theta  # pylint: disable=wrong-import-position
-
-
-@pytest.fixture
-def moment_vector():
-    """get moment vector from test data"""
-    mv = read_data("testing/testin1.txt")[3]
-    return mv
 
 
 # Basic functionality

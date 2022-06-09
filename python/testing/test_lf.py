@@ -8,15 +8,8 @@ import pytest
 
 sys.path.append("./")
 sys.path.append("../")
-from rcr import lambdafast, thetastar, lambdastar, simplify_moments, \
-    read_data  # pylint: disable=wrong-import-position
-
-
-@pytest.fixture
-def moment_vector():
-    """get moment vector from test data"""
-    mv = read_data("testing/testin1.txt")[3]
-    return mv
+from rcr import lambdafast, thetastar, lambdastar, \
+    simplify_moments  # pylint: disable=wrong-import-position
 
 
 # Basic functionality

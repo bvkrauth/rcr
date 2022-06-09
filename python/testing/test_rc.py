@@ -5,16 +5,14 @@ TEST_RC.RC Unit tests for RCR(), not including the fit method
 
 import numpy as np
 import pandas as pd
-import patsy
 
 from rcr import RCR
 
 
 # Basic functionality
 # Patsy design matrices
-def test_rc_patsy(dat, rcr_formula):
+def test_rc_patsy(endog, exog):
     """construct RCR model object using Patsy design matrices"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     model = RCR(endog, exog)
     assert isinstance(model, RCR)
     assert isinstance(model.endog, np.ndarray)
@@ -47,10 +45,9 @@ def test_rc_patsy(dat, rcr_formula):
 
 
 # Data frames (with Patsy design_info)
-def test_rc_patsy_df(dat, rcr_formula):
+def test_rc_patsy_df(endog_df, exog_df):
     """construct RCR model object using Patsy data frames"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
-    model = RCR(endog, exog)
+    model = RCR(endog_df, exog_df)
     assert isinstance(model.endog, np.ndarray)
     assert model.endog.shape == (5839, 2)
     assert isinstance(model.exog, np.ndarray)
@@ -76,10 +73,9 @@ def test_rc_patsy_df(dat, rcr_formula):
 
 
 # Data frames (without Patsy design_info)
-def test_rc_dataframe(dat, rcr_formula):
+def test_rc_dataframe(endog_df, exog_df):
     """construct RCR model object using data frames without design infom"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
-    model = RCR(pd.DataFrame(endog), pd.DataFrame(exog))
+    model = RCR(pd.DataFrame(endog_df), pd.DataFrame(exog_df))
     assert isinstance(model.endog, np.ndarray)
     assert model.endog.shape == (5839, 2)
     assert isinstance(model.exog, np.ndarray)
@@ -105,9 +101,8 @@ def test_rc_dataframe(dat, rcr_formula):
 
 
 # Plain numpy arrays
-def test_rc_array(dat, rcr_formula):
+def test_rc_array(endog, exog):
     """construct RCR model object using plain numpy arrays"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat)
     model = RCR(np.asarray(endog), np.asarray(exog))
     assert isinstance(model.endog, np.ndarray)
     assert model.endog.shape == (5839, 2)
@@ -146,110 +141,100 @@ def test_rc_setlrinf(endog, exog):
 
 
 # Exceptions
-def test_rc_endog1d(dat, rcr_formula):
+def test_rc_endog1d(endog_df, exog_df):
     """raise exception if endog is a 1-d array"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(np.asarray(endog)[:, 1], np.asarray(exog))
+        RCR(np.asarray(endog_df)[:, 1], np.asarray(exog_df))
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_endog1c(dat, rcr_formula):
+def test_rc_endog1c(endog_df, exog_df):
     """raise exception if endog has only 1 column"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(np.asarray(endog)[:, 1:], np.asarray(exog))
+        RCR(np.asarray(endog_df)[:, 1:], np.asarray(exog_df))
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_endog7c(dat, rcr_formula):
+def test_rc_endog7c(exog_df):
     """raise exception if endog has more than 2 columns"""
-    exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")[1]
     try:
-        RCR(np.asarray(exog), np.asarray(exog))
+        RCR(np.asarray(exog_df), np.asarray(exog_df))
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_exog1d(dat, rcr_formula):
+def test_rc_exog1d(endog_df, exog_df):
     """raise exception if exog is a 1-d array"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(np.asarray(endog), np.asarray(exog)[:, 1])
+        RCR(np.asarray(endog_df), np.asarray(exog_df)[:, 1])
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_exog1c(dat, rcr_formula):
+def test_rc_exog1c(endog_df, exog_df):
     """raise exception if exog has only 1 column"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(np.asarray(endog), np.asarray(exog)[:, :1])
+        RCR(np.asarray(endog_df), np.asarray(exog_df)[:, :1])
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_nobsnoteq(dat, rcr_formula):
+def test_rc_nobsnoteq(endog_df, exog_df):
     """raise exception if exog and endog have different # of rows"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(np.asarray(endog), np.asarray(exog)[0:100, ])
+        RCR(np.asarray(endog_df), np.asarray(exog_df)[0:100, ])
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_lr2d(dat, rcr_formula):
+def test_rc_lr2d(endog_df, exog_df):
     """raise exception if lambda_range is a 2-d array"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(endog, exog, lambda_range=np.asarray(endog))
+        RCR(endog_df, exog_df, lambda_range=np.asarray(endog_df))
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_lr1e(dat, rcr_formula):
+def test_rc_lr1e(endog_df, exog_df):
     """raise exception if lambda_range has wrong # of elements"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(endog, exog, lambda_range=np.zeros(1))
+        RCR(endog_df, exog_df, lambda_range=np.zeros(1))
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_lrnan(dat, rcr_formula):
+def test_rc_lrnan(endog_df, exog_df):
     """raise exception if lambda_range includes NaN values (inf is OK)"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(endog, exog, lambda_range=np.asarray([0, np.nan]))
+        RCR(endog_df, exog_df, lambda_range=np.asarray([0, np.nan]))
     except ValueError:
         pass
     else:
         raise AssertionError
 
 
-def test_rc_lrnotsorted(dat, rcr_formula):
+def test_rc_lrnotsorted(endog_df, exog_df):
     """raise exception if lambda_range out of order"""
-    endog, exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")
     try:
-        RCR(endog, exog, lambda_range=np.asarray([1., 0.]))
+        RCR(endog_df, exog_df, lambda_range=np.asarray([1., 0.]))
     except ValueError:
         pass
     else:

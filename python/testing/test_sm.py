@@ -12,11 +12,12 @@ from rcr import simplify_moments
 # Basic functionality
 def test_sm_basic():
     """get simple moments from simple test data"""
-    mv = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
     true_sm = np.array([1, 1, .5, .25, .25, .25])
-    sm = simplify_moments(mv)
-    assert sm == pytest.approx(true_sm)
-    assert sm[5] == (np.sign(sm[5]) * np.sqrt(sm[3] * sm[4]))
+    test_sm = simplify_moments(moment_vector)
+    assert test_sm == pytest.approx(true_sm)
+    assert test_sm[5] == (np.sign(test_sm[5]) *
+                          np.sqrt(test_sm[3] * test_sm[4]))
 
 
 def test_sm_realdata(moment_vector):
@@ -24,13 +25,15 @@ def test_sm_realdata(moment_vector):
     true_sm = np.array([5.42538313e+02, 2.05839484e-01,
                         1.07467966e+00, 4.47643916e+01,
                         1.34931719e-03, 1.10235301e-02])
-    sm = simplify_moments(moment_vector)
-    assert sm == pytest.approx(true_sm)
-    assert sm[5] <= (np.sign(sm[5]) * np.sqrt(sm[3] * sm[4]))
+    test_sm = simplify_moments(moment_vector)
+    assert test_sm == pytest.approx(true_sm)
+    assert test_sm[5] <= (np.sign(test_sm[5]) *
+                          np.sqrt(test_sm[3] * test_sm[4]))
 
 
 def random_mv():
     """generate random data for tests"""
+    # pylint: disable=too-many-locals
     exyz = np.random.randn(3)
     vxyz = abs(np.random.randn(3))
     corxyz = np.random.uniform(-1, 1, 3)
@@ -60,18 +63,19 @@ def random_mv():
 def test_sm_randomdata():
     """get simple moments from random test data"""
     for _ in range(10):
-        mvi, true_smi = random_mv()
-        smi = simplify_moments(mvi)
-        assert smi == pytest.approx(true_smi)
-        assert smi[5] == (np.sign(smi[5]) * np.sqrt(smi[3] * smi[4]))
+        moment_vector, true_smi = random_mv()
+        test_smi = simplify_moments(moment_vector)
+        assert test_smi == pytest.approx(true_smi)
+        assert test_smi[5] == (np.sign(test_smi[5]) *
+                               np.sqrt(test_smi[3] * test_smi[4]))
 
 
 # Special cases
 def test_sm_wronglen():
     """raise exception if wrong length"""
-    mv = np.zeros(8)
+    moment_vector = np.zeros(8)
     try:
-        simplify_moments(mv)
+        simplify_moments(moment_vector)
     except AssertionError:
         pass
     else:
@@ -80,51 +84,52 @@ def test_sm_wronglen():
 
 def test_sm_allzeros():
     """return mix of zeros and NaN if input is all zeros"""
-    mv = np.zeros(9)
+    moment_vector = np.zeros(9)
     true_sm = np.array([0, 0, 0, np.nan, np.nan, np.nan])
-    sm = simplify_moments(mv)
-    assert sm == pytest.approx(true_sm, nan_ok=True)
+    test_sm = simplify_moments(moment_vector)
+    assert test_sm == pytest.approx(true_sm, nan_ok=True)
 
 
 def test_sm_integer():
     """handle integer data"""
-    mv1 = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
-    true_sm1 = np.array([2, 2, 1, .5, .5, .5])
-    sm1 = simplify_moments(mv1)
-    assert sm1 == pytest.approx(true_sm1)
-    assert sm1[5] == (np.sign(sm1[5]) * np.sqrt(sm1[3] * sm1[4]))
+    moment_vector = np.array([0, 0, 0, 2, 1, 1, 2, 1, 2])
+    true_sm = np.array([2, 2, 1, .5, .5, .5])
+    test_sm = simplify_moments(moment_vector)
+    assert test_sm == pytest.approx(true_sm)
+    assert test_sm[5] == (np.sign(test_sm[5]) *
+                          np.sqrt(test_sm[3] * test_sm[4]))
 
 
 def test_sm_varx0():
     """return NaN if var(x)=0"""
-    mv = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
+    moment_vector = np.array([0, 0, 0, 0, 0.5, 0.5, 1, 0.5, 1.0])
     true_sm = np.array([1, 1, 0.5, np.nan, np.nan, np.nan])
-    sm = simplify_moments(mv)
-    assert sm == pytest.approx(true_sm, nan_ok=True)
+    test_sm = simplify_moments(moment_vector)
+    assert test_sm == pytest.approx(true_sm, nan_ok=True)
 
 
 def test_sm_varxneg():
     """return numeric values if var(x)<0"""
-    mv0 = np.array([0, 0, 0, -1, 0.5, 0.5, 1, 0.5, 1.0])
-    sm0 = simplify_moments(mv0)
-    assert all(np.isfinite(sm0))
+    moment_vector = np.array([0, 0, 0, -1, 0.5, 0.5, 1, 0.5, 1.0])
+    test_sm = simplify_moments(moment_vector)
+    assert all(np.isfinite(test_sm))
 
 
 def test_sm_varyneg():
     """return numeric values if var(y) <= 0"""
-    mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
-    sm0 = simplify_moments(mv0)
-    assert all(np.isfinite(sm0))
-    mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, -1, 0.5, 1.0])
-    sm0 = simplify_moments(mv0)
-    assert all(np.isfinite(sm0))
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 0, 0.5, 1.0])
+    test_sm = simplify_moments(moment_vector)
+    assert all(np.isfinite(test_sm))
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, -1, 0.5, 1.0])
+    test_sm = simplify_moments(moment_vector)
+    assert all(np.isfinite(test_sm))
 
 
 def test_sm_varzneg():
     """return numeric values if var(z) < 0"""
-    mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
-    sm0 = simplify_moments(mv0)
-    assert all(np.isfinite(sm0))
-    mv0 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, -1])
-    sm0 = simplify_moments(mv0)
-    assert all(np.isfinite(sm0))
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
+    test_sm = simplify_moments(moment_vector)
+    assert all(np.isfinite(test_sm))
+    moment_vector = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, -1])
+    test_sm = simplify_moments(moment_vector)
+    assert all(np.isfinite(test_sm))

@@ -39,6 +39,7 @@ def fixture_rcr_formula():
 @pytest.fixture(name="endog")
 def fixture_endog(dat, rcr_formula):
     """get endogenous variables"""
+    # pylint: disable=no-member
     endog = patsy.dmatrices(rcr_formula, dat)[0]
     return endog
 
@@ -46,7 +47,26 @@ def fixture_endog(dat, rcr_formula):
 @pytest.fixture(name="exog")
 def fixture_exog(dat, rcr_formula):
     """get endogenous variables"""
+    # pylint: disable=no-member
     exog = patsy.dmatrices(rcr_formula, dat)[1]
+    return exog
+
+
+@pytest.fixture(name="endog_df")
+def fixture_endog_df(dat, rcr_formula):
+    """get endogenous variables"""
+    # pylint: disable=no-member
+    endog = patsy.dmatrices(rcr_formula,
+                            dat,
+                            return_type="dataframe")[0]
+    return endog
+
+
+@pytest.fixture(name="exog_df")
+def fixture_exog_df(dat, rcr_formula):
+    """get endogenous variables"""
+    # pylint: disable=no-member
+    exog = patsy.dmatrices(rcr_formula, dat, return_type="dataframe")[1]
     return exog
 
 

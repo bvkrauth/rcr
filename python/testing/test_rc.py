@@ -6,7 +6,7 @@ TEST_RC.RC Unit tests for RCR(), not including the fit method
 import numpy as np
 import pandas as pd
 
-from rcr import RCR
+from rcrbounds import RCR
 
 
 # Basic functionality

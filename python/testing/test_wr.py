@@ -6,7 +6,7 @@ import tempfile
 
 import pytest
 
-from rcr import write_results, read_data
+from rcrbounds import write_results, read_data
 
 
 # Basic functionality

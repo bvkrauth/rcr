@@ -6,7 +6,7 @@ TEST_LSF.PY: Unit tests for lambdastar()
 import numpy as np
 import pytest
 
-from rcr import lambdastar
+from rcrbounds import lambdastar
 
 
 # Basic functionality

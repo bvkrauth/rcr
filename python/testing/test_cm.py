@@ -4,7 +4,7 @@ TEST_CM.PY: Unit tests for check_moments()
 import numpy as np
 import pytest
 
-from rcr import check_moments, read_data
+from rcrbounds import check_moments, read_data
 
 
 # Basic functionality

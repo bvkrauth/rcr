@@ -5,7 +5,7 @@ TEST_SGL.PY Unit tests for set_logfile() and get_logfile()
 
 import numpy as np
 
-from rcr import get_logfile, set_logfile
+from rcrbounds import get_logfile, set_logfile
 
 
 # set_logfile(str) sets the global variable logfile to str

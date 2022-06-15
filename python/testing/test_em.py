@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from rcr import estimate_model
+from rcrbounds import estimate_model
 
 
 # Basic functionality

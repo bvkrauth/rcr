@@ -6,7 +6,7 @@ TEST_RF.RC Unit tests for fit() method of RCR object
 import pytest
 import numpy as np
 
-from rcr import RCR, RCRResults
+from rcrbounds import RCR, RCRResults
 
 
 # Basic functionality

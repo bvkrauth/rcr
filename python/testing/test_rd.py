@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from rcr import read_data
+from rcrbounds import read_data
 
 
 # Basic functionality

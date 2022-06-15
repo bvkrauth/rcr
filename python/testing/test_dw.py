@@ -3,7 +3,7 @@ TEST_DW.PY Unit tests for die() and warn()
 """
 import pytest
 
-from rcr import warn, die, set_logfile, get_logfile
+from rcrbounds import warn, die, set_logfile, get_logfile
 
 
 # Basic functionality of warn()

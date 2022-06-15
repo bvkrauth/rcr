@@ -6,7 +6,7 @@ TEST_EP.PY: Unit tests for estimate_parameter()
 import numpy as np
 import pytest
 
-from rcr import estimate_parameter, thetastar, lambdastar, \
+from rcrbounds import estimate_parameter, thetastar, lambdastar, \
     simplify_moments
 
 

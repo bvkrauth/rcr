@@ -4,7 +4,7 @@ TEST_RF.RR Unit tests for RCRResults object and its methods
 import numpy as np
 import pytest
 
-from rcr import RCRResults
+from rcrbounds import RCRResults
 
 
 # Basic functionality

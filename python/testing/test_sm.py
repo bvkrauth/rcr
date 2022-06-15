@@ -6,7 +6,7 @@ TEST_SM.PY: Unit tests for simplify_moments()
 import numpy as np
 import pytest
 
-from rcr import simplify_moments
+from rcrbounds import simplify_moments
 
 
 # Basic functionality

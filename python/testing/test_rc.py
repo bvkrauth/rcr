@@ -43,7 +43,6 @@ def test_rc_patsy(endog, exog):
     assert model.weights is None
 
 
-
 def test_rc_patsy_df(endog_df, exog_df):
     """construct RCR model object using Patsy data frames"""
     model = RCR(endog_df, exog_df)
@@ -121,6 +120,7 @@ def test_rc_array(endog, exog):
     assert model.lambda_range.shape == (2, )
     assert model.lambda_range[0] == 0.0
     assert model.lambda_range[1] == 1.0
+
 
 # pylint: disable=duplicate-code
 # lambda_range arguments

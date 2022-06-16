@@ -1,8 +1,6 @@
 """
 TEST_RP.PY: Unit tests for rcrplot() method
 """
-import sys
-
 import numpy as np
 import pandas as pd
 import pytest

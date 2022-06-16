@@ -34,10 +34,10 @@ def test_wtl_none():
 
 
 # Exceptions to handle
-def test_wtl_readonly():
+def test_wtl_readonly(read_only_file):
     """warn and continue if file is read-only"""
     oldlogfile = get_logfile()
-    set_logfile("testing/read-only-file.txt")
+    set_logfile(read_only_file)
     with pytest.warns(UserWarning, match="Cannot write to logfile"):
         write_to_logfile("Line 1\n", mode="w")
         write_to_logfile("Line 2\n")

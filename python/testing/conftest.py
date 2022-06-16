@@ -1,6 +1,8 @@
 """
 TEST_RP.PY: Unit tests for rcrplot() method
 """
+import os
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -10,11 +12,76 @@ import patsy
 # sys.path.append("../")
 from rcrbounds import RCR, read_data  # pylint: disable=wrong-import-position
 
+FIXTURE_DIR = os.path.dirname(os.path.realpath(__file__))
+
+
+@pytest.fixture(name="badin1")
+def fixture_badin1():
+    """get bad data"""
+    infile = os.path.join(FIXTURE_DIR, "badin1.txt")
+    return str(infile)
+
+
+@pytest.fixture(name="badin2")
+def fixture_badin2():
+    """get bad data"""
+    infile = os.path.join(FIXTURE_DIR, "badin2.txt")
+    return str(infile)
+
+
+@pytest.fixture(name="badin3")
+def fixture_badin3():
+    """get bad data"""
+    infile = os.path.join(FIXTURE_DIR, "badin3.txt")
+    return str(infile)
+
+
+@pytest.fixture(name="badin4")
+def fixture_badin4():
+    """get bad data"""
+    infile = os.path.join(FIXTURE_DIR, "badin4.txt")
+    return str(infile)
+
+
+@pytest.fixture(name="badin5")
+def fixture_badin5():
+    """get bad data"""
+    infile = os.path.join(FIXTURE_DIR, "badin5.txt")
+    return str(infile)
+
+
+@pytest.fixture(name="true_result")
+def fixture_true_result():
+    """get true results for test data"""
+    outfile = os.path.join(FIXTURE_DIR, "testout1.txt")
+    result = np.asarray(pd.read_csv(outfile,
+                                    delimiter=" ",
+                                    header=None,
+                                    skipinitialspace=True))
+    return result
+
+
+@pytest.fixture(name="read_only_file")
+def fixture_read_only_file(tmp_path):
+    """get read only file"""
+    infile = tmp_path / "read-only-file.txt"
+    infile.write_text("This file is read only")
+    # mode = infile.stat().st_mode
+    infile.chmod(0o444)
+    return str(infile)
+
+
+@pytest.fixture(name="infile")
+def fixture_infile():
+    """get test data"""
+    infile = os.path.join(FIXTURE_DIR, "testin1.txt")
+    return str(infile)
+
 
 @pytest.fixture(name="moment_vector")
-def fixture_moment_vector():
+def fixture_moment_vector(infile):
     """get moment vector from test data"""
-    return read_data("testing/testin1.txt")[3]
+    return read_data(infile)[3]
 
 
 @pytest.fixture(name="dat")

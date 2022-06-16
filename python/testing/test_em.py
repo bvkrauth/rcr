@@ -3,21 +3,16 @@ TEST_EM.PY: Unit tests for estimate_model()
 """
 import pytest
 import numpy as np
-import pandas as pd
 
 from rcrbounds import estimate_model
 
 
 # Basic functionality
-def test_em_realdata(moment_vector):
+def test_em_realdata(moment_vector, true_result):
     """estimate parameters and gradient with real data"""
     lambda_range = np.array([0.0, 1.0])
     true_em = np.array([12.31059909,  8.16970996, 28.93548917,
                         5.13504376,  5.20150257])
-    true_result = np.asarray(pd.read_csv("testing/testout1.txt",
-                                         delimiter=" ",
-                                         header=None,
-                                         skipinitialspace=True))
     test_result = estimate_model(moment_vector, lambda_range)[0]
     # Check parameter estimates
     assert test_result[:, 0] == pytest.approx(true_em)

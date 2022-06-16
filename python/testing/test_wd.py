@@ -31,16 +31,16 @@ def test_wd_nofile():
     write_details(thetavec, lambdavec, "")
 
 
-def test_wd_readonly():
+def test_wd_readonly(read_only_file):
     """warn and continue if read-only file"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with pytest.warns(UserWarning, match="Cannot write"):
-        write_details(thetavec, lambdavec, "testing/read-only-file.txt")
+        write_details(thetavec, lambdavec, read_only_file)
 
 
 def test_wd_badfolder():
-    """warn and continue if non-existend folder"""
+    """warn and continue if non-existent folder"""
     thetavec = np.zeros(3)
     lambdavec = np.zeros(3)
     with pytest.warns(UserWarning, match="Cannot write"):

@@ -4,7 +4,7 @@ TEST_CM.PY: Unit tests for check_moments()
 import numpy as np
 import pytest
 
-from rcrbounds import check_moments, read_data
+from rcrbounds import check_moments
 
 
 # Basic functionality
@@ -14,9 +14,8 @@ def test_cm_basic():
     assert check_moments(mv1) == (True, True)
 
 
-def test_cm_realdata():
+def test_cm_realdata(moment_vector):
     """check moments from real data"""
-    moment_vector = read_data("testing/testin1.txt")[3]
     assert check_moments(moment_vector) == (True, True)
 
 

@@ -6,7 +6,7 @@ TEST_ET.PY: Unit tests for estimate_theta()
 import pytest
 import numpy as np
 
-from rcr import estimate_theta_segments, estimate_theta
+from rcrbounds import estimate_theta_segments, estimate_theta
 
 
 # Basic functionality

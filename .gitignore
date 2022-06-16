@@ -16,7 +16,8 @@ out.txt
 /src/rcr.exe
 /bin/rcr.exe
 
-# Compiled python files
+# Compiled and auto-generated python files
 /python/__pycache__
 /python/testing/__pycache__
 /python/testing/.pytest_cache
+/python/.vscode

@@ -1,16 +1,14 @@
 """
 TEST_RP.PY: Unit tests for rcrplot() method
 """
-import sys
-
 import numpy as np
 import pandas as pd
 import pytest
 import patsy
 
-sys.path.append("./")
-sys.path.append("../")
-from rcr import RCR, read_data  # pylint: disable=wrong-import-position
+# sys.path.append("./")
+# sys.path.append("../")
+from rcrbounds import RCR, read_data  # pylint: disable=wrong-import-position
 
 
 @pytest.fixture(name="moment_vector")

@@ -6,7 +6,7 @@ TEST_ETS.PY: Unit tests for estimate_theta_segments()
 import numpy as np
 import pytest
 
-from rcr import lambdafast, simplify_moments, estimate_theta_segments
+from rcrbounds import lambdafast, simplify_moments, estimate_theta_segments
 
 
 # Basic functionality

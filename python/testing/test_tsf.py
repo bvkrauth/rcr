@@ -6,7 +6,7 @@ TEST_TSF.PY: Unit tests for thetastar()
 import numpy as np
 import pytest
 
-from rcr import thetastar
+from rcrbounds import thetastar
 
 
 # Basic functionality

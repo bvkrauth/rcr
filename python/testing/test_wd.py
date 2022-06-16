@@ -8,7 +8,7 @@ import tempfile
 import pytest
 import numpy as np
 
-from rcr import write_details
+from rcrbounds import write_details
 
 
 # Basic functionality

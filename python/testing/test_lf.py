@@ -4,7 +4,7 @@ TEST_LF.PY: Unit tests for lambdafast()
 import numpy as np
 import pytest
 
-from rcr import lambdafast, thetastar, lambdastar, simplify_moments
+from rcrbounds import lambdafast, thetastar, lambdastar, simplify_moments
 
 
 # Basic functionality

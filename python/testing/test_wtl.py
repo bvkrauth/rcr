@@ -6,7 +6,7 @@ import tempfile
 
 import pytest
 
-from rcr import write_to_logfile, set_logfile, get_logfile
+from rcrbounds import write_to_logfile, set_logfile, get_logfile
 
 
 # Basic functionality

@@ -17,7 +17,7 @@ def test_em_realdata(moment_vector, true_result):
     # Check parameter estimates
     assert test_result[:, 0] == pytest.approx(true_em)
     # Check parameter estimates and gradient
-    assert test_result == pytest.approx(true_result)
+    assert test_result == pytest.approx(true_result, rel=1e-04, abs=1e-04)
 
 
 # Special cases for lambda_range

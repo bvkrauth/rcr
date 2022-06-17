@@ -2,6 +2,7 @@
 TEST_WR.PY Unit tests for write_results()
 """
 import os
+import sys
 import tempfile
 
 import numpy as np
@@ -34,6 +35,7 @@ def test_wr_badfolder():
         write_results(moment_vector, "nonexistent-path-name/pout.txt")
 
 
+@pytest.mark.skipif(sys.platform != 'win32', reason="Windows test")
 def test_wr_illegalname():
     """warn and continue if file name is illegal"""
     moment_vector = np.zeros(5)

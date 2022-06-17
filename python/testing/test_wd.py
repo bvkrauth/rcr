@@ -2,6 +2,7 @@
 TEST_WD.PY Unit tests for write_details()
 """
 import os
+import sys
 import tempfile
 
 
@@ -47,6 +48,7 @@ def test_wd_badfolder():
         write_details(thetavec, lambdavec, "nonexistent-path-name/pout.txt")
 
 
+@pytest.mark.skipif(sys.platform != 'win32', reason="Windows test")
 def test_wd_illegalname():
     """warn and continue if illegal file name"""
     thetavec = np.zeros(3)

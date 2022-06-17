@@ -1311,7 +1311,7 @@ def check_covinfo(cov_type, vceadj):
     if cov_type not in ("nonrobust", "cluster"):
         msg = f"cov_type '{cov_type}' not yet supported."
         raise ValueError(msg)
-    if type(vceadj) not in (float, int):
+    if not isinstance(vceadj, (float, int)):
         msg = f"vceadj must be a number, is a {type(vceadj)}."
         raise TypeError(msg)
     if vceadj < 0.:
@@ -1323,7 +1323,7 @@ def check_ci(cilevel, citype=None):
     """
     Check that the given cilevel and citype are valid
     """
-    if type(cilevel) not in (float, int):
+    if not isinstance(cilevel, (float, int)):
         msg = f"cilevel must be a number, is a {type(cilevel)}."
         raise TypeError(msg)
     if cilevel < 0.:
@@ -1348,7 +1348,7 @@ def check_weights(weights, nrows):
         msg1 = "weights must be a 1-d array"
         msg2 = f" but is a {weights.ndim}-d array."
         raise TypeError(msg1 + msg2)
-    if weights.dtype not in (float, int):
+    if not np.issubdtype(weights.dtype, np.number):
         msg1 = "weights must be an array of numbers"
         msg2 = f" but is an array of {weights.dtype}."
         raise TypeError(msg1 + msg2)

@@ -1348,7 +1348,7 @@ def check_weights(weights, nrows):
         msg1 = "weights must be a 1-d array"
         msg2 = f" but is a {weights.ndim}-d array."
         raise TypeError(msg1 + msg2)
-    if weights.dtype not in (float, int):
+    if not np.issubdtype(weights.dtype, np.number):
         msg1 = "weights must be an array of numbers"
         msg2 = f" but is an array of {weights.dtype}."
         raise TypeError(msg1 + msg2)

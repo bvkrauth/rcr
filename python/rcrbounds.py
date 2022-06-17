@@ -1311,7 +1311,7 @@ def check_covinfo(cov_type, vceadj):
     if cov_type not in ("nonrobust", "cluster"):
         msg = f"cov_type '{cov_type}' not yet supported."
         raise ValueError(msg)
-    if type(vceadj) not in (float, int):
+    if not isinstance(vceadj, (float, int)):
         msg = f"vceadj must be a number, is a {type(vceadj)}."
         raise TypeError(msg)
     if vceadj < 0.:
@@ -1323,7 +1323,7 @@ def check_ci(cilevel, citype=None):
     """
     Check that the given cilevel and citype are valid
     """
-    if type(cilevel) not in (float, int):
+    if not isinstance(cilevel, (float, int)):
         msg = f"cilevel must be a number, is a {type(cilevel)}."
         raise TypeError(msg)
     if cilevel < 0.:

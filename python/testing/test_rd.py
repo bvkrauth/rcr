@@ -82,7 +82,7 @@ def test_rd_badlambda(badin4):
         raise AssertionError
 
 
-def test_rd_badbignum(badin5):
+def test_rd_badbignum1(badin5):
     """raise exception if extarnal_big_number is invalid"""
     try:
         read_data(badin5)
@@ -90,3 +90,9 @@ def test_rd_badbignum(badin5):
         pass
     else:
         raise AssertionError
+
+
+def test_rd_badbignum2(badin6):
+    """raise warning if extarnal_big_number is too big"""
+    with pytest.warns(UserWarning, match="Largest Python real"):
+        read_data(badin6)

@@ -50,6 +50,13 @@ def fixture_badin5():
     return str(infile)
 
 
+@pytest.fixture(name="badin6")
+def fixture_badin6():
+    """get bad data"""
+    infile = os.path.join(FIXTURE_DIR, "badin6.txt")
+    return str(infile)
+
+
 @pytest.fixture(name="true_result")
 def fixture_true_result():
     """get true results for test data"""

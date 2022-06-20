@@ -16,7 +16,7 @@ def test_rd_basic(infile):
         lambda_range = read_data(infile)
     assert n_moments == 44
     assert n_lambda == 1
-    assert external_big_number.dtype == "float"
+    assert external_big_number == pytest.approx(8.98846567e+306)
     assert moment_vector.shape == (44, )
     assert lambda_range.shape == (2, )
 
@@ -28,6 +28,16 @@ def test_rd_nonexistent():
     assert ~os.path.exists("nonexistent-file")
     try:
         read_data("nonexistent-file")
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError
+
+
+def test_rd_notastring():
+    """raise exception if filename is not a string"""
+    try:
+        read_data([1, 10])
     except RuntimeError:
         pass
     else:

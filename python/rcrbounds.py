@@ -1478,8 +1478,8 @@ class RCR:
             self.weights = np.asarray(weights)
             self.weights_name = get_column_names(weights,
                                                  default_names="(no name)")
+            check_weights(self.weights, nrows)
             self.nobs = sum(weights > 0)
-        check_weights(self.weights, nrows)
         if groupvar is not None:
             self.groupvar = np.asarray(groupvar)
             self.groupvar_name = get_column_names(groupvar,
@@ -1524,12 +1524,11 @@ class RCR:
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
         moment_vector = np.average(xyzzyx, axis=0, weights=weights)
         if estimate_cov:
-            if weights is None and groupvar is None:
+            if weights is None and cov_type != "cluster":
                 fac = 1/self.nobs
                 cov_mv = fac*np.cov(xyzzyx,
                                     rowvar=False)
-            elif (weights is not None and
-                  (groupvar is None or cov_type != "cluster")):
+            elif weights is not None and cov_type != "cluster":
                 fac = sum((weights/sum(weights)) ** 2)
                 cov_mv = fac*np.cov(xyzzyx,
                                     rowvar=False,
@@ -1615,8 +1614,12 @@ class RCR:
         if citype is None:
             citype = self.citype
         check_ci(cilevel, citype)
-        if weights is None:
+        if weights is None and self.weights is not None:
             weights = self.weights
+            weights_name = self.weights_name
+        else:
+            weights_name = get_column_names(weights,
+                                            default_names="(no name)")
         check_weights(weights, len(self.endog))
         if weights is None:
             nobs = self.nobs
@@ -1645,6 +1648,7 @@ class RCR:
                           cilevel=cilevel,
                           citype=citype,
                           weights=weights,
+                          weights_name=weights_name,
                           nobs=nobs)
 
 
@@ -1742,6 +1746,7 @@ class RCRResults:
                  cilevel,
                  citype,
                  weights,
+                 weights_name,
                  nobs):
         """
         Constructs the RCRResults object.
@@ -1763,6 +1768,7 @@ class RCRResults:
         self.cilevel = cilevel
         self.citype = citype
         self.weights = weights
+        self.weights_name = weights_name
         self.nobs = nobs
 
     def params_se(self):
@@ -2058,7 +2064,7 @@ class RCRResults:
             table1stub1.append("Cluster variable:")
             table1stub2.append("No. Clusters")
         if self.weights is not None:
-            table1data.append([self.model.weights_name,
+            table1data.append([self.weights_name,
                                ""])
             table1stub1.append("Weight variable:")
             table1stub2.append("")

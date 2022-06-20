@@ -23,6 +23,7 @@ def test_rp_basic(results):
     assert np.all(np.logical_or(test_ax.get_lines()[0].get_ydata() ==
                                 lambdavals,
                                 np.isnan(lambdavals)))
+    assert test_ax.get_legend() is None
     test_ax.clear()
 
 
@@ -51,6 +52,14 @@ def test_rp_xlim2(results):
     assert np.all(np.logical_or(test_ax.get_lines()[0].get_ydata() ==
                                 lambdavals,
                                 np.isnan(lambdavals)))
+    test_ax.clear()
+
+
+def test_rp_ylim(results):
+    """plot rcr function with alternate ylim"""
+    ylim = np.asarray((0.0, 1.0))
+    test_ax = results.rcrplot(ylim=ylim)
+    assert np.all(test_ax.yaxis.get_view_interval() == ylim)
     test_ax.clear()
 
 
@@ -100,4 +109,11 @@ def test_rp_setlab(results):
                                                       'LSLABEL',
                                                       'ID0',
                                                       'ID1']
+    test_ax.clear()
+
+
+def test_rp_legend(results):
+    """plot rcr function with labels set by hand"""
+    test_ax = results.rcrplot(legend=True)
+    assert test_ax.get_legend() is not None
     test_ax.clear()

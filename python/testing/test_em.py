@@ -75,3 +75,21 @@ def test_em_rct():
     else:
         assert np.all(test_result[0:3, 0] > 1000)
         assert test_result[3:4, 0] == pytest.approx(0.5, rel=1e-04)
+
+
+def test_em_invalid():
+    """estimate for invalid moment vector"""
+    mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
+    lr1 = np.array([0.0, 1.0])
+    with pytest.warns(UserWarning, match="Invalid data:"):
+        test_result = estimate_model(mv1, lr1)
+    assert np.all(np.isnan(test_result))
+
+
+def test_em_nonid():
+    """estimate for unidentifying moment vector"""
+    mv1 = np.array([0, 0, 0, 1, 0., 0.5, 1, 0.5, 1.0])
+    lr1 = np.array([0.0, 1.0])
+    with pytest.warns(UserWarning, match="Model not identified:"):
+        test_result = estimate_model(mv1, lr1)
+    assert np.all(np.isnan(test_result))

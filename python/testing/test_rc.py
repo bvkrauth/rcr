@@ -189,6 +189,16 @@ def test_rc_exog1c(endog_df, exog_df):
         raise AssertionError
 
 
+def test_rc_nointercept(endog_df, exog_df):
+    """raise exception if exog does not have an intercept"""
+    try:
+        RCR(np.asarray(endog_df), np.asarray(exog_df)[:, 1:])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError
+
+
 def test_rc_nobsnoteq(endog_df, exog_df):
     """raise exception if exog and endog have different # of rows"""
     try:
@@ -256,6 +266,61 @@ def test_rc_weights_noname(endog, exog, weights):
     assert model.nobs == 3325
 
 
+def test_rc_zeroweights(endog, exog):
+    """estimate with weights"""
+    weights = np.zeros(len(endog))
+    try:
+        RCR(endog, exog, weights=weights)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError
+
+
+def test_rc_infweights(endog, exog):
+    """estimate with weights"""
+    weights = np.full((len(endog),), np.inf)
+    try:
+        RCR(endog, exog, weights=weights)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError
+
+
+def test_rc_shortweights(endog, exog):
+    """estimate with weights"""
+    weights = np.ones((len(endog)-1,))
+    try:
+        RCR(endog, exog, weights=weights)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError
+
+
+def test_rc_strweights(endog, exog):
+    """estimate with weights"""
+    weights = np.full(len(endog), "hello")
+    try:
+        RCR(endog, exog, weights=weights)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError
+
+
+def test_rc_wrongdimweights(endog, exog):
+    """estimate with weights"""
+    weights = np.ones((len(endog), 2))
+    try:
+        RCR(endog, exog, weights=weights)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError
+
+
 def test_rc_clusters(endog, exog, clusters):
     """construct model with clusters"""
     model = RCR(endog, exog, groupvar=clusters)
@@ -281,3 +346,13 @@ def test_rc_clust_and_wt(endog, exog, clusters, weights):
     assert model.groupvar_name == "TCHID"
     assert model.nobs == 3325
     assert model.ngroups == 184
+
+
+def test_rc_badci(endog, exog):
+    """estimate with weights"""
+    try:
+        RCR(endog, exog, citype="Some unsupported type")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError

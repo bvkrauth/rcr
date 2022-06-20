@@ -116,6 +116,12 @@ def test_rr_bciimbensmanski(results):
     assert ci2 == pytest.approx(trueci)
 
 
+def test_rr_bcibad(results):
+    """incorrectly-named confidence interval, should return NaN"""
+    ci1 = results.betax_ci(citype="Some Unsupported Type")
+    assert np.all(np.isnan(ci1))
+
+
 def test_rr_testbetax(results):
     """test_betax() method with default options"""
     test_t0 = results.test_betax()
@@ -129,11 +135,28 @@ def test_rr_testbetax(results):
 def test_rr_summary(results):
     """summary() method with default options"""
     # pylint: disable=unidiomatic-typecheck
-    summary = results.summary()
-    assert type(summary).__name__ == "Summary"
-    assert type(summary.tables) == list
-    assert len(summary.tables) == 3
-    assert len(summary.extra_txt) > 0
+    test_result = results.summary()
+    assert type(test_result).__name__ == "Summary"
+    assert type(test_result.tables) == list
+    assert len(test_result.tables) == 3
+    assert len(test_result.extra_txt) > 0
+
+
+def test_rr_summary_weights(model, weights):
+    """summary() method with weights"""
+    test_result = model.fit(weights=weights).summary()
+    assert isinstance(test_result.tables, list)
+    assert len(test_result.tables) == 3
+    assert len(test_result.extra_txt) > 0
+
+
+@pytest.mark.skip(reason="not yet working")
+def test_rr_summary_cluster(model, clusters):
+    """summary() method with weights"""
+    test_result = model.fit(groupvar=clusters, cov_type="cluster").summary()
+    assert isinstance(test_result.tables, list)
+    assert len(test_result.tables) == 3
+    assert len(test_result.extra_txt) > 0
 
 
 def test_rr_noid(model):

@@ -241,6 +241,25 @@ def test_rf_cluster(endog, exog, clusters):
     assert result.cov_params == pytest.approx(truecov)
 
 
+def test_rf_nocluster(endog, exog):
+    """estimate with cluster-robust standard errors but no groupvar"""
+    model = RCR(endog,
+                exog,
+                cov_type="cluster")
+    truecov = np.asarray([[4.40273105e+00,  1.68091057e+00,  1.48603397e+01,
+                           2.62163549e-02,  1.48105699e-02],
+                          [1.68091057e+00,  9.36816074e+02, -3.30554494e+03,
+                           -2.08604784e+01,  9.45995702e-02],
+                          [1.48603397e+01, -3.30554494e+03,  1.17764763e+04,
+                           7.63213528e+01,  2.09329548e+00],
+                          [2.62163549e-02, -2.08604784e+01,  7.63213528e+01,
+                           9.15729396e-01,  4.38565221e-01],
+                          [1.48105699e-02,  9.45995702e-02,  2.09329548e+00,
+                           4.38565221e-01,  4.30902711e-01]])
+    result = model.fit()
+    assert result.cov_params == pytest.approx(truecov)
+
+
 def test_rf_clust_and_wt(endog, exog, clusters, weights):
     """estimate with weights and clusters"""
     model = RCR(endog,

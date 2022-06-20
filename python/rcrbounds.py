@@ -114,53 +114,44 @@ def read_data(infile):
     # infile argument should be a single string
     if not isinstance(infile, str):
         msg = "Infile should be a single string"
-        warn(msg)
-    # Line 1 should be three whitespace delimited numbers
+        die(msg)
     try:
+        # Line 1 should be three whitespace delimited numbers
         line1 = pd.read_csv(infile,
                             delim_whitespace=True,
                             skiprows=[1, 2],
                             header=None).values[0, ]
         n_moments, n_lambda, external_big_number = tuple(line1)
+        # Line 2 should be n_moments whitespace delimited numbers
+        moment_vector = pd.read_csv(infile,
+                                    delim_whitespace=True,
+                                    skiprows=[0, 2],
+                                    header=None).values[0, ].astype(np.float64)
+        # Lines 3+ should be two whitespace delimited numbers each
+        lambda_range = pd.read_csv(infile,
+                                   delim_whitespace=True,
+                                   skiprows=[0, 1],
+                                   header=None).values[0, ].astype(np.float64)
     except FileNotFoundError:
         msg = f"infile {infile} not found.\n"
         die(msg)
     except ValueError:
-        msg = f"Incorrect format in line 1 of infile {infile}.\n"
+        msg = f"Incorrect format in infile {infile}.\n"
         die(msg)
     else:
         msg1 = f"Line 1: n_moments = {n_moments}, n_lambda = {n_lambda}"
         msg2 = f"external_big_number = {external_big_number}.\n"
         write_to_logfile(msg1 + ", " + msg2)
-    # Line 2 should be n_moments whitespace delimited numbers
-    try:
-        moment_vector = pd.read_csv(infile,
-                                    delim_whitespace=True,
-                                    skiprows=[0, 2],
-                                    header=None).values[0, ].astype(np.float64)
-    except ValueError:
-        msg = f"Incorrect format in line 2 of infile {infile}.\n"
-        die(msg)
-    else:
         mv_len = len(moment_vector)
         msg = f"Line 2: moment_vector = a vector of length {mv_len}.\n"
         write_to_logfile(msg)
-    # Lines 3+ should be two whitespace delimited numbers each
-    try:
-        lambda_range = pd.read_csv(infile,
-                                   delim_whitespace=True,
-                                   skiprows=[0, 1],
-                                   header=None).values[0, ].astype(np.float64)
-    except ValueError:
-        msg = f"Incorrect format in line 3 of infile {infile}.\n"
-        die(msg)
-    else:
         write_to_logfile(f"Line 3: lambda_range = {lambda_range}.\n")
         write_to_logfile("For calculations, lambda_range,...\n")
-    write_to_logfile(f"Data successfully loaded from file {infile}\n")
+        write_to_logfile(f"Data successfully loaded from file {infile}\n")
+    # reset n_moments and n_lambda if needed
     n_lambda = int(n_lambda)
     n_moments = int(n_moments)
-    # reset n_moments and n_lambda if needed
+    external_big_number = float(external_big_number)
     if n_moments != len(moment_vector):
         msg1 = f"n_moments reset from {n_moments} "
         msg2 = f"to len(moment_vector) = {len(moment_vector)}."

@@ -2092,22 +2092,17 @@ class RCRResults:
         return obj
 
 
-#############################################################################
-# Begin run code
-#############################################################################
-
-
-if __name__ == "__main__":
-    # Load in arguments from call to program
+def stata_exe(argv):
+    """main run file for stata"""
     (infile0, outfile0, logfile0,
-        detail_file0) = get_command_arguments(sys.argv)
+        detail_file0) = get_command_arguments(argv)
 
     # Start the log file
     start_logfile(logfile0)
 
     # Read in the data from INFILE
-    (n_moments0, n_lambda0, external_big_number0, moment_vector0,
-        lambda_range0) = read_data(infile0)
+    (external_big_number0, moment_vector0,
+        lambda_range0) = read_data(infile0)[2:5]
 
     # Perform the calculations and put the results in result_matrix
     (result_matrix0, thetavec0, lambdavec0) = estimate_model(moment_vector0,
@@ -2124,6 +2119,15 @@ if __name__ == "__main__":
 
     # Close the log file
     set_logfile(None)
+
+
+#############################################################################
+# Begin run code
+#############################################################################
+
+
+if __name__ == "__main__":
+    stata_exe(sys.argv)
 
 #############################################################################
 # End run code

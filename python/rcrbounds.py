@@ -79,8 +79,6 @@ def set_logfile(fname):
 def get_logfile():
     """Retrieve name of log file.  If undefined, return None"""
     global LOGFILE  # pylint: disable=global-statement
-    if "LOGFILE" not in globals():
-        LOGFILE = None
     return LOGFILE
 
 

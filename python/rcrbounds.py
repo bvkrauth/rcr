@@ -1209,15 +1209,11 @@ def get_column_names(arr, default_names=None):
     return cols
 
 
-def bkouter(arrow):
+def bkouter(arrow, msk):
     """
     Given a vector, return its outer product with itself, as a vector
     """
-    mat = np.outer(arrow, arrow)
-    k = len(mat)
-    msk = np.triu(np.full((k, k), True)).flatten()
-    mat = mat.flatten()
-    return mat[msk]
+    return np.outer(arrow, arrow).flatten()[msk]
 
 
 def check_lambda(lambda_range):
@@ -1501,7 +1497,9 @@ class RCR:
                 weights=None,
                 groupvar=None):
         xyz = np.concatenate((self.exog, self.endog), axis=1)
-        xyzzyx = np.apply_along_axis(bkouter, 1, xyz)[:, 1:]
+        k = xyz.shape[1]
+        msk = np.triu(np.full((k, k), True)).flatten()
+        xyzzyx = np.apply_along_axis(bkouter, 1, xyz, msk=msk)[:, 1:]
         moment_vector = np.average(xyzzyx, axis=0, weights=weights)
         if estimate_cov:
             if weights is None and cov_type != "cluster":

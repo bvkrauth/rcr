@@ -367,9 +367,6 @@ def estimate_theta_segments(moment_vector):
             # thetavec that are the closest to theta_star.
             assert thetavec[i-2] < thetavec[i-1]
             assert thetavec[i] < thetavec[i+1]
-        else:
-            msg = f"theta_star (={theta_star}) > thetamax (={thetamax})."
-            warn(msg)
     # Re-sort thetavec
     thetavec = np.sort(thetavec)
     # Calculate lambda for every theta in thetavec
@@ -600,7 +597,8 @@ def estimate_theta(moment_vector,
     # Take the gradient at both theta_L and theta_H
     for j in range(1, 3):
         theta = theta_estimate[j-1, 0]
-        # The gradient can only be calculated if theta is finite!
+        # The gradient can only be calculated if theta is finite.
+        # This was hopefully caught above but check just in case.
         if not np.isfinite(theta):
             # If theta is infinite, then the gradient is zero.
             theta_estimate[j - 1, 1:] = 0.0
@@ -824,6 +822,7 @@ def check_moments(moment_vector):
         msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
         msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
         warn(msg1 + msg2)
+    # I'm not certain this condition can ever be triggered here
     if np.abs(simplified_moments[5]) > np.sqrt(simplified_moments[3] *
                                                simplified_moments[4]):
         valid = False
@@ -1226,10 +1225,7 @@ def check_lambda(lambda_range):
     """
     Check that the given lambda_range is valid
     """
-    if not isinstance(lambda_range, np.ndarray):
-        msg1 = "lambda_range should be a numpy array"
-        msg2 = f" and is a {type(lambda_range)}."
-        raise TypeError(msg1 + msg2)
+    assert isinstance(lambda_range, np.ndarray)
     if lambda_range.ndim != 1:
         msg1 = "lambda_range should be 1-d array"
         msg2 = f" and is a {lambda_range.ndim}-d array."
@@ -1255,10 +1251,7 @@ def check_endog(endog):
     """
     Check that the given endog matrix is valid
     """
-    if not isinstance(endog, np.ndarray):
-        msg1 = "endog should be an array-like object"
-        msg2 = f" and is a {type(endog)}."
-        raise TypeError(msg1 + msg2)
+    assert isinstance(endog, np.ndarray)
     if endog.ndim != 2:
         msg1 = "endog should be 2-d array"
         msg2 = f" and is a {endog.ndim}-d array."
@@ -1273,10 +1266,7 @@ def check_exog(exog, nrows):
     """
     Check that the given exog matrix is valid
     """
-    if not isinstance(exog, np.ndarray):
-        msg1 = "exog should be an array-like object"
-        msg2 = f" and is a {type(exog)}."
-        raise TypeError(msg1 + msg2)
+    assert isinstance(exog, np.ndarray)
     if exog.ndim != 2:
         msg = f"exog should be 2-d array; is a {exog.ndim}-d array."
         raise TypeError(msg)

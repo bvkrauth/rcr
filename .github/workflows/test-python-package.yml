@@ -4,16 +4,18 @@ on: [push]
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
-
+      matrix:
+        os: [ubuntu-latest]
+        version: [3.10]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: ${{ matrix.version }}
     - name: Install dependencies
       run: |
         pip install ./python

@@ -88,7 +88,8 @@ to indicate that there is no upper (lower) bound.  For example {cmd: lambda(. 1)
         that the observations be independent.  That is, the observations are independent across groups (clusters) but not
         necessarily within groups.  {cmd: varname} specifies to which group each observation belongs, e.g., {cmd: cluster(personid)} in
         data with repeated observations on individuals.  This option affects the standard errors and
-        variance-covariance matrix of the estimators but not the estimated coefficients.
+        variance-covariance matrix of the estimators but not the estimated coefficients.  You can also
+		use {cmd:vce(cluster varname)}.
 {p_end}
 
 {phang}

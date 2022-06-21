@@ -32,6 +32,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 			[if] [in] [fw aw pw iw] /* Standard estimation command arguments, handled in the standard way */
 			[, CLuster(varname) /* Standard option for cluster-corrected standard errors */
 								/* We don't have the robust option - the program uses Stata's MEAN command, which doesn't support it */
+			vce(namelist min = 2 max = 2) /* alternative to cluster */
 			SAVe /* Undocumented option to save intermediate files */
 			exe(string) /* Option to force a particular version */
 			vceadj(real 1.0) 
@@ -68,6 +69,23 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	if `vceadj' < 0 {;
 		di as error "Negative values for vceadj not allowed";
 		error 111;
+	};
+	/* Process vce */
+	if "`vce'" != "" {;
+		gettoken vce1 vce2: vce;
+		if "`vce1'" != "cluster" {;
+			di as error "vce option `vce1' not allowed";
+			error 198;
+		};
+		confirm variable `vce2';
+		unab vce2 : `vce2';
+		if "`cluster'" == "" {;
+			local cluster "`vce2'";
+		};
+		if "`cluster'" != "`vce2'" {;
+			di as error "options cluster() and vce(cluster) are in conflict";
+			error 100;
+		};
 	};
 /******** (2) Set the appropriate matsize **********/
 	/*** The number of explanatory variables is limited by the value of matsize.  The algorithm is based on the second moment ***/

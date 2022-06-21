@@ -388,6 +388,7 @@ savedresults drop unweighted
 est replay basic
 /* Clustering on group */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, cluster(TCHID)
+savedresults save cluster e()
 assert reldif( e(betaxCI_H)  , 7.221434897597197 ) <  1E-8
 assert reldif( e(betaxCI_L)  , 2.472053399759639 ) <  1E-8
 /* Clustering on individual ID. Should give the same result as no clustering */
@@ -398,6 +399,18 @@ assert reldif( e(betaxCI_L)  , 3.259480713112168 ) <  1E-8
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, cluster(zero)
 assert         e(betaxCI_L) < -8.99e+305
 assert         e(betaxCI_H) > -8.99e+305
+
+/* This also works with vce(cluster), which should produce the same result */
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster TCHID)
+savedresults compare cluster e(), tol(1.0e-8)
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster TCH) cluster(TCHI)
+savedresults compare cluster e(), tol(1.0e-8)
+savedresults drop cluster
+/* Issue an error if the vce and cluster options are in conflict */
+rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster TCHID) cluster(Girl)" == 100
+/* Issue an error if the cluster variable does not exist */
+rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster NOTHING) " == 111
+
 
 /*******************************************************************
 * VCEADJ option

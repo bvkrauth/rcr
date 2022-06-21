@@ -73,7 +73,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	/*** The number of explanatory variables is limited by the value of matsize.  The algorithm is based on the second moment ***/
 	/*** matrix of the data.  With K variables (1 outcome, 1 explanatory, K-2 control), that matrix is ***/
 	/*** (K+1)*(K+1) because of the intercept.   So there can be no more than:  ***/
-	/***      no more than 25 = floor(sqrt(800)-3) control variables for Stata IC ***/
+	/***      no more than 25 = floor(sqrt(800)-3) control variables for Stata BE/IC ***/
 	/***      no more than 101 = floor(sqrt(11000)-3) control variables for Stata SE/MP ***/
 	/*** NOTE: The second moment matrix is symmetric, so the code could be rewritten to take advantage of that.  ***/
 	/*** By my calculation this would raise the Stata IC limit to 36 control variables, and the Stata SE limit to 146.  ***/

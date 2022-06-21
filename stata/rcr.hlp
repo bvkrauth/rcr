@@ -50,7 +50,7 @@ Limitations:
 
 {phang2}
 (1) The minimum number of control variables is 1. The maximum number of control variables is 
-	floor(sqrt(c(max_matsize)))-3), which works out to 25 for Stata IC and 101 for Stata SE/MP.
+	floor(sqrt(c(max_matsize)))-3), which works out to 25 for Stata BE/IC and 101 for Stata SE/MP.
 {p_end}
 
 {phang2}

@@ -18,9 +18,6 @@
 capture program drop rcr;
 * set type double, permanently; /* I removed this because we don't want to make any persistent hidden changes to the user's environment */
 program define rcr , eclass byable(recall) /* sortpreserve [I took this out because it generated an error msg with detail option */;
-	/* Specify the version number.  The program uses ERETURN, which requires at least version 8.0 */
-	/* Version 9.x will work fine here too, but then users with version 8.0 wouldn't be able to use it. */
-	version 8.0; 
 	
 	/* If we are "replaying" (i.e. the user typed RCR with no arguments, or ESTIMATES REPLAY) just display the most recent results */
 	if (replay()){;
@@ -89,7 +86,8 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		di as error "Too many (" (`numall' - 2)	") explanatory variables. Maximum number for this Stata version is " (floor(sqrt(c(max_matsize)))-3);
 		exit 103;
 	};
-	if (`mat_needed' > `mat_current') {;
+	/* matsize does not apply for Stata version 16 and up */
+	if (`mat_needed' > `mat_current') & (c(stata_version) < 16) {;
 		set matsize `mat_needed';
 	};
 	
@@ -361,8 +359,10 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	di_rcr, level(`level'); /*refer to the program "di_rcr" below for more information on di_rcr program*/
 	Footer_rcr, level(`level'); /*refer to the program "Footer" below for more information on Footer program*/
 
-	/* Reset MATSIZE to its original value.  */
-	set matsize `mat_current';	
+	/* Reset MATSIZE to its original value (not needed for Stata version 16 and up).  */
+	if (c(stata_version) < 16) {;
+		set matsize `mat_current';
+	};
 	if "`details'" == "details" {;
 		quietly insheet using `detail_file', clear comma;
 		rename theta betax;
@@ -492,7 +492,8 @@ program define ci_imbensmanski, rclass;
 	/* Otherwise, we need to calculate the critical value based on Imbens-Manski (2004), Econometrica Vol. 72*/
 		while ((`cv_max' - `cv_min') > epsfloat()) {;
 			scalar `cv' = 0.5*(`cv_min' + `cv_max');
-			if ((norm (`cv' + `delta' )  - norm( - `cv')) - (`level'/100) < 0) scalar `cv_min' = `cv';			
+			/* The NORM function was renamed in later Stata versions */
+			version 8: if ((norm (`cv' + `delta' )  - norm( - `cv')) - (`level'/100) < 0) scalar `cv_min' = `cv';
 			else scalar `cv_max' = `cv';				
 		};
 	};

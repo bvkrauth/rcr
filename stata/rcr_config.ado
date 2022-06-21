@@ -21,7 +21,7 @@ program define rcr_config, rclass
 		local os "`forceos'"
 	}
 	if "`forcereq'" == "" {
-		local requirements "numpy pandas scipy statsmodels"
+		local requirements "numpy pandas scipy"
 	}
 	else {
 		local requirements "`forcereq'"

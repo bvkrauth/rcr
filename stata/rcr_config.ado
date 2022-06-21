@@ -42,9 +42,9 @@ program define rcr_config, rclass
 
 	if `py' == 1 {
 		di "STEP 2: Is your Stata version linked to a compatible Python installation?"
-		local python_exec = c(python_exec)
 		capture python : 1
 		if _rc == 0 & "`python'" == "" {
+			local python_exec = c(python_exec)
 			di "  YES, your Stata version is linked to a compatible Python installation"
 			di "  (`python_exec')." _newline
 		}
@@ -56,8 +56,7 @@ program define rcr_config, rclass
 			di "    2. If you do not have a compatible version of Python available,"
 			di "       you can install one from {browse www.anaconda.com/products/distribution} "
 			di "    3. Once you have a compatible version of Python installed,"
-			di "       use {help python: python set exec} to tell Stata where it is."
-			python search
+			di "       use {help python: python set exec} to tell Stata where it is." _newline
 			local py = 0
 		}
 	}

@@ -36,9 +36,12 @@ import numpy as np
 from numpy.linalg import inv
 import pandas as pd
 import scipy.stats
-import statsmodels.iolib as si
-import statsmodels.iolib.summary as su
-import matplotlib.pyplot as plt
+try:
+    import statsmodels.iolib as si
+    import statsmodels.iolib.summary as su
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
 
 # Local application imports
 # (none)

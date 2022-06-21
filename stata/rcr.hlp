@@ -64,6 +64,12 @@ number (9.0e306) and -infinity is reported as a very large negative number (-9.0
 listed as "(dropped)" in keeping with Stata's convention for unidentified regression coefficients.
 {p_end}
 
+{pstd}
+Note that these limitations are all due to limitations in Stata itself, and can be avoided by
+using the full Python package RCRBOUNDS, available at
+{browse "https://github.com/bvkrauth/rcr" : https://github.com/bvkrauth/rcr}.
+
+
 {title:Options}
 
 {dlgtab:Model}
@@ -111,13 +117,36 @@ equations (6) and (7).{p_end}
 {synopt: {bf:"lower"}}: A one-tailed lower confidence interval for betax_H.  {p_end}
 {synopt: {bf:"upper"}}: A one-tailed upper confidence interval for betax_L.  {p_end}
 
-
 {phang}
 {opt details} indicates that a plot of the lambda(betax) function should be created, and the necessary
 	information to recreate that plot be saved in memory.  Note that this will overwrite the current 
 	data set.  The default plot may be improved upon by using the {help rcrplot} postestimation command.
 {p_end}
 
+{dlgtab:Advanced options}
+
+{phang}
+{opt exe(string)} specifies explicitly which external program to use.  Options include
+{cmd: python}, {cmd: windows-fortran}, and {cmd: unix-fortran}.  If not provided, an
+appropriate default will be chosen; see Technical notes below.
+{p_end}
+
+{title:Technical notes}
+
+{pstd}
+The Stata rcr command is a wrapper for an external program written in Python or Fortran. The Python version
+is the currently-supported one, but the older Fortran version is also provided for those using an older
+version of Stata (< version 16) that does not support Python, or who do not have a suitable Python installation
+available.  The command will automatically choose the executable version based on your setup, but you can:
+{p_end}
+
+{phang2}
+Check your configuration with the {help rcr_config} command.
+{p_end}
+
+{phang2}
+Force a particular version with the {cmd: exe} optional argument (see above).
+{p_end}
 
 {title:Examples:}
 

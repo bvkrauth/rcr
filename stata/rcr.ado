@@ -33,6 +33,7 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 			[, CLuster(varname) /* Standard option for cluster-corrected standard errors */
 								/* We don't have the robust option - the program uses Stata's MEAN command, which doesn't support it */
 			SAVe /* Undocumented option to save intermediate files */
+			exe(string) /* Option to force a particular version */
 			vceadj(real 1.0) 
 			DETails /* Option to save details */
 			citype(string) /* This is a special option for the type of confidence interval to calculate for BetaX */
@@ -43,7 +44,6 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	tempname lamb length moments lambf results V b gradient;
 														
 /***** (1) Process the command options ******/	
-
 	/* Process varlist */
 	/* The first variable name in varlist refers to the outcome variable and will be stored in DEPVAR */
 	gettoken depvar indepvar: varlist;
@@ -228,19 +228,33 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	quietly mat2txt, matrix(`lambf') saving("`input_file'") append; /*lambda vector*/	
 
 /***** (6) Call the RCR program *****/
+	/* See if Python is supported in this environment */
+	quietly rcr_config;
+	if "`exe'" == "" {;
+		local exe = r(default_version);
+	};
 	/***** the "RCR" should be stored in an ADO folder along with RCR program*************/
 	/* Find the RCR program */
-	if (c(os) == "Windows") {;
+	if ("`exe'" == "python"){;
+		quietly findfile "rcrbounds.py";
+		local rcr_py = r(fn);
+	};
+	else if ("`exe'" == "windows-fortran") {;
 		quietly findfile "rcr.exe";
+		local rcr_exe = r(fn);
 	};
-	if (c(os) == "Unix") {;
+	else if ("`exe'" == "unix-fortran") {;
 		quietly findfile "rcr";
+		local rcr_exe = r(fn);
 	};
-	local rcr_exe = r(fn);
-	/* Check to see if the output_file already exists */
-	capture confirm file "`output_file'";
+	else {;
+		di "Executable `exe' is not supported.  Run rcr_config to check configuration.";
+		return;
+	};
 	/* Input path(s) to libraries required by RCR (this is machine-specific) */
 	local path_to_libs "LD_LIBRARY_PATH=/opt/apps/rhel7/gcc-5.4.0/lib64:/lib64/:/hpchome/econ/tmr17/lib/OpenBLAS/lib/";
+	/* Check to see if the output_file already exists */
+	capture confirm file "`output_file'";
 	/* Delete it if it does exist */
 	if (_rc == 0) {;
 		erase "`output_file'";	
@@ -252,10 +266,13 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		erase "`log_file'";	
 	};
 	/* Execute the RCR program.  */
-	if (c(os) == "Windows") {;
+	if ("`exe'" == "python"){;
+		python script `rcr_py', args("`input_file'" "`output_file'" "`log_file'" "`detail_file'");
+	};
+	else if ("`exe'" == "windows-fortran") {;
 		winexec "`rcr_exe'" "`input_file'" "`output_file'" "`log_file'" "`detail_file'";
 	};
-	if (c(os) == "Unix") {;
+	else if ("`exe'" == "unix-fortran") {;
 		shell `path_to_libs' `rcr_exe' `input_file' `output_file' `log_file' `detail_file'; /* quotes around local macros won't work in Linux shell! */
 	};
 	/* The following lines of code pauses the Stata program until the RCR program has ended.  */

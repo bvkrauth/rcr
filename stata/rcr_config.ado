@@ -83,7 +83,8 @@ program define rcr_config, rclass
 
 	if `py' == 1 {
 		di "RCR will use the latest (Python) version." _newline
-		di "Include the version(fortran) argument if you want to use the older (Fortran) version"
+		di "Add the exe(windows-fortran) or exe(unix-fortran) optional argument"
+		di "if you want to use the older (Fortran) version"
 		local default_version "python"
 	}
 	else if (`py' == 0) & "`os'" == "Windows" {

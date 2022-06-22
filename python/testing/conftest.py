@@ -8,9 +8,7 @@ import pandas as pd
 import pytest
 import patsy
 
-# sys.path.append("./")
-# sys.path.append("../")
-from rcrbounds import RCR, read_data  # pylint: disable=wrong-import-position
+from rcrbounds import RCR, read_data
 
 FIXTURE_DIR = os.path.dirname(os.path.realpath(__file__))
 

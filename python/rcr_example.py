@@ -8,6 +8,7 @@ argument "all".  For example, in iPython this would be:
 %run rcr_example all
 
 """
+# pylint: disable=no-member
 # Built in modules
 import sys
 

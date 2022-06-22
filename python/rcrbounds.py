@@ -1494,18 +1494,17 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
-    def copy(self,
-             endog=None,
-             exog=None,
-             lambda_range=None,
-             cov_type=None,
-             vceadj=None,
-             citype=None,
-             cilevel=None,
-             weights=None,
-             groupvar=None):
+    def copy(self, **kwargs):
         """copy (and possibly modify) an RCR object"""
-        # pylint: disable=too-many-arguments
+        endog = kwargs.get("endog")
+        exog = kwargs.get("exog")
+        lambda_range = kwargs.get("lambda_range")
+        cov_type = kwargs.get("cov_type")
+        vceadj = kwargs.get("vceadj")
+        citype = kwargs.get("citype")
+        cilevel = kwargs.get("cilevel")
+        weights = kwargs.get("weights")
+        groupvar = kwargs.get("groupvar")
         if endog is None:
             endog = pd.DataFrame(self.endog,
                                  columns=self.endog_names)

@@ -1494,6 +1494,50 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
+    def copy(self,
+             endog=None,
+             exog=None,
+             lambda_range=None,
+             cov_type=None,
+             vceadj=None,
+             citype=None,
+             cilevel=None,
+             weights=None,
+             groupvar=None):
+        """copy (and possibly modify) an RCR object"""
+        # pylint: disable=too-many-arguments
+        if endog is None:
+            endog = pd.DataFrame(self.endog,
+                                 columns=self.endog_names)
+        if exog is None:
+            exog = pd.DataFrame(self.exog,
+                                columns=self.exog_names)
+        if lambda_range is None:
+            lambda_range = self.lambda_range
+        if cov_type is None:
+            cov_type = self.cov_type
+        if vceadj is None:
+            vceadj = self.vceadj
+        if citype is None:
+            citype = self.citype
+        if cilevel is None:
+            cilevel = self.cilevel
+        if weights is None and self.weights is not None:
+            weights = pd.DataFrame(self.weights,
+                                   columns=self.weights_name)
+        if groupvar is None and self.groupvar is not None:
+            groupvar = pd.DataFrame(self.groupvar,
+                                    columns=self.groupvar_name)
+        return RCR(endog=endog,
+                   exog=exog,
+                   lambda_range=lambda_range,
+                   cov_type=cov_type,
+                   vceadj=vceadj,
+                   citype=citype,
+                   cilevel=cilevel,
+                   weights=weights,
+                   groupvar=groupvar)
+
     def _get_mv(self,
                 estimate_cov=False,
                 cov_type="conservative",

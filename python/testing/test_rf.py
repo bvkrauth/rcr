@@ -42,10 +42,6 @@ def test_rf_basic(model):
                                    'lambda0',
                                    'betaxL',
                                    'betaxH']
-    assert results.cov_type == "nonrobust"
-    assert results.vceadj == 1.0
-    assert results.citype == "conservative"
-    assert results.cilevel == 95
 
 
 # Set lambda_range
@@ -213,11 +209,9 @@ def test_rf_weighted(endog, exog, weights):
     assert res1.params == pytest.approx(res0.params)
     assert res1.cov_params == pytest.approx(res0.cov_params)
     assert res1.model.nobs == res0.model.nobs
-    assert res1.nobs == res0.nobs
     assert res2.params == pytest.approx(res0.params)
     assert res2.cov_params == pytest.approx(res0.cov_params)
-    assert res2.model.nobs == len(endog)
-    assert res2.nobs == res0.nobs
+    assert res2.model.nobs == res0.model.nobs
 
 
 def test_rf_cluster(endog, exog, clusters):

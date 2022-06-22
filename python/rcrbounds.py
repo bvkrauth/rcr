@@ -1538,29 +1538,26 @@ class RCR:
                    groupvar=groupvar)
 
     def _get_mv(self,
-                estimate_cov=False,
-                cov_type="conservative",
-                weights=None,
-                groupvar=None):
+                estimate_cov=False):
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         k = xyz.shape[1]
         msk = np.triu(np.full((k, k), True)).flatten()
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz, msk=msk)[:, 1:]
-        moment_vector = np.average(xyzzyx, axis=0, weights=weights)
+        moment_vector = np.average(xyzzyx, axis=0, weights=self.weights)
         if estimate_cov:
-            if weights is None and cov_type != "cluster":
+            if self.weights is None and self.cov_type != "cluster":
                 fac = 1/self.nobs
                 cov_mv = fac*np.cov(xyzzyx,
                                     rowvar=False)
-            elif weights is not None and cov_type != "cluster":
-                fac = sum((weights/sum(weights)) ** 2)
+            elif self.weights is not None and self.cov_type != "cluster":
+                fac = sum((self.weights/sum(self.weights)) ** 2)
                 cov_mv = fac*np.cov(xyzzyx,
                                     rowvar=False,
-                                    aweights=weights)
+                                    aweights=self.weights)
             else:
                 cov_mv = robust_cov(xyzzyx,
-                                    groupvar=groupvar,
-                                    weights=weights)
+                                    groupvar=self.groupvar,
+                                    weights=self.weights)
             return moment_vector, cov_mv
         return moment_vector
 
@@ -1571,7 +1568,7 @@ class RCR:
         Estimate lambda for a set of theta values
         """
         thetavals = np.asarray(thetavals).flatten()
-        moment_vector = self._get_mv(weights=self.weights)
+        moment_vector = self._get_mv()
         simplified_moments = simplify_moments(moment_vector)
         theta_star = thetastar(moment_vector)
         lambdavals = lambdafast(thetavals, simplified_moments)
@@ -1584,13 +1581,7 @@ class RCR:
         return lambdavals, thetavals
 
     def fit(self,
-            lambda_range=None,
-            cov_type=None,
-            groupvar=None,
-            vceadj=None,
-            citype=None,
-            cilevel=None,
-            weights=None):
+            **kwargs):
         """
         Estimates an RCR model.
 
@@ -1620,60 +1611,24 @@ class RCR:
         RCRResults
             the results container.
         """
-        # pylint: disable=too-many-arguments,too-many-locals
-        if lambda_range is None:
-            lambda_range = self.lambda_range
+        # pylint: disable=protected-access
+        if kwargs == {}:
+            model = self
         else:
-            lambda_range = np.asarray(lambda_range)
-            check_lambda(lambda_range)
-        if cov_type is None:
-            cov_type = self.cov_type
-        if groupvar is None:
-            groupvar = self.groupvar
-        if vceadj is None:
-            vceadj = self.vceadj
-        check_covinfo(cov_type, vceadj)
-        if cilevel is None:
-            cilevel = self.cilevel
-        if citype is None:
-            citype = self.citype
-        check_ci(cilevel, citype)
-        if weights is None and self.weights is not None:
-            weights = self.weights
-            weights_name = self.weights_name
-        else:
-            weights_name = get_column_names(weights,
-                                            default_names="(no name)")
-        check_weights(weights, len(self.endog))
-        if weights is None:
-            nobs = self.nobs
-        else:
-            nobs = sum(weights > 0.)
-        moment_vector, cov_mv = self._get_mv(estimate_cov=True,
-                                             weights=weights,
-                                             cov_type=cov_type,
-                                             groupvar=groupvar)
+            model = self.copy(**kwargs)
+        moment_vector, cov_mv = model._get_mv(estimate_cov=True)
         (result_matrix, thetavec, lambdavec) = \
-            estimate_model(moment_vector, lambda_range)
+            estimate_model(moment_vector, model.lambda_range)
         params = result_matrix[:, 0]
-        cov_params = (vceadj *
+        cov_params = (model.vceadj *
                       result_matrix[:, 1:] @
                       cov_mv @
                       result_matrix[:, 1:].T)
         details = np.array([thetavec, lambdavec])
-        return RCRResults(self,
+        return RCRResults(model=model,
                           params=params,
                           cov_params=cov_params,
-                          details=details,
-                          cov_type=cov_type,
-                          groupvar=groupvar,
-                          vceadj=vceadj,
-                          lambda_range=lambda_range,
-                          cilevel=cilevel,
-                          citype=citype,
-                          weights=weights,
-                          weights_name=weights_name,
-                          nobs=nobs)
+                          details=details)
 
 
 class RCRResults:
@@ -1762,16 +1717,7 @@ class RCRResults:
                  model,
                  params,
                  cov_params,
-                 details,
-                 cov_type,
-                 groupvar,
-                 vceadj,
-                 lambda_range,
-                 cilevel,
-                 citype,
-                 weights,
-                 weights_name,
-                 nobs):
+                 details):
         """
         Constructs the RCRResults object.
         """
@@ -1785,15 +1731,6 @@ class RCRResults:
                             "betaxH"]
         self.cov_params = cov_params
         self.details = details
-        self.cov_type = cov_type
-        self.groupvar = groupvar
-        self.vceadj = vceadj
-        self.lambda_range = lambda_range
-        self.cilevel = cilevel
-        self.citype = citype
-        self.weights = weights
-        self.weights_name = weights_name
-        self.nobs = nobs
 
     def params_se(self):
         """
@@ -1819,7 +1756,7 @@ class RCRResults:
         asymptotic confidence intervals for RCR parameter estimates
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         check_ci(cilevel)
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
         return np.array([self.params - crit * self.params_se(),
@@ -1849,7 +1786,7 @@ class RCRResults:
         conservative asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
         ci_lb = self.params[3] - crit * self.params_se()[3]
         ci_ub = self.params[4] + crit * self.params_se()[4]
@@ -1860,7 +1797,7 @@ class RCRResults:
         upper asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         ci_lb = self.params[3] - crit * self.params_se()[3]
         ci_ub = np.inf
@@ -1871,7 +1808,7 @@ class RCRResults:
         lower asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         ci_lb = -np.inf
         ci_ub = self.params[4] + crit * self.params_se()[4]
@@ -1882,7 +1819,7 @@ class RCRResults:
         Imbens-Manski confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
         cv_mid = cv_min
         cv_max = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 200.0))
@@ -1992,8 +1929,8 @@ class RCRResults:
                            color=lscolor,
                            label=lslabel)
         if idset is True:
-            ax.axhspan(self.lambda_range[0],
-                       self.lambda_range[1],
+            ax.axhspan(self.model.lambda_range[0],
+                       self.model.lambda_range[1],
                        color=idcolors[0],
                        alpha=idalphas[0],
                        label=idlabels[0])
@@ -2065,13 +2002,13 @@ class RCRResults:
         table1data = [[self.model.depvar,
                        self.model.treatvar],
                       [datetime.now().strftime("%a, %d %b %Y"),
-                       self.lambda_range[0]],
+                       self.model.lambda_range[0]],
                       [datetime.now().strftime("%H:%M:%S"),
-                       self.lambda_range[1]],
-                      [self.nobs,
+                       self.model.lambda_range[1]],
+                      [self.model.nobs,
                        ncontrols],
-                      [self.cov_type,
-                       self.vceadj]]
+                      [self.model.cov_type,
+                       self.model.vceadj]]
         table1stub1 = ["Dep. Variable",
                        "Date",
                        "Time",
@@ -2082,13 +2019,13 @@ class RCRResults:
                        "Upper bound on lambda",
                        "No. Controls",
                        "Cov. adjustment factor"]
-        if self.cov_type == "cluster":
+        if self.model.cov_type == "cluster":
             table1data.append([self.model.groupvar_name,
                                self.model.ngroups])
             table1stub1.append("Cluster variable:")
             table1stub2.append("No. Clusters")
-        if self.weights is not None:
-            table1data.append([self.weights_name,
+        if self.model.weights is not None:
+            table1data.append([self.model.weights_name,
                                ""])
             table1stub1.append("Weight variable:")
             table1stub2.append("")

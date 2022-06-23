@@ -1,29 +1,34 @@
 """
-RCR.PY: Performs calculations for RCR model
+RCRBOUNDS.PY: Performs calculations for RCR model
 
 Author:       Brian Krauth
               Department of Economics
               Simon Fraser University
 Usage:
 
-       rcr.py [infile outfile logfile]
+This Python package is meant to be used in one of two ways:
 
-       where
+1. As the Python module rcrbounds.  To fit an RCR model in
+   Python:
 
-           infile      An optional argument giving the name
-                       of the input file.  Default is IN.TXT.
+    1. Use the RCR function to set up the model as an
+       RCR object.
+    2. Use the RCR object's fit() method to fit the model,
+       and return an RCRResults object.
+    3. Use the RCRResults objects summary() method to
+       show a summary table of results.
 
-           outfile     An optional argument giving the name of
-                       the output file. Default is OUT.TXT.
+    For additional details and options, see the associated
+    docstrings:
+        rcrbounds.RCR?
+        rcrbounds.RCR.fit?
+        rcrbounds.RCRResults?
+        rcrbounds.RCRResults.summary?
 
-           logfile     An optional argument giving the name of
-                       the output file. Default is LOG.TXT.
-
-       The RCR program will read in the INFILE, perform
-       the calculations, and then write the results to OUTFILE.
-       The program may also report information on its status to
-       LOGFILE.
-
+2. As a Python script to be called from Stata's rcr command.
+   This usage is invisible to most users, but if you are
+   debugging or trying to understand the code, view the
+   docstring for the stata_exe() function.
 """
 # pylint: disable=too-many-lines
 # Standard library imports
@@ -268,22 +273,9 @@ def estimate_model(moment_vector, lambda_range):
     -------
     result_matrix : ndarray
         an array of parameter estimates and gradients
-
-    Side effects
-    ------------
-    None.
-
-    See also
-    --------
-    To be added.
-
-    Notes
-    -----
-    To be added.
-
-    Examples
-    --------
-    To be added.
+    theetavec, lambdavec : ndarray
+        the lambda(theta) function, estimated at a large
+        number of points
 
     """
     write_to_logfile("Estimating model.\n")
@@ -1384,16 +1376,47 @@ class RCR:
         (dependent variable) and the second column represents the
         treatment (explanatory variable of interest).
     exog : array_like
-        a nrows x k array of control variables. The first column should
+        A nrows x k array of control variables. The first column should
         be an intercept.  See :func:`statsmodels.tools.add_constant`
         to add an intercept.
+    weights : array_like or None
+        An optional nrows x 1 array of weights.
+        Default is None.
+    groupvar : array_like or None
+        An optional nrows x 1 array of group ID variables for the
+        calculation of cluster-robust standard errors.
+        Default is None.
     lambda_range: array_like
-        a 1-d array of the form [lambdaL, lambdaH] where lambdaL
-        is the lower bound and lambdaH is the upper bound
-        for the RCR parameter lambda.  lambdaL can be -inf
-        to indicate no lower bound, and lambdaH can be inf
-        to indicate no upper bound.  lambdaL should be <=
-        to lambdaH. Default is [0.0, 1.0].
+        An optional 1-d array of the form [lambdaL, lambdaH]
+        where lambdaL is the lower bound and lambdaH is the
+        upper bound for the RCR parameter lambda.  lambdaL can
+        be -inf to indicate no lower bound, and lambdaH can
+        be inf to indicate no upper bound.  lambdaL should always
+        be <= lambdaH.
+        Default is [0.0, 1.0].
+    cov_type : str
+        The method used to estimate the covariance matrix
+        of parameter estimates. Currently-available options
+        are 'nonrobust' (the usual standard errors for
+        a random sample) and 'cluster' (cluster-robust
+        standard errors)
+        Default is 'nonrobust'.
+    vceadj : float
+        Optional degrees of freedom adjustment factor. The covariance
+        matrix of parameters will be multiplied by vceadj.
+        Default is no adjustment (vceadj = 1.0).
+    citype: str
+        Optional confidence interval type for the causal effect
+        of interest.  Options include "conservative" (ignores
+        the width of the identified set), "Imbens-Manski"
+        (accounts for the width of the identified set),
+        "upper" (one-tailed upper CI), and "lower" (one-tailed
+        lower CI).
+        Default is "conservative"
+    cilevel : float
+        Optional confidence level on a 0 to 100 scale for confidence
+        interval calculations.
+        Default is 95.
 
     Attributes
     ----------
@@ -1403,6 +1426,18 @@ class RCR:
         the array of exogenous variables
     lambda_range : ndarray
         the array of lambda values.
+    weights : ndarray or None
+        the array of weights.
+    groupvar : ndarray or None
+        the array of group ID variables
+    cov_type : str
+        the method used to estimate the covariance matrix
+    vceadj : float
+        the degrees of freedom adjustment factor
+    citype: str
+        the confidence interval type
+    cilevel : float
+        the confidence level
     endog_names, exog_names : ndarray of str
         the names of the variables in endog and exog.
     depvar, treatvar, controlvars : str
@@ -1414,8 +1449,15 @@ class RCR:
 
     Methods
     ------------
-    fit(lambda_range=None, cov_type="nonrobust", vceadj=1.0)
+    fit()
         Estimates the RCR model.
+    copy()
+        Creates a copy of the RCR model object, with
+        modificatios as specified by any keyword arguments
+        provided.
+    lambdavals()
+        Calculates the lambda(betax) function associated
+        with the RCR model.
 
     See also
     --------
@@ -1442,7 +1484,7 @@ class RCR:
                  weights=None,
                  groupvar=None):
         """
-        Constructs the RCR object.
+        Construct the RCR object.
         """
         # pylint: disable=too-many-arguments
         self.endog = np.asarray(endog)
@@ -1494,30 +1536,75 @@ class RCR:
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
+    def copy(self, **kwargs):
+        """
+        Copy (and possibly modify) an RCR object
+        """
+        endog = kwargs.get("endog")
+        exog = kwargs.get("exog")
+        lambda_range = kwargs.get("lambda_range")
+        cov_type = kwargs.get("cov_type")
+        vceadj = kwargs.get("vceadj")
+        citype = kwargs.get("citype")
+        cilevel = kwargs.get("cilevel")
+        weights = kwargs.get("weights")
+        groupvar = kwargs.get("groupvar")
+        if endog is None:
+            endog = pd.DataFrame(self.endog,
+                                 columns=self.endog_names)
+        if exog is None:
+            exog = pd.DataFrame(self.exog,
+                                columns=self.exog_names)
+        if lambda_range is None:
+            lambda_range = self.lambda_range
+        if cov_type is None:
+            cov_type = self.cov_type
+        if vceadj is None:
+            vceadj = self.vceadj
+        if citype is None:
+            citype = self.citype
+        if cilevel is None:
+            cilevel = self.cilevel
+        if weights is None and self.weights is not None:
+            weights = pd.DataFrame(self.weights,
+                                   columns=self.weights_name)
+        if groupvar is None and self.groupvar is not None:
+            groupvar = pd.DataFrame(self.groupvar,
+                                    columns=self.groupvar_name)
+        return RCR(endog=endog,
+                   exog=exog,
+                   lambda_range=lambda_range,
+                   cov_type=cov_type,
+                   vceadj=vceadj,
+                   citype=citype,
+                   cilevel=cilevel,
+                   weights=weights,
+                   groupvar=groupvar)
+
     def _get_mv(self,
-                estimate_cov=False,
-                cov_type="conservative",
-                weights=None,
-                groupvar=None):
+                estimate_cov=False):
+        """
+        Calculate the moment vector used in RCR estimation
+        """
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         k = xyz.shape[1]
         msk = np.triu(np.full((k, k), True)).flatten()
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz, msk=msk)[:, 1:]
-        moment_vector = np.average(xyzzyx, axis=0, weights=weights)
+        moment_vector = np.average(xyzzyx, axis=0, weights=self.weights)
         if estimate_cov:
-            if weights is None and cov_type != "cluster":
+            if self.weights is None and self.cov_type != "cluster":
                 fac = 1/self.nobs
                 cov_mv = fac*np.cov(xyzzyx,
                                     rowvar=False)
-            elif weights is not None and cov_type != "cluster":
-                fac = sum((weights/sum(weights)) ** 2)
+            elif self.weights is not None and self.cov_type != "cluster":
+                fac = sum((self.weights/sum(self.weights)) ** 2)
                 cov_mv = fac*np.cov(xyzzyx,
                                     rowvar=False,
-                                    aweights=weights)
+                                    aweights=self.weights)
             else:
                 cov_mv = robust_cov(xyzzyx,
-                                    groupvar=groupvar,
-                                    weights=weights)
+                                    groupvar=self.groupvar,
+                                    weights=self.weights)
             return moment_vector, cov_mv
         return moment_vector
 
@@ -1525,10 +1612,10 @@ class RCR:
                    thetavals=np.linspace(-50, 50, 100),
                    add_thetastar=False):
         """
-        Estimate lambda for a set of theta values
+        Estimate lambda() for a set of values
         """
         thetavals = np.asarray(thetavals).flatten()
-        moment_vector = self._get_mv(weights=self.weights)
+        moment_vector = self._get_mv()
         simplified_moments = simplify_moments(moment_vector)
         theta_star = thetastar(moment_vector)
         lambdavals = lambdafast(thetavals, simplified_moments)
@@ -1541,31 +1628,15 @@ class RCR:
         return lambdavals, thetavals
 
     def fit(self,
-            lambda_range=None,
-            cov_type=None,
-            groupvar=None,
-            vceadj=None,
-            citype=None,
-            cilevel=None,
-            weights=None):
+            **kwargs):
         """
-        Estimates an RCR model.
+        Estimate an RCR model.
 
         Parameters
         ----------
-        lambda_range : array_like
-            if supplied, overrides the value of lambda_range in
-            the RCR object.
-        cov_type : str
-            the method used to estimate the covariance matrix
-            of parameter estimates. Currently-available options
-            include 'nonrobust'.  Heteroscedasticity and
-            cluster robust uptions to be added. Default
-            is 'nonrobust'.
-        vceadj : float
-            degrees of freedom adjustment factor. The covariance
-            matrix of parameters will be multiplied by vceadj.
-            Default is no adjustment (vceadj = 1.0).
+        **kwargs
+            Additional keyword arguments that will override any options
+            specified when constructing the model.
 
         Returns
         -------
@@ -1577,60 +1648,24 @@ class RCR:
         RCRResults
             the results container.
         """
-        # pylint: disable=too-many-arguments,too-many-locals
-        if lambda_range is None:
-            lambda_range = self.lambda_range
+        # pylint: disable=protected-access
+        if not kwargs:
+            model = self
         else:
-            lambda_range = np.asarray(lambda_range)
-            check_lambda(lambda_range)
-        if cov_type is None:
-            cov_type = self.cov_type
-        if groupvar is None:
-            groupvar = self.groupvar
-        if vceadj is None:
-            vceadj = self.vceadj
-        check_covinfo(cov_type, vceadj)
-        if cilevel is None:
-            cilevel = self.cilevel
-        if citype is None:
-            citype = self.citype
-        check_ci(cilevel, citype)
-        if weights is None and self.weights is not None:
-            weights = self.weights
-            weights_name = self.weights_name
-        else:
-            weights_name = get_column_names(weights,
-                                            default_names="(no name)")
-        check_weights(weights, len(self.endog))
-        if weights is None:
-            nobs = self.nobs
-        else:
-            nobs = sum(weights > 0.)
-        moment_vector, cov_mv = self._get_mv(estimate_cov=True,
-                                             weights=weights,
-                                             cov_type=cov_type,
-                                             groupvar=groupvar)
+            model = self.copy(**kwargs)
+        moment_vector, cov_mv = model._get_mv(estimate_cov=True)
         (result_matrix, thetavec, lambdavec) = \
-            estimate_model(moment_vector, lambda_range)
+            estimate_model(moment_vector, model.lambda_range)
         params = result_matrix[:, 0]
-        cov_params = (vceadj *
+        cov_params = (model.vceadj *
                       result_matrix[:, 1:] @
                       cov_mv @
                       result_matrix[:, 1:].T)
         details = np.array([thetavec, lambdavec])
-        return RCRResults(self,
+        return RCRResults(model=model,
                           params=params,
                           cov_params=cov_params,
-                          details=details,
-                          cov_type=cov_type,
-                          groupvar=groupvar,
-                          vceadj=vceadj,
-                          lambda_range=lambda_range,
-                          cilevel=cilevel,
-                          citype=citype,
-                          weights=weights,
-                          weights_name=weights_name,
-                          nobs=nobs)
+                          details=details)
 
 
 class RCRResults:
@@ -1639,22 +1674,15 @@ class RCRResults:
 
     Parameters
     ----------
-    endog : array_like
-        A nobs x 2 array where nobs is the number of observations.
-        The first column represents the outcome (dependent variable)
-        and the second column represents the treatment
-        (explanatory variable of interest).
-    exog : array_like
-        a nobs x k array of control variables. The first column should
-        be an intercept.  See :func:`statsmodels.tools.add_constant`
-        to add an intercept.
-    lambda_range: array_like
-        a 1-d array of the form [lambdaL, lambdaH] where lambdaL
-        is the lower bound and lambdaH is the upper bound
-        for the RCR parameter lambda.  lambdaL can be -inf
-        to indicate no lower bound, and lambdaH can be inf
-        to indicate no upper bound.  lambdaL should be <=
-        to lambdaH. Default is [0.0, 1.0].
+    model : RCR object
+        The RCR object representing the model to be estimated.
+        See rcrbounds.RCR for details.
+    params : ndarray
+        A 5-element ndarray representing estimates for the point-identified
+        parameters [lambdaInf, betaxInf, lambda0, betaxL, betaxH]
+    cov_params : ndarray
+        A 5 x 5 ndarray representing the estimated covariance matrix
+        for the esimates in params.
 
     Attributes
     ----------
@@ -1662,16 +1690,10 @@ class RCRResults:
         the model that has been estimated.
     params : ndarray
         the estimated parameters.
-    param_names : list
-        the parameter names.
     cov_params : ndarray
         the covariance matrix for the parameter estimates.
-    cov_type : str
-        the covariance estimator used in the results.
-    vceadj : float
-        the user-supplied adjustment factor used to
-        calculate the covariance matrix.  Usually is
-        1.0 (no adjustment).
+    param_names : list
+        the parameter names.
     details : ndarray
         a d x 2 array representing the lambda(theta) function
         the first column is a set of theta values,
@@ -1682,24 +1704,22 @@ class RCRResults:
 
     Methods
     ------------
-    se()
-        standard errors for param.
-    z()
-        z-statistics for param.
-    pz()
-        asymptotic p-values for param.
-    ci(cilevel=95)
-        (cilevel)% confidence intervals for param.
-    betax_ci_conservative(cilevel=95)
-        conservative confidence interval for the causal effect.
-    betax_ci_upper(cilevel=95)
-        upper confidence interval for the causal effect.
-    betax_ci_lower(cilevel=95)
-        lower confidence interval for the causal effect.
-    betax_ci_imbensmanski(cilevel=95)
-        Imbens-Manski confidence interval for the causal effect.
+    params_se()
+        standard errors for params.
+    params_z()
+        z-statistics for params.
+    params_pvalue()
+        asymptotic p-values for params.
+    params_ci()
+        confidence intervals for params.
+    betax_ci()
+        confidence interval for the causal effect.
+    test_betax()
+        hypothesis test for the causal effect.
     summary()
-        Summary of results.
+        summary of results.
+    rcrplot()
+        plot of results.
 
     See also
     --------
@@ -1719,18 +1739,9 @@ class RCRResults:
                  model,
                  params,
                  cov_params,
-                 details,
-                 cov_type,
-                 groupvar,
-                 vceadj,
-                 lambda_range,
-                 cilevel,
-                 citype,
-                 weights,
-                 weights_name,
-                 nobs):
+                 details):
         """
-        Constructs the RCRResults object.
+        Construct the RCRResults object.
         """
         # pylint: disable=too-many-arguments
         self.model = model
@@ -1742,15 +1753,6 @@ class RCRResults:
                             "betaxH"]
         self.cov_params = cov_params
         self.details = details
-        self.cov_type = cov_type
-        self.groupvar = groupvar
-        self.vceadj = vceadj
-        self.lambda_range = lambda_range
-        self.cilevel = cilevel
-        self.citype = citype
-        self.weights = weights
-        self.weights_name = weights_name
-        self.nobs = nobs
 
     def params_se(self):
         """
@@ -1773,10 +1775,21 @@ class RCRResults:
 
     def params_ci(self, cilevel=None):
         """
-        asymptotic confidence intervals for RCR parameter estimates
+        Asymptotic confidence intervals for RCR parameter estimates
+
+        Parameters
+        ----------
+        cilevel : float
+            Optional confidence level on a 0 to 100 scale for confidence
+            interval calculations.
+            Default is the value set in the RCR model object.
+
+        Returns
+        -------
+        a 2 x 5 ndarrray representing the confidence intervals
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         check_ci(cilevel)
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
         return np.array([self.params - crit * self.params_se(),
@@ -1786,7 +1799,26 @@ class RCRResults:
                  cilevel=None,
                  citype="conservative"):
         """
-        asymptotic confidence interval for causal effect.
+        Asymptotic confidence intervals for the RCR causal effect
+
+        Parameters
+        ----------
+        cilevel : float
+            Optional confidence level on a 0 to 100 scale for confidence
+            interval calculations.
+            Default is the value set in the RCR model object.
+        citype: str
+            Optional confidence interval type for the causal effect
+            of interest.  Options include "conservative" (ignores
+            the width of the identified set), "Imbens-Manski"
+            (accounts for the width of the identified set),
+            "upper" (one-tailed upper CI), and "lower" (one-tailed
+            lower CI).
+            Default is the value set in the RCR model object.
+
+        Returns
+        -------
+        a length-2 ndarrray representing the confidence interval
         """
 
         if citype == "conservative":
@@ -1806,7 +1838,7 @@ class RCRResults:
         conservative asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
         ci_lb = self.params[3] - crit * self.params_se()[3]
         ci_ub = self.params[4] + crit * self.params_se()[4]
@@ -1817,7 +1849,7 @@ class RCRResults:
         upper asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         ci_lb = self.params[3] - crit * self.params_se()[3]
         ci_ub = np.inf
@@ -1828,7 +1860,7 @@ class RCRResults:
         lower asymptotic confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
         ci_lb = -np.inf
         ci_ub = self.params[4] + crit * self.params_se()[4]
@@ -1839,7 +1871,7 @@ class RCRResults:
         Imbens-Manski confidence interval for causal effect.
         """
         if cilevel is None:
-            cilevel = self.cilevel
+            cilevel = self.model.cilevel
         cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
         cv_mid = cv_min
         cv_max = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 200.0))
@@ -1866,14 +1898,33 @@ class RCRResults:
 
     def test_betax(self, h0_value=0.0):
         """
-        Perform a hypothesis test for betax
+        Conduct a hypothesis test for betax
 
+        Parameters
+        ----------
+        h0_value : float
+            Optional value for causal effect under the null hypothesis.
+            Default is zero.
+
+        Returns
+        -------
+        the p-value for the test of the null hypothesis
+            H0: betax = h0_value
+
+        Notes
+        -------
         This test works by inverting the Imbens-Manski confidence interval.
         That is, the function reports a p-value defined as (1 - L/100)
         where L is the highest confidence level at which h0 is outside
         of the L% confidence interval.  For example, the p-value will
         be less than 0.05 (reject the null at 5%) if h0 is outside of
-        the 95% confidence interval.
+        the 95% confidence interval.  Since the test works by inverting
+        the confidence interval, there is no associated test statistic
+        to report.
+
+        See also
+        --------
+        RCRResults.betax_ci()
         """
         low = 0.0
         high = 100.0
@@ -1915,7 +1966,79 @@ class RCRResults:
                 idalphas=(0.25, 0.75),
                 legend=False):
         """
-        Create plot of RCR estimation results
+        Create a plot of RCR estimation results
+
+        Parameters
+        ----------
+        ax : a matplotlib axes object`or None
+            Axis object to return/modify.
+            Default is None.
+        xlim : array-like
+            Range of values for x-axis
+            Default is (-50, 50),
+        ylim : array-like or None
+            Range of values for y-axis.  If None,
+            the y-axis will adjust to fit the data.
+            Default is None
+        tsline : bool
+            Optional flag to show a line for theta_star
+            Default is False,
+        lsline : bool
+            Optional flag to show a line for lambda_star
+            Default is False,
+        idset : bool
+            Optional flag to show the identified set
+            Default is False,
+        title : str or None
+            Optional plot title.
+            Default is None,
+        xlabel : str
+            Optional label for x axis.
+            Default is r"Effect ($\beta_x$)",
+        ylabel : str
+            Optional label for y axis.
+        flabel : str
+            Optional label for lambda(theta) function.
+        tslabel : str
+            Optional label for theta_star line.
+        lslabel : str
+            Optional label for lambda_star line.
+        idlabels : (str, str)
+            Optional labels for identified set.
+        tss : str
+            Optional line type for theta_star
+        lss : str
+            Optional line type for lambda_star
+        fcolor : str
+            Optional color specification for lambda(betax) function
+            Default is "C0",
+        tscolor : str
+            Optional color specification for theta_star line
+            Default is "0.75",
+        lscolor : str
+            Optional color specification for lambda_star line
+            Default is "0.75",
+        idcolors : (str, str)
+            Optional color specifications for identified set
+            Default is ("C0", "C0"),
+        idalphas : (str, str)
+            Optional alpha specifications for identified set
+            Default is=(0.25, 0.75),
+        legend : bool
+            Optional flag to include legend
+            Default is=False
+
+        Returns
+        -------
+        ax
+            a matplotlib axes object
+
+        Notes
+        -------
+
+        See also
+        --------
+
         """
         # pylint: disable=too-many-arguments,too-many-locals,invalid-name
         xlim = np.sort(np.asarray(xlim))
@@ -1949,8 +2072,8 @@ class RCRResults:
                            color=lscolor,
                            label=lslabel)
         if idset is True:
-            ax.axhspan(self.lambda_range[0],
-                       self.lambda_range[1],
+            ax.axhspan(self.model.lambda_range[0],
+                       self.model.lambda_range[1],
                        color=idcolors[0],
                        alpha=idalphas[0],
                        label=idlabels[0])
@@ -1968,8 +2091,8 @@ class RCRResults:
         return ax
 
     def summary(self,
-                citype="conservative",
-                cilevel=95,
+                citype=None,
+                cilevel=None,
                 tableformats=None):
         """
         Display summary of RCR results and return a summary
@@ -2005,6 +2128,10 @@ class RCRResults:
         To be added.
         """
         # pylint: disable=too-many-locals
+        if citype is None:
+            citype = self.model.citype
+        if cilevel is None:
+            cilevel = self.model.cilevel
         if tableformats is None:
             tableformats = ["%9.4f", "%9.3f", "%9.3f",
                             "%9.3f", "%9.3f", "%9.3f"]
@@ -2022,13 +2149,13 @@ class RCRResults:
         table1data = [[self.model.depvar,
                        self.model.treatvar],
                       [datetime.now().strftime("%a, %d %b %Y"),
-                       self.lambda_range[0]],
+                       self.model.lambda_range[0]],
                       [datetime.now().strftime("%H:%M:%S"),
-                       self.lambda_range[1]],
-                      [self.nobs,
+                       self.model.lambda_range[1]],
+                      [self.model.nobs,
                        ncontrols],
-                      [self.cov_type,
-                       self.vceadj]]
+                      [self.model.cov_type,
+                       self.model.vceadj]]
         table1stub1 = ["Dep. Variable",
                        "Date",
                        "Time",
@@ -2039,13 +2166,13 @@ class RCRResults:
                        "Upper bound on lambda",
                        "No. Controls",
                        "Cov. adjustment factor"]
-        if self.cov_type == "cluster":
+        if self.model.cov_type == "cluster":
             table1data.append([self.model.groupvar_name,
                                self.model.ngroups])
             table1stub1.append("Cluster variable:")
             table1stub2.append("No. Clusters")
-        if self.weights is not None:
-            table1data.append([self.weights_name,
+        if self.model.weights is not None:
+            table1data.append([self.model.weights_name,
                                ""])
             table1stub1.append("Weight variable:")
             table1stub2.append("")
@@ -2080,7 +2207,29 @@ class RCRResults:
 
 
 def stata_exe(argv):
-    """main run file for stata"""
+    """
+    Main run file for stata
+
+    Stata will call this file with the command:
+
+       python rcrbounds.py [infile outfile logfile]
+
+       where
+
+           infile      An optional argument giving the name
+                       of the input file.  Default is IN.TXT.
+
+           outfile     An optional argument giving the name of
+                       the output file. Default is OUT.TXT.
+
+           logfile     An optional argument giving the name of
+                       the output file. Default is LOG.TXT.
+
+       This function will read in the INFILE, perform
+       the calculations, and then write the results to OUTFILE.
+       The program may also report information on its status to
+       LOGFILE.
+    """
     (infile0, outfile0, logfile0,
         detail_file0) = get_command_arguments(argv)
 
@@ -2112,7 +2261,8 @@ def stata_exe(argv):
 # Begin run code
 #############################################################################
 
-
+# If this program is called as a script, it will be from the Stata RCR command.
+# Call stata_exe to perform the actions required for this purpose.
 if __name__ == "__main__":
     stata_exe(sys.argv)
 

@@ -206,19 +206,13 @@ if SHOW_ALL:
     # The RCRResult object includes various properties you can view directly
     #
     print("nobs is the number of observations:\n",
-          rcr_results.nobs)
+          rcr_results.model.nobs)
     print("params is the vector of parameter estimates:\n",
           rcr_results.params)
     print("param_names is the parameter names:\n",
           rcr_results.param_names)
     print("cov_params is the estimated covariance matrix:\n",
           rcr_results.cov_params)
-    print("You can also view the settings for all options:\n",
-          "lambda_range:", rcr_results.lambda_range, "\n",
-          "cilevel:", rcr_results.cilevel, "\n",
-          "citype:", rcr_results.citype, "\n",
-          "cov_type:", rcr_results.cov_type, "\n",
-          "\n")
     print("The results object also includes the original model object:",
           rcr_results.model,
           "\nwhich you can use to re-fit the model with other settings:\n\n",

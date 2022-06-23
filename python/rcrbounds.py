@@ -1948,8 +1948,8 @@ class RCRResults:
         return ax
 
     def summary(self,
-                citype="conservative",
-                cilevel=95,
+                citype=None,
+                cilevel=None,
                 tableformats=None):
         """
         Display summary of RCR results and return a summary
@@ -1985,6 +1985,10 @@ class RCRResults:
         To be added.
         """
         # pylint: disable=too-many-locals
+        if citype is None:
+            citype = self.model.citype
+        if cilevel is None:
+            cilevel = self.model.cilevel
         if tableformats is None:
             tableformats = ["%9.4f", "%9.3f", "%9.3f",
                             "%9.3f", "%9.3f", "%9.3f"]

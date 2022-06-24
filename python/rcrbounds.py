@@ -1,5 +1,5 @@
 """
-RCRBOUNDS.PY: Performs calculations for RCR model
+Calculate RCR bounds for linear causal effects (Krauth 2016)
 
 Author:       Brian Krauth
               Department of Economics
@@ -25,8 +25,8 @@ This Python package is meant to be used in one of two ways:
         rcrbounds.RCRResults?
         rcrbounds.RCRResults.summary?
 
-2. As a Python script to be called from Stata's rcr command.
-   This usage is invisible to most users, but if you are
+2. As a Python script to be called from the Stata rcr command.
+   This call is invisible to most Stata users, but if you are
    debugging or trying to understand the code, view the
    docstring for the stata_exe() function.
 """
@@ -58,7 +58,7 @@ LOGFILE = None
 
 
 def get_command_arguments(args):
-    """Retrieve command arguments, usually from sys.argv."""
+    """Retrieves command arguments, usually from sys.argv."""
     # ARGS should be a list of 1 to 5 strings like sys.argv
     if isinstance(args, list) and all(isinstance(item, str) for item in args):
         if len(args) > 5:
@@ -76,7 +76,7 @@ def get_command_arguments(args):
 
 
 def set_logfile(fname):
-    """Set name of log file"""
+    """Sets name of log file."""
     global LOGFILE  # pylint: disable=global-statement
     if isinstance(fname, str) or fname is None:
         LOGFILE = fname
@@ -85,12 +85,12 @@ def set_logfile(fname):
 
 
 def get_logfile():
-    """Retrieve name of log file.  If undefined, return None"""
+    """Retrieves the name of the log file."""
     return LOGFILE
 
 
 def write_to_logfile(msg, mode="a"):
-    """Write a note to the log file."""
+    """Writes a note to the log file."""
     logfile = get_logfile()
     if logfile is None:
         return None
@@ -106,7 +106,7 @@ def write_to_logfile(msg, mode="a"):
 
 
 def start_logfile(logfile):
-    """Start the log file."""
+    """Starts the log file."""
     set_logfile(logfile)
     write_to_logfile(f"Log file {logfile} for RCR version 1.0\n",
                      mode="w")
@@ -115,7 +115,7 @@ def start_logfile(logfile):
 
 
 def read_data(infile):
-    """Read RCR data from input file"""
+    """Reads RCR data from infile."""
     # pylint: disable=too-many-statements
     write_to_logfile(f"Reading data from input file {infile}.\n")
     # infile argument should be a single string
@@ -176,7 +176,7 @@ def read_data(infile):
 
 
 def check_input_values(n_moments, n_lambda, external_big_number):
-    """make sure read_data read in valid data"""
+    """Makes sure read_data has read in valid data."""
     # Check to make sure n_moments is a valid value
     #   1. It should be the same as the length of moment_vector.  if not,
     #      just reset it.
@@ -202,7 +202,7 @@ def check_input_values(n_moments, n_lambda, external_big_number):
 
 
 def write_results(result_matrix, outfile):
-    """Write the results_matrix array to outfile."""
+    """Writes the results_matrix array to outfile."""
     write_to_logfile(f"Writing results to output file {outfile}.\n")
     write_to_logfile("Actual results = ...\n")
     try:
@@ -216,10 +216,7 @@ def write_results(result_matrix, outfile):
 
 
 def write_details(thetavec, lambdavec, detail_file):
-    """
-    If a detail_file has been specified, output thetavec and lambdavec to
-    that file
-    """
+    """Outputs thetavec and lambdavec to _detail_file."""
     if len(detail_file) > 0:
         try:
             with open(detail_file,
@@ -233,19 +230,19 @@ def write_details(thetavec, lambdavec, detail_file):
 
 
 def warn(msg):
-    """Issue warning (to logfile and python warning system) but continue."""
+    """Issues warning (to logfile and python warning system) but continues."""
     write_to_logfile("WARNING: " + msg + "\n")
     warnings.warn(msg)
 
 
 def die(msg):
-    """Fatal error - write message to log file and then shut down."""
+    """Writes message to log file and raises exception."""
     write_to_logfile("FATAL ERROR: " + msg)
     raise RuntimeError(msg)
 
 
 def translate_result(mat, inf=np.inf, nan=np.nan):
-    """Translate inf and NaN values (e.g., for passing to Stata)"""
+    """Translates inf and NaN values (e.g., for passing to Stata)."""
     newmat = np.copy(mat)
     msk1 = np.isinf(newmat)
     newmat[msk1] = np.sign(newmat[msk1])*inf
@@ -258,7 +255,7 @@ def translate_result(mat, inf=np.inf, nan=np.nan):
 
 
 def estimate_model(moment_vector, lambda_range):
-    """Estimate the RCR model.
+    """Estimates the RCR model.
 
     Parameters
     ----------
@@ -321,7 +318,7 @@ def estimate_model(moment_vector, lambda_range):
 
 
 def estimate_theta_segments(moment_vector):
-    """Divide real line into segments over which lambda(theta) is monotonic"""
+    """Constructs segments over which lambda(theta) is monotonic."""
     imax = 30000   # A bigger number produces an FP overflow in fortran
     simplified_moments = simplify_moments(moment_vector)
     theta_star = thetastar(moment_vector)
@@ -423,7 +420,7 @@ def estimate_theta_segments(moment_vector):
 
 
 def bracket_theta_star(moment_vector):
-    """Find theta valus close to theta_star"""
+    """Finds theta valus close to theta_star."""
     # Get the value of theta_star.  If we are in this function it should be
     # finite.
     theta_star = thetastar(moment_vector)
@@ -484,7 +481,7 @@ def bracket_theta_star(moment_vector):
 def estimate_theta(moment_vector,
                    lambda_range,
                    theta_segments):
-    """Estimate theta"""
+    """Estimates theta and its gradient."""
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     # pylint: disable=invalid-name
     ntab = 10
@@ -720,7 +717,7 @@ def estimate_theta(moment_vector,
 
 
 def simplify_moments(moment_vector):
-    """Convert moment_vector into the six moments needed for the model"""
+    """Converts moment_vector into the six moments needed for the model."""
     # Get sizes
     # pylint: disable=invalid-name
     m = len(moment_vector)
@@ -784,7 +781,7 @@ def simplify_moments(moment_vector):
 
 
 def check_moments(moment_vector):
-    """Check to ensure moment_vector is valid"""
+    """Checks that moment_vector is valid."""
     # pylint: disable=too-many-branches
     simplified_moments = simplify_moments(moment_vector)
     # First make sure that moment_vector describes a valid covariance matrix
@@ -846,7 +843,7 @@ def check_moments(moment_vector):
 
 
 def lambdastar(moment_vector):
-    """Calculate lambda_star"""
+    """Calculates lambda_star."""
     simplified_moments = simplify_moments(moment_vector)
     # lambda_star is defined as sqrt( var(z)/var(zhat) - 1)
     # The check_moments subroutine should ensure that
@@ -860,7 +857,7 @@ def lambdastar(moment_vector):
 
 
 def thetastar(moment_vector):
-    """Calculate theta_star"""
+    """Calculates theta_star."""
     simplified_moments = simplify_moments(moment_vector)
     # theta_star is defined as
     #   cov(yhat,zhat)/var(zhat)
@@ -873,7 +870,7 @@ def thetastar(moment_vector):
 
 
 def lambdafast(theta, simplified_moments):
-    """Calculate lambda for each theta in the given array"""
+    """Calculates lambda for each theta in the given array."""
     # pylint: disable=invalid-name
     y = simplified_moments[0]
     z = simplified_moments[1]
@@ -900,18 +897,18 @@ def lambdafast(theta, simplified_moments):
 
 
 def negative_lambdafast(theta, simplified_moments):
-    """the negative of lambdafast()"""
+    """Calcualtes -lambda(theta)."""
     return -lambdafast(theta, simplified_moments)
 
 
 def lambdafun(moment_vector, theta):
-    """Calculate lambda for the given theta"""
+    """Calculates lambda(theta)."""
     lambda_fast = lambdafast(theta, simplify_moments(moment_vector))
     return lambda_fast
 
 
 def lambda0_fun(moment_vector):
-    """"Calculate lambda(theta) for theta = 0"""
+    """"Calculates lambda(0)."""
     # lambda0 is defined as:
     # (cov(y,z)/cov(yhat,zhat)-1) / sqrt(var(y)/var(yhat)-1)
     # The check_moments subroutine should ensure that
@@ -934,14 +931,14 @@ def lambda0_fun(moment_vector):
 
 
 def lambda_minus_lambda(theta, simplified_moments_and_lambda):
-    """Calculate lamba(theta)-lambda given theta and lambda"""
+    """Calculates lamba(theta)."""
     lambda1 = lambdafast(theta, simplified_moments_and_lambda[1:])
     lambda0 = simplified_moments_and_lambda[0]
     return lambda1 - lambda0
 
 
 def estimate_parameter(func, moment_vector):
-    """Estimate a parameter and its gradient"""
+    """Estimates a parameter and its gradient."""
     # pylint: disable=too-many-locals,invalid-name
     parameter_estimate = np.zeros(len(moment_vector) + 1)
     parameter_estimate[0] = func(moment_vector)
@@ -1028,7 +1025,7 @@ def estimate_parameter(func, moment_vector):
 
 
 def brent(ax, bx, cx, func, tol, xopt):
-    """Maximize by Brent algorithm"""
+    """Maximizes by Brent algorithm."""
     # pylint: disable=too-many-arguments,too-many-locals
     # pylint: disable=too-many-branches,too-many-statements
     # pylint: disable=invalid-name
@@ -1113,7 +1110,7 @@ def brent(ax, bx, cx, func, tol, xopt):
 
 
 def zbrent(func, x1, x2, tol, xopt):
-    """Find a root using the Brent algorithm"""
+    """Finds a root using the Brent algorithm."""
     # pylint: disable=too-many-arguments,too-many-locals
     # pylint: disable=too-many-branches,too-many-statements
     # pylint: disable=consider-swap-variables
@@ -1181,7 +1178,7 @@ def zbrent(func, x1, x2, tol, xopt):
 
 
 def geop(first, factor, nobs):
-    """Create a geometric series"""
+    """Creates a geometric series."""
     geometric_series = np.zeros(nobs)
     if nobs > 0:
         geometric_series[0] = first
@@ -1191,9 +1188,7 @@ def geop(first, factor, nobs):
 
 
 def get_column_names(arr, default_names=None):
-    """
-    Return column names for an array_like object, if available
-    """
+    """Returns column names for an array_like object."""
     cols = default_names
     if isinstance(arr, pd.DataFrame):
         cols = arr.columns.tolist()
@@ -1205,16 +1200,12 @@ def get_column_names(arr, default_names=None):
 
 
 def bkouter(arrow, msk):
-    """
-    Given a vector, return its outer product with itself, as a vector
-    """
+    """Returns a vector's outer product with itself, as a vector."""
     return np.outer(arrow, arrow).flatten()[msk]
 
 
 def check_lambda(lambda_range):
-    """
-    Check that the given lambda_range is valid
-    """
+    """Checks that lambda_range is valid."""
     assert isinstance(lambda_range, np.ndarray)
     if lambda_range.ndim != 1:
         msg1 = "lambda_range should be 1-d array"
@@ -1238,9 +1229,7 @@ def check_lambda(lambda_range):
 
 
 def check_endog(endog):
-    """
-    Check that the given endog matrix is valid
-    """
+    """Checks that endog is valid."""
     assert isinstance(endog, np.ndarray)
     if endog.ndim != 2:
         msg1 = "endog should be 2-d array"
@@ -1253,9 +1242,7 @@ def check_endog(endog):
 
 
 def check_exog(exog, nrows):
-    """
-    Check that the given exog matrix is valid
-    """
+    """Checks that exog matrix is valid."""
     assert isinstance(exog, np.ndarray)
     if exog.ndim != 2:
         msg = f"exog should be 2-d array; is a {exog.ndim}-d array."
@@ -1274,9 +1261,7 @@ def check_exog(exog, nrows):
 
 
 def check_covinfo(cov_type, vceadj):
-    """
-    Check that the given cov_type and vceadj are valid
-    """
+    """Checks that cov_type and vceadj are valid."""
     if cov_type not in ("nonrobust", "cluster"):
         msg = f"cov_type '{cov_type}' not yet supported."
         raise ValueError(msg)
@@ -1289,9 +1274,7 @@ def check_covinfo(cov_type, vceadj):
 
 
 def check_ci(cilevel, citype=None):
-    """
-    Check that the given cilevel and citype are valid
-    """
+    """Checks that cilevel and citype are valid."""
     if not isinstance(cilevel, (float, int)):
         msg = f"cilevel must be a number, is a {type(cilevel)}."
         raise TypeError(msg)
@@ -1307,9 +1290,7 @@ def check_ci(cilevel, citype=None):
 
 
 def check_weights(weights, nrows):
-    """
-    Check that the given weights are valid
-    """
+    """Checks that weights are valid."""
     if weights is None:
         return None
     weights = np.asarray(weights)
@@ -1336,9 +1317,7 @@ def check_weights(weights, nrows):
 def robust_cov(dat,
                groupvar=None,
                weights=None):
-    """
-    Estimate cluster-robust covariance metrix
-    """
+    """Estimates cluster-robust covariance metrix"""
     resid = pd.DataFrame(dat - np.average(dat, weights=weights, axis=0))
     if weights is None:
         nobs = len(dat)
@@ -1450,18 +1429,19 @@ class RCR:
     Methods
     ------------
     fit()
-        Estimates the RCR model.
+        Estimate the RCR model.
     copy()
-        Creates a copy of the RCR model object, with
+        Create a copy of the RCR model object, with
         modificatios as specified by any keyword arguments
         provided.
     lambdavals()
-        Calculates the lambda(betax) function associated
-        with the RCR model.
+        Calculate the lambda(betax) function associated
+        with the RCR model.  This is used mostly for
+        plots.
 
     See also
     --------
-    To be added.
+    RCRResults
 
     Notes
     -----
@@ -1470,7 +1450,27 @@ class RCR:
 
     Examples
     --------
-    To be added.
+    Setup:
+    >>> dat = pd.read_stata("http://www.sfu.ca/~bkrauth/code/rcr_example.dta")
+    >>> dat["Intercept"] = 1.0
+    >>> endog = dat[["SAT", "Small_Class"]]
+    >>> exog = dat[["Intercept", "White_Asian", "Girl",
+    ...             "Free_Lunch", "White_Teacher", "Teacher_Experience",
+    ...             "Masters_Degree"]]
+
+    Create RCR model object:
+    >>> model = RCR(endog, exog)
+
+    Report attributes of the model
+    >>> print(model.nobs)
+    5839
+
+    Use the fit() method to fit the model
+    >>> results = model.fit()
+
+    Report results using attributes of the RCRResults object
+    >>> print(results.params)
+    [12.31059909  8.16970997 28.93548917  5.13504376  5.20150257]
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
@@ -1483,9 +1483,7 @@ class RCR:
                  cilevel=95,
                  weights=None,
                  groupvar=None):
-        """
-        Construct the RCR object.
-        """
+        """Constructs the RCR object."""
         # pylint: disable=too-many-arguments
         self.endog = np.asarray(endog)
         check_endog(self.endog)
@@ -1537,9 +1535,7 @@ class RCR:
         check_ci(cilevel, citype)
 
     def copy(self, **kwargs):
-        """
-        Copy (and possibly modify) an RCR object
-        """
+        """Copies (and possibly modifies) an RCR object."""
         endog = kwargs.get("endog")
         exog = kwargs.get("exog")
         lambda_range = kwargs.get("lambda_range")
@@ -1583,9 +1579,7 @@ class RCR:
 
     def _get_mv(self,
                 estimate_cov=False):
-        """
-        Calculate the moment vector used in RCR estimation
-        """
+        """Calculates the moment vector used in RCR estimation."""
         xyz = np.concatenate((self.exog, self.endog), axis=1)
         k = xyz.shape[1]
         msk = np.triu(np.full((k, k), True)).flatten()
@@ -1611,9 +1605,7 @@ class RCR:
     def lambdavals(self,
                    thetavals=np.linspace(-50, 50, 100),
                    add_thetastar=False):
-        """
-        Estimate lambda() for a set of values
-        """
+        """Estimates lambda() for a set of values."""
         thetavals = np.asarray(thetavals).flatten()
         moment_vector = self._get_mv()
         simplified_moments = simplify_moments(moment_vector)
@@ -1630,7 +1622,7 @@ class RCR:
     def fit(self,
             **kwargs):
         """
-        Estimate an RCR model.
+        Estimates an RCR model.
 
         Parameters
         ----------
@@ -1732,7 +1724,25 @@ class RCRResults:
 
     Examples
     --------
-    To be added.
+    Setup:
+    >>> dat = pd.read_stata("http://www.sfu.ca/~bkrauth/code/rcr_example.dta")
+    >>> dat["Intercept"] = 1.0
+    >>> endog = dat[["SAT", "Small_Class"]]
+    >>> exog = dat[["Intercept", "White_Asian", "Girl",
+    ...             "Free_Lunch", "White_Teacher", "Teacher_Experience",
+    ...             "Masters_Degree"]]
+    >>> model = RCR(endog, exog)
+    >>> results = model.fit()
+
+    Report results using attributes of the RCRResults object
+    >>> print(results.params)
+    [12.31059909  8.16970997 28.93548917  5.13504376  5.20150257]
+
+    Report results using methods of the RCRResults object
+    >>> print(results.params_se())
+    [  2.09826858  30.60745128 108.51947421   0.95693751   0.6564318 ]
+    >>> result_summary = results.summary()
+
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
@@ -1740,9 +1750,7 @@ class RCRResults:
                  params,
                  cov_params,
                  details):
-        """
-        Construct the RCRResults object.
-        """
+        """Constructs the RCRResults object."""
         # pylint: disable=too-many-arguments
         self.model = model
         self.params = params
@@ -1755,27 +1763,21 @@ class RCRResults:
         self.details = details
 
     def params_se(self):
-        """
-        Standard errors for RCR parameter estimates
-        """
+        """Calcuates standard errors for RCR parameter estimates."""
         return np.sqrt(np.diag(self.cov_params))
 
     def params_z(self):
-        """
-        z-statistics for RCR parameter estimates
-        """
+        """Calcuates z-statistics for RCR parameter estimates."""
         return self.params / self.params_se()
 
     def params_pvalue(self):
-        """
-        asymptotic p-values for RCR parameter estimates
-        """
+        """Calcuates asymptotic p-values for RCR parameter estimates."""
         alpha = scipy.stats.norm.cdf(np.abs(self.params / self.params_se()))
         return 2 * (1.0 - alpha)
 
     def params_ci(self, cilevel=None):
         """
-        Asymptotic confidence intervals for RCR parameter estimates
+        Calcuates asymptotic confidence intervals for RCR parameters.
 
         Parameters
         ----------
@@ -1799,7 +1801,7 @@ class RCRResults:
                  cilevel=None,
                  citype="conservative"):
         """
-        Asymptotic confidence intervals for the RCR causal effect
+        Calculates asymptotic confidence intervals for the RCR causal effect.
 
         Parameters
         ----------
@@ -1820,7 +1822,6 @@ class RCRResults:
         -------
         a length-2 ndarrray representing the confidence interval
         """
-
         if citype == "conservative":
             betax_ci = self.betax_ci_conservative(cilevel=cilevel)
         elif citype == "upper":
@@ -1834,9 +1835,7 @@ class RCRResults:
         return betax_ci
 
     def betax_ci_conservative(self, cilevel=None):
-        """
-        conservative asymptotic confidence interval for causal effect.
-        """
+        """Calcuates conservative confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf((100 + cilevel) / 200)
@@ -1845,9 +1844,7 @@ class RCRResults:
         return np.array([ci_lb, ci_ub])
 
     def betax_ci_upper(self, cilevel=None):
-        """
-        upper asymptotic confidence interval for causal effect.
-        """
+        """Calcuates upper confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
@@ -1856,9 +1853,7 @@ class RCRResults:
         return np.array([ci_lb, ci_ub])
 
     def betax_ci_lower(self, cilevel=None):
-        """
-        lower asymptotic confidence interval for causal effect.
-        """
+        """Calcuates lower confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
         crit = scipy.stats.norm.ppf(cilevel / 100)
@@ -1867,9 +1862,7 @@ class RCRResults:
         return np.array([ci_lb, ci_ub])
 
     def betax_ci_imbensmanski(self, cilevel=None):
-        """
-        Imbens-Manski confidence interval for causal effect.
-        """
+        """Calcuates Imbens-Manski confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
         cv_min = scipy.stats.norm.ppf(1 - ((100 - cilevel) / 100.0))
@@ -1898,7 +1891,7 @@ class RCRResults:
 
     def test_betax(self, h0_value=0.0):
         """
-        Conduct a hypothesis test for betax
+        Conducts a hypothesis test for the RCR causal effect.
 
         Parameters
         ----------
@@ -1966,7 +1959,7 @@ class RCRResults:
                 idalphas=(0.25, 0.75),
                 legend=False):
         """
-        Create a plot of RCR estimation results
+        Creates a plot of RCR estimation results.
 
         Parameters
         ----------
@@ -2095,8 +2088,7 @@ class RCRResults:
                 cilevel=None,
                 tableformats=None):
         """
-        Display summary of RCR results and return a summary
-        object.
+        Displays a summary of RCR results.
 
         Parameters
         ----------
@@ -2123,9 +2115,6 @@ class RCRResults:
         The summary() method returns a
         statsmodels.iolib.summary.Summary object.
 
-        Examples
-        --------
-        To be added.
         """
         # pylint: disable=too-many-locals
         if citype is None:
@@ -2208,7 +2197,7 @@ class RCRResults:
 
 def stata_exe(argv):
     """
-    Main run file for stata
+    Performs tasks needed by Stata RCR command.
 
     Stata will call this file with the command:
 

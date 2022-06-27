@@ -79,13 +79,13 @@ class RCR:
         An optional nrows x 1 array of group ID variables for the
         calculation of cluster-robust standard errors.
         Default is None.
-    lambda_range: array_like
-        An optional 1-d array of the form [lambdaL, lambdaH]
-        where lambdaL is the lower bound and lambdaH is the
-        upper bound for the RCR parameter lambda.  lambdaL can
-        be -inf to indicate no lower bound, and lambdaH can
-        be inf to indicate no upper bound.  lambdaL should always
-        be <= lambdaH.
+    rc_range: array_like
+        An optional 1-d array of the form [rcL, rcH]
+        where rcL is the lower bound and rcH is the
+        upper bound for the RCR parameter rc.  rcL can
+        be -inf to indicate no lower bound, and rcH can
+        be inf to indicate no upper bound.  rcL should always
+        be <= rcH.
         Default is [0.0, 1.0].
     cov_type : str
         The method used to estimate the covariance matrix
@@ -117,8 +117,8 @@ class RCR:
         the array of endogenous variables.
     exog : ndarray
         the array of exogenous variables
-    lambda_range : ndarray
-        the array of lambda values.
+    rc_range : ndarray
+        the array of rc values.
     weights : ndarray or None
         the array of weights.
     groupvar : ndarray or None
@@ -148,8 +148,8 @@ class RCR:
         Create a copy of the RCR model object, with
         modificatios as specified by any keyword arguments
         provided.
-    lambdavals()
-        Calculate the lambda(betax) function associated
+    rcvals()
+        Calculate the rc(effect) function associated
         with the RCR model.  This is used mostly for
         plots.
 
@@ -190,7 +190,7 @@ class RCR:
     def __init__(self,
                  endog,
                  exog,
-                 lambda_range=np.array([0.0, 1.0]),
+                 rc_range=np.array([0.0, 1.0]),
                  cov_type="nonrobust",
                  vceadj=1.0,
                  citype="conservative",
@@ -239,12 +239,12 @@ class RCR:
         self.controlvars = " ".join([str(item) for
                                      item in
                                      self.exog_names[1:]])
-        self.lambda_range = np.asarray(lambda_range)
+        self.rc_range = np.asarray(rc_range)
         self.cov_type = cov_type
         self.vceadj = vceadj
         self.citype = citype
         self.cilevel = cilevel
-        check_lambda(self.lambda_range)
+        check_rc(self.rc_range)
         check_covinfo(cov_type, vceadj)
         check_ci(cilevel, citype)
 
@@ -252,7 +252,7 @@ class RCR:
         """Copies (and possibly modifies) an RCR object."""
         endog = kwargs.get("endog")
         exog = kwargs.get("exog")
-        lambda_range = kwargs.get("lambda_range")
+        rc_range = kwargs.get("rc_range")
         cov_type = kwargs.get("cov_type")
         vceadj = kwargs.get("vceadj")
         citype = kwargs.get("citype")
@@ -265,8 +265,8 @@ class RCR:
         if exog is None:
             exog = pd.DataFrame(self.exog,
                                 columns=self.exog_names)
-        if lambda_range is None:
-            lambda_range = self.lambda_range
+        if rc_range is None:
+            rc_range = self.rc_range
         if cov_type is None:
             cov_type = self.cov_type
         if vceadj is None:
@@ -283,7 +283,7 @@ class RCR:
                                     columns=self.groupvar_name)
         return RCR(endog=endog,
                    exog=exog,
-                   lambda_range=lambda_range,
+                   rc_range=rc_range,
                    cov_type=cov_type,
                    vceadj=vceadj,
                    citype=citype,
@@ -316,22 +316,22 @@ class RCR:
             return moment_vector, cov_mv
         return moment_vector
 
-    def lambdavals(self,
-                   thetavals=np.linspace(-50, 50, 100),
-                   add_thetastar=False):
-        """Estimates lambda() for a set of values."""
-        thetavals = np.asarray(thetavals).flatten()
+    def rcvals(self,
+               effectvals=np.linspace(-50, 50, 100),
+               add_effectinf=False):
+        """Estimates rc() for a set of values."""
+        effectvals = np.asarray(effectvals).flatten()
         moment_vector = self._get_mv()
         simplified_moments = simplify_moments(moment_vector)
-        theta_star = thetastar(moment_vector)
-        lambdavals = lambdafast(thetavals, simplified_moments)
-        if add_thetastar and min(thetavals) <= theta_star <= max(thetavals):
-            thetavals = np.append(thetavals, [theta_star])
-            lambdavals = np.append(lambdavals, [np.nan])
-            msk = np.argsort(thetavals)
-            lambdavals = lambdavals[msk]
-            thetavals = thetavals[msk]
-        return lambdavals, thetavals
+        effect_inf = effectinf(moment_vector)
+        rcvals = rcfast(effectvals, simplified_moments)
+        if add_effectinf and min(effectvals) <= effect_inf <= max(effectvals):
+            effectvals = np.append(effectvals, [effect_inf])
+            rcvals = np.append(rcvals, [np.nan])
+            msk = np.argsort(effectvals)
+            rcvals = rcvals[msk]
+            effectvals = effectvals[msk]
+        return rcvals, effectvals
 
     def fit(self,
             **kwargs):
@@ -360,14 +360,14 @@ class RCR:
         else:
             model = self.copy(**kwargs)
         moment_vector, cov_mv = model._get_mv(estimate_cov=True)
-        (result_matrix, thetavec, lambdavec) = \
-            estimate_model(moment_vector, model.lambda_range)
+        (result_matrix, effectvec, rcvec) = \
+            estimate_model(moment_vector, model.rc_range)
         params = result_matrix[:, 0]
         cov_params = (model.vceadj *
                       result_matrix[:, 1:] @
                       cov_mv @
                       result_matrix[:, 1:].T)
-        details = np.array([thetavec, lambdavec])
+        details = np.array([effectvec, rcvec])
         return RCRResults(model=model,
                           params=params,
                           cov_params=cov_params,
@@ -385,7 +385,7 @@ class RCRResults:
         See rcrbounds.RCR for details.
     params : ndarray
         A 5-element ndarray representing estimates for the point-identified
-        parameters [lambdaInf, betaxInf, lambda0, betaxL, betaxH]
+        parameters [rcInf, effectInf, rc0, effectL, effectH]
     cov_params : ndarray
         A 5 x 5 ndarray representing the estimated covariance matrix
         for the esimates in params.
@@ -401,9 +401,9 @@ class RCRResults:
     param_names : list
         the parameter names.
     details : ndarray
-        a d x 2 array representing the lambda(theta) function
-        the first column is a set of theta values,
-        the second column is the estimated lambda(theta)
+        a d x 2 array representing the rc(effect) function
+        the first column is a set of effect values,
+        the second column is the estimated rc(effect)
         for that value.
     nobs : float
         the number of observations.
@@ -418,9 +418,9 @@ class RCRResults:
         asymptotic p-values for params.
     params_ci()
         confidence intervals for params.
-    betax_ci()
+    effect_ci()
         confidence interval for the causal effect.
-    test_betax()
+    test_effect()
         hypothesis test for the causal effect.
     summary()
         summary of results.
@@ -468,11 +468,11 @@ class RCRResults:
         # pylint: disable=too-many-arguments
         self.model = model
         self.params = params
-        self.param_names = ["lambdaInf",
-                            "betaxInf",
-                            "lambda0",
-                            "betaxL",
-                            "betaxH"]
+        self.param_names = ["rcInf",
+                            "effectInf",
+                            "rc0",
+                            "effectL",
+                            "effectH"]
         self.cov_params = cov_params
         self.details = details
 
@@ -511,9 +511,9 @@ class RCRResults:
         return np.array([self.params - crit * self.params_se(),
                          self.params + crit * self.params_se()])
 
-    def betax_ci(self,
-                 cilevel=None,
-                 citype="conservative"):
+    def effect_ci(self,
+                  cilevel=None,
+                  citype="conservative"):
         """
         Calculates asymptotic confidence intervals for the RCR causal effect.
 
@@ -537,18 +537,18 @@ class RCRResults:
         a length-2 ndarrray representing the confidence interval
         """
         if citype == "conservative":
-            betax_ci = self.betax_ci_conservative(cilevel=cilevel)
+            effect_ci = self.effect_ci_conservative(cilevel=cilevel)
         elif citype == "upper":
-            betax_ci = self.betax_ci_upper(cilevel=cilevel)
+            effect_ci = self.effect_ci_upper(cilevel=cilevel)
         elif citype == "lower":
-            betax_ci = self.betax_ci_lower(cilevel=cilevel)
+            effect_ci = self.effect_ci_lower(cilevel=cilevel)
         elif citype == "Imbens-Manski":
-            betax_ci = self.betax_ci_imbensmanski(cilevel=cilevel)
+            effect_ci = self.effect_ci_imbensmanski(cilevel=cilevel)
         else:
-            betax_ci = np.array([np.nan, np.nan])
-        return betax_ci
+            effect_ci = np.array([np.nan, np.nan])
+        return effect_ci
 
-    def betax_ci_conservative(self, cilevel=None):
+    def effect_ci_conservative(self, cilevel=None):
         """Calcuates conservative confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
@@ -557,7 +557,7 @@ class RCRResults:
         ci_ub = self.params[4] + crit * self.params_se()[4]
         return np.array([ci_lb, ci_ub])
 
-    def betax_ci_upper(self, cilevel=None):
+    def effect_ci_upper(self, cilevel=None):
         """Calcuates upper confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
@@ -566,7 +566,7 @@ class RCRResults:
         ci_ub = np.inf
         return np.array([ci_lb, ci_ub])
 
-    def betax_ci_lower(self, cilevel=None):
+    def effect_ci_lower(self, cilevel=None):
         """Calcuates lower confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
@@ -575,7 +575,7 @@ class RCRResults:
         ci_ub = self.params[4] + crit * self.params_se()[4]
         return np.array([ci_lb, ci_ub])
 
-    def betax_ci_imbensmanski(self, cilevel=None):
+    def effect_ci_imbensmanski(self, cilevel=None):
         """Calcuates Imbens-Manski confidence interval for causal effect."""
         if cilevel is None:
             cilevel = self.model.cilevel
@@ -603,7 +603,7 @@ class RCRResults:
             ci_ub = np.inf
         return np.array([ci_lb, ci_ub])
 
-    def test_betax(self, h0_value=0.0):
+    def test_effect(self, h0_value=0.0):
         """
         Conducts a hypothesis test for the RCR causal effect.
 
@@ -616,7 +616,7 @@ class RCRResults:
         Returns
         -------
         the p-value for the test of the null hypothesis
-            H0: betax = h0_value
+            H0: effect = h0_value
 
         Notes
         -------
@@ -631,7 +631,7 @@ class RCRResults:
 
         See also
         --------
-        RCRResults.betax_ci()
+        RCRResults.effect_ci()
         """
         low = 0.0
         high = 100.0
@@ -641,7 +641,7 @@ class RCRResults:
         else:
             while (high - low) > 0.00001:
                 mid = (high + low) / 2.0
-                current_ci = self.betax_ci_imbensmanski(cilevel=mid)
+                current_ci = self.effect_ci_imbensmanski(cilevel=mid)
                 if current_ci[0] <= h0_value <= current_ci[1]:
                     high = mid
                 else:
@@ -662,7 +662,7 @@ class RCRResults:
                 flabel=r"$\lambda(\beta_x)$ function",
                 tslabel=r"$\beta_x^{\infty}$",
                 lslabel=r"$\lambda^{\infty}$",
-                idlabels=(r"assumed $[\lambda^L,\lambda^H]$",
+                idlabels=(r"RC bounds $[\lambda^L,\lambda^H]$",
                           r"Identified set $[\beta_x^L,\beta_x^H]$"),
                 tss="--",
                 lss="-.",
@@ -688,10 +688,10 @@ class RCRResults:
             the y-axis will adjust to fit the data.
             Default is None
         tsline : bool
-            Optional flag to show a line for theta_star
+            Optional flag to show a line for effect_inf
             Default is False,
         lsline : bool
-            Optional flag to show a line for lambda_star
+            Optional flag to show a line for rc_inf
             Default is False,
         idset : bool
             Optional flag to show the identified set
@@ -705,25 +705,25 @@ class RCRResults:
         ylabel : str
             Optional label for y axis.
         flabel : str
-            Optional label for lambda(theta) function.
+            Optional label for rc(effect) function.
         tslabel : str
-            Optional label for theta_star line.
+            Optional label for effect_inf line.
         lslabel : str
-            Optional label for lambda_star line.
+            Optional label for rc_inf line.
         idlabels : (str, str)
             Optional labels for identified set.
         tss : str
-            Optional line type for theta_star
+            Optional line type for effect_inf
         lss : str
-            Optional line type for lambda_star
+            Optional line type for rc_inf
         fcolor : str
-            Optional color specification for lambda(betax) function
+            Optional color specification for rc(effect) function
             Default is "C0",
         tscolor : str
-            Optional color specification for theta_star line
+            Optional color specification for effect_inf line
             Default is "0.75",
         lscolor : str
-            Optional color specification for lambda_star line
+            Optional color specification for rc_inf line
             Default is "0.75",
         idcolors : (str, str)
             Optional color specifications for identified set
@@ -753,34 +753,34 @@ class RCRResults:
             xgrid = np.linspace(xlim[0], xlim[1], num=100)
         else:
             xgrid = xlim
-        lambdavals, thetavals = self.model.lambdavals(thetavals=xgrid,
-                                                      add_thetastar=True)
+        rcvals, effectvals = self.model.rcvals(effectvals=xgrid,
+                                               add_effectinf=True)
         if ax is None:
             ax = plt.gca()
             ax.clear()
-        ax.plot(thetavals,
-                lambdavals,
+        ax.plot(effectvals,
+                rcvals,
                 label=flabel,
                 color=fcolor)
         if ylim is not None:
             ax.set_ylim(ylim[0], ylim[1])
         if tsline is True:
-            theta_star = self.params[1]
-            if xlim[0] <= theta_star <= xlim[-1]:
-                ax.axvline(theta_star,
+            effect_inf = self.params[1]
+            if xlim[0] <= effect_inf <= xlim[-1]:
+                ax.axvline(effect_inf,
                            ls=tss,
                            color=tscolor,
                            label=tslabel)
         if lsline is True:
-            lambda_star = self.params[0]
-            if min(lambdavals) <= lambda_star <= max(lambdavals):
-                ax.axhline(lambda_star,
+            rc_inf = self.params[0]
+            if min(rcvals) <= rc_inf <= max(rcvals):
+                ax.axhline(rc_inf,
                            ls=lss,
                            color=lscolor,
                            label=lslabel)
         if idset is True:
-            ax.axhspan(self.model.lambda_range[0],
-                       self.model.lambda_range[1],
+            ax.axhspan(self.model.rc_range[0],
+                       self.model.rc_range[1],
                        color=idcolors[0],
                        alpha=idalphas[0],
                        label=idlabels[0])
@@ -812,7 +812,7 @@ class RCRResults:
             attribute of the RCRResults object.
         citype : "conservative", "upper", "lower" or "Imbens-Manski"
             the method to be used in calculating the confidence
-            interval for the causal effect betax. Default is
+            interval for the causal effect effect. Default is
             the citype attribute of the RCRResults object.
         tableformats: list
             a list of formatting strings to use for the table
@@ -847,14 +847,14 @@ class RCRResults:
         params_ci = self.params_ci(cilevel=cilevel)
         outmat["ciL"] = params_ci[0, :]
         outmat["ciH"] = params_ci[1, :]
-        betax_ci = self.betax_ci(cilevel=cilevel, citype=citype)
+        effect_ci = self.effect_ci(cilevel=cilevel, citype=citype)
         ncontrols = self.model.exog.shape[1] - 1
         table1data = [[self.model.depvar,
                        self.model.treatvar],
                       [datetime.now().strftime("%a, %d %b %Y"),
-                       self.model.lambda_range[0]],
+                       self.model.rc_range[0]],
                       [datetime.now().strftime("%H:%M:%S"),
-                       self.model.lambda_range[1]],
+                       self.model.rc_range[1]],
                       [self.model.nobs,
                        ncontrols],
                       [self.model.cov_type,
@@ -865,8 +865,8 @@ class RCRResults:
                        "No. Observations",
                        "Covariance Type"]
         table1stub2 = ["Treatment Variable",
-                       "Lower bound on lambda",
-                       "Upper bound on lambda",
+                       "Lower bound on rc",
+                       "Upper bound on rc",
                        "No. Controls",
                        "Cov. adjustment factor"]
         if self.model.cov_type == "cluster":
@@ -895,8 +895,8 @@ class RCRResults:
                                       headers=table2headers,
                                       stubs=table2stubs,
                                       data_fmts=tableformats)
-        table3data = [[betax_ci[0], betax_ci[1]]]
-        table3stubs = ["betax_ci (" +
+        table3data = [[effect_ci[0], effect_ci[1]]]
+        table3stubs = ["effect_ci (" +
                        citype +
                        ")                            "]
         table3 = si.table.SimpleTable(table3data,
@@ -912,7 +912,7 @@ class RCRResults:
 # Model calculation functions
 
 
-def estimate_model(moment_vector, lambda_range):
+def estimate_model(moment_vector, rc_range):
     """Estimates the RCR model.
 
     Parameters
@@ -921,20 +921,20 @@ def estimate_model(moment_vector, lambda_range):
         its elements will be interpreted as the upper triangle of the
         (estimated) second moment matrix E(W'W), where W = [1 X Y Z].
         It is normally constructed by Stata.
-    lambda_range : ndarray of floats
-        its elements lambda values to consider
+    rc_range : ndarray of floats
+        its elements rc values to consider
 
     Returns
     -------
     result_matrix : ndarray
         an array of parameter estimates and gradients
-    theetavec, lambdavec : ndarray
-        the lambda(theta) function, estimated at a large
+    theetavec, rcvec : ndarray
+        the rc(effect) function, estimated at a large
         number of points
 
     """
     write_to_logfile("Estimating model.\n")
-    result_matrix = np.full((len(lambda_range) + 3,
+    result_matrix = np.full((len(rc_range) + 3,
                              len(moment_vector) + 1),
                             float('nan'))
     # Check to make sure the moments are consistent
@@ -945,99 +945,99 @@ def estimate_model(moment_vector, lambda_range):
     # If model is not identified, just stop there
     if not identified:
         return result_matrix
-    # We have closed forms for the global parameters lambda_star, theta_star,
-    # and lambda(0), so we just estimate them directly.
-    result_matrix[0, ] = estimate_parameter(lambdastar, moment_vector)
-    result_matrix[1, ] = estimate_parameter(thetastar, moment_vector)
-    result_matrix[2, ] = estimate_parameter(lambda0_fun, moment_vector)
+    # We have closed forms for the global parameters rc_inf, effect_inf,
+    # and rc(0), so we just estimate them directly.
+    result_matrix[0, ] = estimate_parameter(rcinf, moment_vector)
+    result_matrix[1, ] = estimate_parameter(effectinf, moment_vector)
+    result_matrix[2, ] = estimate_parameter(rc0_fun, moment_vector)
     # Here we get to the main estimation problem.  We need to find the range
-    # of theta values consistent with the lambda(theta) function falling in
-    # lambda_range.  We have a closed form solution for lambda(theta), but
+    # of effect values consistent with the rc(effect) function falling in
+    # rc_range.  We have a closed form solution for rc(effect), but
     # finding its inverse is an iterative problem.
     #
-    # STEP 1: Estimate THETA_SEGMENTS, which is a global real vector
+    # STEP 1: Estimate effect_SEGMENTS, which is a global real vector
     #         indicating all critical points (i.e., points where the
     #         derivative is zero or nonexistent) of the function
-    #         lambda(theta).  The function is continuous and monotonic
+    #         rc(effect).  The function is continuous and monotonic
     #         between these points. Note that we don't know a priori how many
     #         critical points there will be, and so we don't know how big
-    #         THETA_SEGMENTS will be.
-    theta_segments, thetavec, lambdavec = \
-        estimate_theta_segments(moment_vector)
-    # STEP 2: For each row of lambda_range (i.e., each pair of lambda values):
-    # do i=1,size(lambda_range,1)
-    # j is the row in result_matrix corresponding to lambda_range(i,:)
+    #         effect_SEGMENTS will be.
+    effect_segments, effectvec, rcvec = \
+        estimate_effect_segments(moment_vector)
+    # STEP 2: For each row of rc_range (i.e., each pair of rc values):
+    # do i=1,size(rc_range,1)
+    # j is the row in result_matrix corresponding to rc_range(i,:)
     # j = 2+2*i
-    #  Estimate the corresponding theta range, and put it in result_matrix
-    result_matrix[3:5, :] = estimate_theta(moment_vector,
-                                           lambda_range,
-                                           theta_segments)
-    return result_matrix, thetavec, lambdavec
+    #  Estimate the corresponding effect range, and put it in result_matrix
+    result_matrix[3:5, :] = estimate_effect(moment_vector,
+                                            rc_range,
+                                            effect_segments)
+    return result_matrix, effectvec, rcvec
 
 
-def estimate_theta_segments(moment_vector):
-    """Constructs segments over which lambda(theta) is monotonic."""
+def estimate_effect_segments(moment_vector):
+    """Constructs segments over which rc(effect) is monotonic."""
     imax = 30000   # A bigger number produces an FP overflow in fortran
     simplified_moments = simplify_moments(moment_vector)
-    theta_star = thetastar(moment_vector)
-    # THETAMAX is the largest value of theta for which we can calculate both
-    # lambda(theta) and lambda(-theta) without generating a floating point
+    effect_inf = effectinf(moment_vector)
+    # effectMAX is the largest value of effect for which we can calculate both
+    # rc(effect) and rc(-effect) without generating a floating point
     # exception.
-    thetamax = np.sqrt(sys.float_info.max /
-                       max(1.0,
-                           simplified_moments[4],
-                           simplified_moments[1] - simplified_moments[4]))
+    effectmax = np.sqrt(sys.float_info.max /
+                        max(1.0,
+                            simplified_moments[4],
+                            simplified_moments[1] - simplified_moments[4]))
     # The calculation above seems clever, but it turns out not to always work.
     # So I've put in a hard limit as well
-    thetamax = min(1.0e100, thetamax)
-    # Create a starting set of theta values at which to calculate lambda
-    thetavec = np.sort(np.append(np.linspace(-50.0, 50.0, imax - 2),
-                                 (thetamax, -thetamax)))
-    if np.isfinite(theta_star):
-        # Figure out where theta_star lies in thetavec
-        i = np.sum(thetavec < theta_star)
-        # If i=0 or i=k, then theta_star is finite but outside of
-        # [-thetamax,thetamax]. This is unlikely, but we should check.
+    effectmax = min(1.0e100, effectmax)
+    # Create a infting set of effect values at which to calculate rc
+    effectvec = np.sort(np.append(np.linspace(-50.0, 50.0, imax - 2),
+                                  (effectmax, -effectmax)))
+    if np.isfinite(effect_inf):
+        # Figure out where effect_inf lies in effectvec
+        i = np.sum(effectvec < effect_inf)
+        # If i=0 or i=k, then effect_inf is finite but outside of
+        # [-effectmax,effectmax]. This is unlikely, but we should check.
         if 0 < i < imax:
-            # Adjust i to ensure that -thetamax and thetamax are still
-            # included in thetavec
+            # Adjust i to ensure that -effectmax and effectmax are still
+            # included in effectvec
             i = min(max(i, 2), imax - 2)
-            # Replace the two elements of thetavec that bracket theta_star
-            # with two more carefully-chosen numbers.  See BRACKET_THETA_STAR
+            # Replace the two elements of effectvec that bracket effect_inf
+            # with two more carefully-chosen numbers.  See BRACKET_EFFECT_INF
             # for details
-            bracket = bracket_theta_star(moment_vector)
+            bracket = bracket_effect_inf(moment_vector)
             if bracket is not None:
-                thetavec[i-1: i+1] = bracket
-            # There is a potential bug here.  The bracket_theta_star
-            # function is used to take the two values in thetavec that are
-            # closest to theta_star and replace them with values that are
-            # guaranteed to give finite and nonzero lambda.  But there's
+                effectvec[i-1: i+1] = bracket
+            # There is a potential bug here.  The bracket_effect_inf
+            # function is used to take the two values in effectvec that are
+            # closest to effect_inf and replace them with values that are
+            # guaranteed to give finite and nonzero rc.  But there's
             # nothing to guarantee that these are still the two values in
-            # thetavec that are the closest to theta_star.
-            assert thetavec[i-2] < thetavec[i-1]
-            assert thetavec[i] < thetavec[i+1]
-    # Re-sort thetavec
-    thetavec = np.sort(thetavec)
-    # Calculate lambda for every theta in thetavec
-    lambdavec = lambdafast(thetavec, simplify_moments(moment_vector))
-    # LOCALMIN = True if the corresponding element of THETAVEC appears to be
+            # effectvec that are the closest to effect_inf.
+            assert effectvec[i-2] < effectvec[i-1]
+            assert effectvec[i] < effectvec[i+1]
+    # Re-sort effectvec
+    effectvec = np.sort(effectvec)
+    # Calculate rc for every effect in effectvec
+    rcvec = rcfast(effectvec, simplify_moments(moment_vector))
+    # LOCALMIN = True if the corresponding element of effectVEC appears to be
     # a local minimum
-    localmin = ((lambdavec[1:imax-1] < lambdavec[0:imax-2]) &
-                (lambdavec[1:imax-1] < lambdavec[2:imax]))
+    localmin = ((rcvec[1:imax-1] < rcvec[0:imax-2]) &
+                (rcvec[1:imax-1] < rcvec[2:imax]))
     # The end points are not local minima
     localmin = np.append(np.insert(localmin, [0], [False]), False)
-    # LOCALMAX = True if the corresponding element of THETAVEC appears to be
+    # LOCALMAX = True if the corresponding element of effectVEC appears to be
     # a local maximum
-    localmax = ((lambdavec[1:imax-1] > lambdavec[0:imax-2]) &
-                (lambdavec[1:imax-1] > lambdavec[2:imax]))
+    localmax = ((rcvec[1:imax-1] > rcvec[0:imax-2]) &
+                (rcvec[1:imax-1] > rcvec[2:imax]))
     # The end points are not local max`ima
     localmax = np.append(np.insert(localmax, [0], [False]), False)
-    # Figure out where theta_star lies in THETAVEC.  We need to do this
-    # calculation again because we sorted THETAVEC
-    if np.isfinite(theta_star):
-        i = np.sum(thetavec < theta_star)
+    # Figure out where effect_inf lies in effectVEC.  We need to do this
+    # calculation again because we sorted effectVEC
+    if np.isfinite(effect_inf):
+        i = np.sum(effectvec < effect_inf)
         if 0 < i < imax:
-            # The two values bracketing theta_star are never local optima
+            # The two values bracketing effect_inf are never local optima
             localmin[i-1:i+1] = False
             localmax[i-1:i+1] = False
     # Right now, we only have approximate local optima.  We need to apply
@@ -1045,44 +1045,44 @@ def estimate_theta_segments(moment_vector):
     # do j=1,size(localmin)
     for j in range(1, len(localmin)):
         if localmin[j-1]:
-            thetavec[j-1] = brent(thetavec[j-2],
-                                  thetavec[j-1],
-                                  thetavec[j],
-                                  lambdafast,
-                                  1.0e-10,
-                                  simplify_moments(moment_vector))
+            effectvec[j-1] = brent(effectvec[j-2],
+                                   effectvec[j-1],
+                                   effectvec[j],
+                                   rcfast,
+                                   1.0e-10,
+                                   simplify_moments(moment_vector))
         elif localmax[j-1]:
-            thetavec[j-1] = brent(thetavec[j-2],
-                                  thetavec[j-1],
-                                  thetavec[j],
-                                  negative_lambdafast,
-                                  1.0e-10,
-                                  simplify_moments(moment_vector))
-    # Now we are ready to create THETA_SEGMENTS.
-    if np.isfinite(theta_star) and 0 < i < imax:
-        # THETA_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
-        # values that bracket theta_star, and any local optima
-        theta_segments = np.append(np.concatenate([thetavec[i-1:i+1],
-                                                   thetavec[localmin],
-                                                   thetavec[localmax]]),
-                                   (-thetamax, thetamax))
+            effectvec[j-1] = brent(effectvec[j-2],
+                                   effectvec[j-1],
+                                   effectvec[j],
+                                   negative_rcfast,
+                                   1.0e-10,
+                                   simplify_moments(moment_vector))
+    # Now we are ready to create effect_SEGMENTS.
+    if np.isfinite(effect_inf) and 0 < i < imax:
+        # effect_SEGMENTS contains the two limits (-Inf,+Inf), the pair of
+        # values that bracket effect_inf, and any local optima
+        effect_segments = np.append(np.concatenate([effectvec[i-1:i+1],
+                                                   effectvec[localmin],
+                                                   effectvec[localmax]]),
+                                    (-effectmax, effectmax))
     else:
-        # If theta_star is not finite, then we have two less elements in
-        # THETA_SEGMENTS
-        theta_segments = np.concatenate([thetavec[i-1:i+1],
-                                         thetavec[localmin],
-                                         thetavec[localmax]])
+        # If effect_inf is not finite, then we have two less elements in
+        # effect_SEGMENTS
+        effect_segments = np.concatenate([effectvec[i-1:i+1],
+                                         effectvec[localmin],
+                                         effectvec[localmax]])
     # Sort the result (definitely necessary)
-    theta_segments = np.sort(theta_segments)
-    return theta_segments, thetavec, lambdavec
+    effect_segments = np.sort(effect_segments)
+    return effect_segments, effectvec, rcvec
 
 
-def bracket_theta_star(moment_vector):
-    """Finds theta valus close to theta_star."""
-    # Get the value of theta_star.  If we are in this function it should be
+def bracket_effect_inf(moment_vector):
+    """Finds effect valus close to effect_inf."""
+    # Get the value of effect_inf.  If we are in this function it should be
     # finite.
-    theta_star = thetastar(moment_vector)
-    # Get the limit of lambda(theta) as theta approaches theta_star,from below
+    effect_inf = effectinf(moment_vector)
+    # Get the limit of rc(effect) as effect approaches effect_inf,from below
     # and from above. These limits are generally not finite.
     simplified_moments = simplify_moments(moment_vector)
     # If this condition holds, no need to find a bracket (and the code
@@ -1103,26 +1103,26 @@ def bracket_theta_star(moment_vector):
     bracket = None
     j = 0
     for i in range(1, 101):
-        # For the candidate bracket, consider theta_star plus or minus some
+        # For the candidate bracket, consider effect_inf plus or minus some
         # small number epsilon (epsilon gets smaller each iteration)
-        candidate = (theta_star +
-                     np.array((-1.0, 1.0)) * max(abs(theta_star), 1.0)*0.1**i)
+        candidate = (effect_inf +
+                     np.array((-1.0, 1.0)) * max(abs(effect_inf), 1.0)*0.1**i)
         # To be a good bracket, candidate must satisfy some conditions:
         #    1. The bracket must be wide enough that the system can tell that
-        #       CANDIDATE(1) < theta_star < CANDIDATE(2)
-        #    2. The bracket must be narrow enough that lambda(candidate) is
+        #       CANDIDATE(1) < effect_inf < CANDIDATE(2)
+        #    2. The bracket must be narrow enough that rc(candidate) is
         #       the same sign as true_limit.
-        #    3. The bracket must be wide enough that lambda(candidate) is
-        #       finite and nonzero. If candidate is very close to theta_star,
-        #       then the calculated lambda(candidate) can be *either* NaN or
-        #       zero.  The reason for this is that lambda(candidate) is a
+        #    3. The bracket must be wide enough that rc(candidate) is
+        #       finite and nonzero. If candidate is very close to effect_inf,
+        #       then the calculated rc(candidate) can be *either* NaN or
+        #       zero.  The reason for this is that rc(candidate) is a
         #       ratio of two things that are going to zero.  Approximation
         #       error will eventually make both the numerator and denominator
         #       indistingushable from zero (NaN), but sometimes the numerator
         #       will reach indistinguishable-from-zero faster (giving zero
         #       for the ratio).
-        if candidate[0] < theta_star < candidate[1]:
-            tmp2 = lambdafast(candidate, simplified_moments)
+        if candidate[0] < effect_inf < candidate[1]:
+            tmp2 = rcfast(candidate, simplified_moments)
             if (np.isfinite(tmp2).all() and
                (tmp2[0]*np.sign(true_limit[0]) > 0.0) and
                (tmp2[1]*np.sign(true_limit[1]) > 0.0)):
@@ -1131,15 +1131,15 @@ def bracket_theta_star(moment_vector):
             else:
                 continue
     if j == 0:
-        msg = "Unable to find a good bracket for theta_star"
+        msg = "Unable to find a good bracket for effect_inf"
         warn(msg)
     return bracket
 
 
-def estimate_theta(moment_vector,
-                   lambda_range,
-                   theta_segments):
-    """Estimates theta and its gradient."""
+def estimate_effect(moment_vector,
+                    rc_range,
+                    effect_segments):
+    """Estimates effect and its gradient."""
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     # pylint: disable=invalid-name
     ntab = 10
@@ -1150,107 +1150,107 @@ def estimate_theta(moment_vector,
     safe = 2.0
     h = 1.0e-1
     errmax = 0.0
-    theta_estimate = np.zeros((2, len(moment_vector)+1))
+    effect_estimate = np.zeros((2, len(moment_vector)+1))
     deps = np.zeros(len(moment_vector))
     dmoments = np.zeros(len(moment_vector))
     a = np.zeros((ntab, ntab))
     fac = geop(con2, con2, ntab - 1)
     errt = np.zeros(ntab-1)
-    # Get lambda_star and theta_star
-    lambda_star = lambdastar(moment_vector)
-    theta_star = thetastar(moment_vector)
-    # Check to make sure that lambda_star is not in lambda_range.  If so,
-    # theta is completely unidentified.
-    if lambda_range[0] <= lambda_star <= lambda_range[1]:
-        theta_estimate[0, 0] = -np.inf
-        theta_estimate[1, 0] = np.inf
-        theta_estimate[:, 1:] = 0.0
-        return theta_estimate
-    # IMPORTANT_THETAS is a list of theta values for which lambda(theta) needs
+    # Get rc_inf and effect_inf
+    rc_inf = rcinf(moment_vector)
+    effect_inf = effectinf(moment_vector)
+    # Check to make sure that rc_inf is not in rc_range.  If so,
+    # effect is completely unidentified.
+    if rc_range[0] <= rc_inf <= rc_range[1]:
+        effect_estimate[0, 0] = -np.inf
+        effect_estimate[1, 0] = np.inf
+        effect_estimate[:, 1:] = 0.0
+        return effect_estimate
+    # IMPORTANT_effectS is a list of effect values for which rc(effect) needs
     # to be calculated. We don't know in advance how many important values
-    # there will be, so we make IMPORTANT_THETAS way too big, and initialize
+    # there will be, so we make IMPORTANT_effectS way too big, and initialize
     # it to all zeros (this choice is arbitrary).
     # Get simplified moments
     simplified_moments = simplify_moments(moment_vector)
-    # k is the number of actual important theta values in IMPORTANT_THETAS
-    important_thetas = np.array([])
+    # k is the number of actual important effect values in IMPORTANT_effectS
+    important_effects = np.array([])
     k = 1
-    # Go piece by piece through theta_segments
-    for i in range(1, len(theta_segments)):
-        # Get the next pair of thetas.  This represents a range of thetas to
+    # Go piece by piece through effect_segments
+    for i in range(1, len(effect_segments)):
+        # Get the next pair of effects.  This represents a range of effects to
         # check
-        current_theta_range = theta_segments[i-1:i+1]
-        # Skip ahead to the next pair if theta_star is in the current range
-        if ((not np.isfinite(theta_star)) or
-           (current_theta_range[0] >= theta_star) or
-           (current_theta_range[1] <= theta_star)):
-            # Otherwise, calculate the range of lambdas associated with that
-            # range of thetas
-            current_lambda_range = lambdafast(current_theta_range,
-                                              simplified_moments)
-            # For each of the values in lambda_range
+        current_effect_range = effect_segments[i-1:i+1]
+        # Skip ahead to the next pair if effect_inf is in the current range
+        if ((not np.isfinite(effect_inf)) or
+           (current_effect_range[0] >= effect_inf) or
+           (current_effect_range[1] <= effect_inf)):
+            # Otherwise, calculate the range of rcs associated with that
+            # range of effects
+            current_rc_range = rcfast(current_effect_range,
+                                      simplified_moments)
+            # For each of the values in rc_range
             for j in range(1, 3):
-                # See if that value satisfies lambda(theta)-lambda(j)=0 for
-                # some theta in current_theta_range
-                if (lambda_range[j-1] > min(current_lambda_range)) and \
-                   (lambda_range[j-1] < max(current_lambda_range)):
-                    # If so, find theta such that lambda(theta)-lambda(j)=0
-                    # and put it inour list of IMPORTANT_THETAS.  Of course,
-                    # we can't quite find the exact theta.
-                    tmp = zbrent(lambda_minus_lambda,
-                                 current_theta_range[0],
-                                 current_theta_range[1],
+                # See if that value satisfies rc(effect)-rc(j)=0 for
+                # some effect in current_effect_range
+                if (rc_range[j-1] > min(current_rc_range)) and \
+                   (rc_range[j-1] < max(current_rc_range)):
+                    # If so, find effect such that rc(effect)-rc(j)=0
+                    # and put it inour list of IMPORTANT_effectS.  Of course,
+                    # we can't quite find the exact effect.
+                    tmp = zbrent(rc_minus_rc,
+                                 current_effect_range[0],
+                                 current_effect_range[1],
                                  1.0e-200,
                                  np.insert(simplified_moments,
                                            0,
-                                           lambda_range[j-1]))
-                    important_thetas = np.append(important_thetas, tmp)
+                                           rc_range[j-1]))
+                    important_effects = np.append(important_effects, tmp)
                     k = k + 1
-    # Add THETA_SEGMENTS to the list of IMPORTANT_THETAS
-    important_thetas = np.append(important_thetas, theta_segments)
-    # Add the OLS theta to the list of IMPORTANT_THETAS?
+    # Add effect_SEGMENTS to the list of IMPORTANT_effectS
+    important_effects = np.append(important_effects, effect_segments)
+    # Add the OLS effect to the list of IMPORTANT_effectS?
     # simplified_moments(3)/simplified_moments(2)
-    # Calculate lambda(theta) for every theta in IMPORTANT_THETAS
-    lambda_segments = lambdafast(important_thetas, simplified_moments)
-    # INRANGE = True if a particular value of theta satisfies the condition
-    #     lambda_range(1) <= lambda(theta) <= lambda_range(2)
+    # Calculate rc(effect) for every effect in IMPORTANT_effectS
+    rc_segments = rcfast(important_effects, simplified_moments)
+    # INRANGE = True if a particular value of effect satisfies the condition
+    #     rc_range(1) <= rc(effect) <= rc_range(2)
     # Notice that we have put a little error tolerance in here, since
     # zbrent won't find the exact root.
-    inrange = ((lambda_segments >= lambda_range[0]-0.001) &
-               (lambda_segments <= lambda_range[1]+0.001))
+    inrange = ((rc_segments >= rc_range[0]-0.001) &
+               (rc_segments <= rc_range[1]+0.001))
     if k > 1:
         inrange[0:k-1] = True
-    # If no IMPORTANT_THETAS are in range, the identified set is empty
+    # If no IMPORTANT_effectS are in range, the identified set is empty
     if sum(inrange) == 0:
-        theta_estimate[0, 0] = np.nan
-    # If the lowest value in IMPORTANT_THETAS is in range, then there is no
+        effect_estimate[0, 0] = np.nan
+    # If the lowest value in IMPORTANT_effectS is in range, then there is no
     # (finite) lower bound
-    elif inrange[np.argmin(important_thetas)]:
-        theta_estimate[0, 0] = -np.inf
+    elif inrange[np.argmin(important_effects)]:
+        effect_estimate[0, 0] = -np.inf
     else:
-        # Otherwise the the lower bound for theta is the minimum value in
-        # IMPORTANT_THETAS that is in range
-        theta_estimate[0, 0] = min(important_thetas[inrange])
-    # If no IMPORTANT_THETAS are in range, the identified set is empty
+        # Otherwise the the lower bound for effect is the minimum value in
+        # IMPORTANT_effectS that is in range
+        effect_estimate[0, 0] = min(important_effects[inrange])
+    # If no IMPORTANT_effectS are in range, the identified set is empty
     if sum(inrange) == 0:
-        theta_estimate[1, 0] = np.nan
-    # If the highest value in IMPORTANT_THETAS is in range, then there is no
+        effect_estimate[1, 0] = np.nan
+    # If the highest value in IMPORTANT_effectS is in range, then there is no
     # (finite) upper bound
-    elif inrange[np.argmax(important_thetas)]:
-        theta_estimate[1, 0] = np.inf
+    elif inrange[np.argmax(important_effects)]:
+        effect_estimate[1, 0] = np.inf
     else:
-        # Otherwise the the upper bound for theta is the maximum value in
-        # IMPORTANT_THETAS that is in range
-        theta_estimate[1, 0] = max(important_thetas[inrange])
+        # Otherwise the the upper bound for effect is the maximum value in
+        # IMPORTANT_effectS that is in range
+        effect_estimate[1, 0] = max(important_effects[inrange])
     # Now we find the gradient
-    # Take the gradient at both theta_L and theta_H
+    # Take the gradient at both effect_L and effect_H
     for j in range(1, 3):
-        theta = theta_estimate[j-1, 0]
-        # The gradient can only be calculated if theta is finite.
+        effect = effect_estimate[j-1, 0]
+        # The gradient can only be calculated if effect is finite.
         # This was hopefully caught above but check just in case.
-        if not np.isfinite(theta):
-            # If theta is infinite, then the gradient is zero.
-            theta_estimate[j - 1, 1:] = 0.0
+        if not np.isfinite(effect):
+            # If effect is infinite, then the gradient is zero.
+            effect_estimate[j - 1, 1:] = 0.0
             continue
 
         # Gradients are estimated using a simple finite central difference:
@@ -1277,12 +1277,12 @@ def estimate_theta(moment_vector,
             errmax = 0.0
             # Initialize the finite-difference vector
             deps[:] = 0.0
-            # First, we calculate the scalar-as-vector (dlambda / dtheta)
+            # First, we calculate the scalar-as-vector (drc / deffect)
             # hh is the current step size.
             hh = h
             # Calculate an approximate derivative using stepsize hh
-            a[0, 0] = (lambdafast(theta + hh, simplified_moments) -
-                       lambdafast(theta - hh, simplified_moments)) / \
+            a[0, 0] = (rcfast(effect + hh, simplified_moments) -
+                       rcfast(effect - hh, simplified_moments)) / \
                       (2.0 * hh)
             # Set the error to very large
             err = big
@@ -1292,8 +1292,8 @@ def estimate_theta(moment_vector,
                 hh = hh / con
                 # Calculate an approximate derivative with the new
                 # stepsize
-                a[0, k-1] = ((lambdafast(theta + hh, simplified_moments) -
-                              lambdafast(theta - hh, simplified_moments)) /
+                a[0, k-1] = ((rcfast(effect + hh, simplified_moments) -
+                              rcfast(effect - hh, simplified_moments)) /
                              (2.0 * hh))
                 # Then use Neville's method to estimate the error
                 for m in range(2, k + 1):
@@ -1317,23 +1317,23 @@ def estimate_theta(moment_vector,
             # errmax is the biggest approximation error so far for the
             # current value of h
             errmax = max(errmax, err)
-            # Now we have a candidate derivative dlambda/dtheta
-            dtheta = dfridr
-            # Second, estimate the vector (dlambda / dmoment_vector)
+            # Now we have a candidate derivative drc/deffect
+            deffect = dfridr
+            # Second, estimate the vector (drc / dmoment_vector)
             for i in range(1, len(moment_vector) + 1):
                 hh = h
                 deps[i-1] = hh
-                a[0, 0] = ((lambdafun(moment_vector + deps, theta) -
-                            lambdafun(moment_vector - deps, theta)) /
+                a[0, 0] = ((rcfun(moment_vector + deps, effect) -
+                            rcfun(moment_vector - deps, effect)) /
                            (2.0 * hh))
                 err = big
                 for k in range(2, ntab + 1):
                     hh = hh / con
                     deps[i-1] = hh
-                    a[0, k - 1] = (lambdafun(moment_vector + deps,
-                                             theta) -
-                                   lambdafun(moment_vector - deps,
-                                             theta)) / (2.0 * hh)
+                    a[0, k - 1] = (rcfun(moment_vector + deps,
+                                         effect) -
+                                   rcfun(moment_vector - deps,
+                                         effect)) / (2.0 * hh)
                     for m in range(2, k + 1):
                         a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
                                            a[m - 2, k - 2]) / \
@@ -1356,7 +1356,7 @@ def estimate_theta(moment_vector,
                 dmoments[i - 1] = dfridr
                 deps[i - 1] = 0.0
             # At this point we have estimates of the derivatives stored in
-            # dtheta and dmoments. We also have the maximum approximation
+            # deffect and dmoments. We also have the maximum approximation
             # error for the current h stored in errmax. If that
             # approximation error is "good enough" we are done and can
             # exit the loop
@@ -1364,14 +1364,14 @@ def estimate_theta(moment_vector,
                 break
             # Otherwise we will try again with a smaller h
             if n == nmax:
-                msg1 = "Inaccurate SE for thetaL/H."
+                msg1 = "Inaccurate SE for effectL/H."
                 msg2 = "Try normalizing variables."
                 warn(msg1 + " " + msg2)
         # Finally, we apply the implicit function theorem to calculate the
         # gradient that we actually need:
-        #   dtheta/dmoments = -(dlambda/dmoments)/(dlambda/dtheta)
-        theta_estimate[j-1, 1:] = -dmoments / dtheta
-    return theta_estimate
+        #   deffect/dmoments = -(drc/dmoments)/(drc/deffect)
+        effect_estimate[j-1, 1:] = -dmoments / deffect
+    return effect_estimate
 
 
 def simplify_moments(moment_vector):
@@ -1500,35 +1500,35 @@ def check_moments(moment_vector):
     return valid, identified
 
 
-def lambdastar(moment_vector):
-    """Calculates lambda_star."""
+def rcinf(moment_vector):
+    """Calculates rc_inf."""
     simplified_moments = simplify_moments(moment_vector)
-    # lambda_star is defined as sqrt( var(z)/var(zhat) - 1)
+    # rc_inf is defined as sqrt( var(z)/var(zhat) - 1)
     # The check_moments subroutine should ensure that
     #   var(z) > 0 and that var(z) >= var(zhat) >= 0.
-    # This implies that lambda_star >= 0.
-    # Special values: If var(zhat) = 0, then lambda_star = +Infinity
-    lambda_star = np.inf if simplified_moments[4] == 0.0 else \
+    # This implies that rc_inf >= 0.
+    # Special values: If var(zhat) = 0, then rc_inf = +Infinity
+    rc_inf = np.inf if simplified_moments[4] == 0.0 else \
         np.sqrt(np.maximum(simplified_moments[1] /
                            simplified_moments[4], 1.0) - 1.0)
-    return lambda_star
+    return rc_inf
 
 
-def thetastar(moment_vector):
-    """Calculates theta_star."""
+def effectinf(moment_vector):
+    """Calculates effect_inf."""
     simplified_moments = simplify_moments(moment_vector)
-    # theta_star is defined as
+    # effect_inf is defined as
     #   cov(yhat,zhat)/var(zhat)
     # The check_moments subroutine should ensure that
     # var(zhat) >= 0 and that if var(zhat)=0 -> cov(yhat,zhat)=0.
-    # Special values: If var(zhat)=0, then theta_star = 0/0 = NaN.
-    theta_star = np.nan if simplified_moments[4] == 0.0 else \
+    # Special values: If var(zhat)=0, then effect_inf = 0/0 = NaN.
+    effect_inf = np.nan if simplified_moments[4] == 0.0 else \
         simplified_moments[5] / simplified_moments[4]
-    return theta_star
+    return effect_inf
 
 
-def lambdafast(theta, simplified_moments):
-    """Calculates lambda for each theta in the given array."""
+def rcfast(effect, simplified_moments):
+    """Calculates rc for each effect in the given array."""
     # pylint: disable=invalid-name
     y = simplified_moments[0]
     z = simplified_moments[1]
@@ -1536,43 +1536,43 @@ def lambdafast(theta, simplified_moments):
     yhat = simplified_moments[3]
     zhat = simplified_moments[4]
     yzhat = simplified_moments[5]
-    theta = np.atleast_1d(theta)
+    effect = np.atleast_1d(effect)
     lf0_num = (yhat -
-               2.0 * theta * yzhat +
-               theta ** 2 * zhat)
+               2.0 * effect * yzhat +
+               effect ** 2 * zhat)
     lf0_denom = (y - yhat -
-                 (2.0) * theta * (yz - yzhat) +
-                 theta ** 2 * (z - zhat))
-    lf1_num = (yz - yzhat - theta * (z - zhat))
-    lf1_denom = (yzhat - theta * zhat)
+                 (2.0) * effect * (yz - yzhat) +
+                 effect ** 2 * (z - zhat))
+    lf1_num = (yz - yzhat - effect * (z - zhat))
+    lf1_denom = (yzhat - effect * zhat)
     msk = ((lf0_denom != 0.0) &
            (lf1_denom != 0.0) &
            (np.sign(lf0_num) == np.sign(lf0_denom)))
-    lambda_fast = np.full(len(theta), np.nan)
-    lambda_fast[msk] = ((lf1_num[msk]/lf1_denom[msk]) *
-                        np.sqrt(lf0_num[msk]/lf0_denom[msk]))
-    return lambda_fast
+    rc_fast = np.full(len(effect), np.nan)
+    rc_fast[msk] = ((lf1_num[msk]/lf1_denom[msk]) *
+                    np.sqrt(lf0_num[msk]/lf0_denom[msk]))
+    return rc_fast
 
 
-def negative_lambdafast(theta, simplified_moments):
-    """Calcualtes -lambda(theta)."""
-    return -lambdafast(theta, simplified_moments)
+def negative_rcfast(effect, simplified_moments):
+    """Calcualtes -rc(effect)."""
+    return -rcfast(effect, simplified_moments)
 
 
-def lambdafun(moment_vector, theta):
-    """Calculates lambda(theta)."""
-    lambda_fast = lambdafast(theta, simplify_moments(moment_vector))
-    return lambda_fast
+def rcfun(moment_vector, effect):
+    """Calculates rc(effect)."""
+    rc_fast = rcfast(effect, simplify_moments(moment_vector))
+    return rc_fast
 
 
-def lambda0_fun(moment_vector):
-    """"Calculates lambda(0)."""
-    # lambda0 is defined as:
+def rc0_fun(moment_vector):
+    """"Calculates rc(0)."""
+    # rc0 is defined as:
     # (cov(y,z)/cov(yhat,zhat)-1) / sqrt(var(y)/var(yhat)-1)
     # The check_moments subroutine should ensure that
     #  var(y) >= var(yhat) > 0, so the denominator is
     # always positive and finite.
-    # Special values: If cov(yhat,zhat)=0, then lambda0 can
+    # Special values: If cov(yhat,zhat)=0, then rc0 can
     #   be +Infinity, -Infinity, or NaN depending on the sign
     #   of cov(y,z).
     simplified_moments = simplify_moments(moment_vector)
@@ -1583,16 +1583,16 @@ def lambda0_fun(moment_vector):
     msk = ((var_y != var_yhat) &
            (cov_yzhat != 0.0) &
            (np.sign(var_yhat) == np.sign((var_y - var_yhat))))
-    lambdaval = (((cov_yz - cov_yzhat)/cov_yzhat) *
-                 np.sqrt(var_yhat/(var_y - var_yhat))) if msk else np.nan
-    return lambdaval
+    rcval = (((cov_yz - cov_yzhat)/cov_yzhat) *
+             np.sqrt(var_yhat/(var_y - var_yhat))) if msk else np.nan
+    return rcval
 
 
-def lambda_minus_lambda(theta, simplified_moments_and_lambda):
-    """Calculates lamba(theta)."""
-    lambda1 = lambdafast(theta, simplified_moments_and_lambda[1:])
-    lambda0 = simplified_moments_and_lambda[0]
-    return lambda1 - lambda0
+def rc_minus_rc(effect, simplified_moments_and_rc):
+    """Calculates lamba(effect)."""
+    rc1 = rcfast(effect, simplified_moments_and_rc[1:])
+    rc0 = simplified_moments_and_rc[0]
+    return rc1 - rc0
 
 
 def estimate_parameter(func, moment_vector):
@@ -1862,26 +1862,26 @@ def bkouter(arrow, msk):
     return np.outer(arrow, arrow).flatten()[msk]
 
 
-def check_lambda(lambda_range):
-    """Checks that lambda_range is valid."""
-    assert isinstance(lambda_range, np.ndarray)
-    if lambda_range.ndim != 1:
-        msg1 = "lambda_range should be 1-d array"
-        msg2 = f" and is a {lambda_range.ndim}-d array."
+def check_rc(rc_range):
+    """Checks that rc_range is valid."""
+    assert isinstance(rc_range, np.ndarray)
+    if rc_range.ndim != 1:
+        msg1 = "rc_range should be 1-d array"
+        msg2 = f" and is a {rc_range.ndim}-d array."
         raise TypeError(msg1 + msg2)
-    if lambda_range.shape[0] != 2:
-        msg1 = "lambda_range should have 2 elements"
-        msg2 = f" and has {lambda_range.shape[0]} element(s)."
+    if rc_range.shape[0] != 2:
+        msg1 = "rc_range should have 2 elements"
+        msg2 = f" and has {rc_range.shape[0]} element(s)."
         raise TypeError(msg1 + msg2)
-    if lambda_range.shape[0] != 2:
-        msg1 = "lambda_range should have 2 elements"
-        msg2 = f" and has {lambda_range.shape[0]} element(s)."
+    if rc_range.shape[0] != 2:
+        msg1 = "rc_range should have 2 elements"
+        msg2 = f" and has {rc_range.shape[0]} element(s)."
         raise TypeError(msg1 + msg2)
-    if any(np.isnan(lambda_range)):
-        msg = "lambda_range cannot be NaN."
+    if any(np.isnan(rc_range)):
+        msg = "rc_range cannot be NaN."
         raise ValueError(msg)
-    if lambda_range[0] > lambda_range[1]:
-        msg1 = f"elements of lambda_range ({lambda_range})"
+    if rc_range[0] > rc_range[1]:
+        msg1 = f"elements of rc_range ({rc_range})"
         msg2 = " must be in (weakly) ascending order."
         raise ValueError(msg1 + msg2)
 
@@ -2076,17 +2076,17 @@ def read_data(infile):
                             delim_whitespace=True,
                             skiprows=[1, 2],
                             header=None).values[0, ]
-        n_moments, n_lambda, external_big_number = tuple(line1)
+        n_moments, n_rc, external_big_number = tuple(line1)
         # Line 2 should be n_moments whitespace delimited numbers
         moment_vector = pd.read_csv(infile,
                                     delim_whitespace=True,
                                     skiprows=[0, 2],
                                     header=None).values[0, ].astype(np.float64)
         # Lines 3+ should be two whitespace delimited numbers each
-        lambda_range = pd.read_csv(infile,
-                                   delim_whitespace=True,
-                                   skiprows=[0, 1],
-                                   header=None).values[0, ].astype(np.float64)
+        rc_range = pd.read_csv(infile,
+                               delim_whitespace=True,
+                               skiprows=[0, 1],
+                               header=None).values[0, ].astype(np.float64)
     except FileNotFoundError:
         msg = f"infile {infile} not found.\n"
         die(msg)
@@ -2094,17 +2094,17 @@ def read_data(infile):
         msg = f"Incorrect format in infile {infile}.\n"
         die(msg)
     else:
-        msg1 = f"Line 1: n_moments = {n_moments}, n_lambda = {n_lambda}"
+        msg1 = f"Line 1: n_moments = {n_moments}, n_rc = {n_rc}"
         msg2 = f"external_big_number = {external_big_number}.\n"
         write_to_logfile(msg1 + ", " + msg2)
         mv_len = len(moment_vector)
         msg = f"Line 2: moment_vector = a vector of length {mv_len}.\n"
         write_to_logfile(msg)
-        write_to_logfile(f"Line 3: lambda_range = {lambda_range}.\n")
-        write_to_logfile("For calculations, lambda_range,...\n")
+        write_to_logfile(f"Line 3: rc_range = {rc_range}.\n")
+        write_to_logfile("For calculations, rc_range,...\n")
         write_to_logfile(f"Data successfully loaded from file {infile}\n")
-    # reset n_moments and n_lambda if needed
-    n_lambda = int(n_lambda)
+    # reset n_moments and n_rc if needed
+    n_rc = int(n_rc)
     n_moments = int(n_moments)
     external_big_number = float(external_big_number)
     if n_moments != len(moment_vector):
@@ -2112,18 +2112,18 @@ def read_data(infile):
         msg2 = f"to len(moment_vector) = {len(moment_vector)}."
         warn(msg1 + msg2)
         n_moments = len(moment_vector)
-    if len(lambda_range) != 2*n_lambda:
-        true_n_lambda = int(len(lambda_range)/2)
-        msg1 = f"n_lambda reset from {n_lambda} "
-        msg2 = f"to len(lambda_range)/2 = {true_n_lambda}."
+    if len(rc_range) != 2*n_rc:
+        true_n_rc = int(len(rc_range)/2)
+        msg1 = f"n_rc reset from {n_rc} "
+        msg2 = f"to len(rc_range)/2 = {true_n_rc}."
         warn(msg1 + msg2)
-        n_lambda = true_n_lambda
-    check_input_values(n_moments, n_lambda, external_big_number)
-    return n_moments, n_lambda, external_big_number, \
-        moment_vector, lambda_range
+        n_rc = true_n_rc
+    check_input_values(n_moments, n_rc, external_big_number)
+    return n_moments, n_rc, external_big_number, \
+        moment_vector, rc_range
 
 
-def check_input_values(n_moments, n_lambda, external_big_number):
+def check_input_values(n_moments, n_rc, external_big_number):
     """Makes sure read_data has read in valid data."""
     # Check to make sure n_moments is a valid value
     #   1. It should be the same as the length of moment_vector.  if not,
@@ -2134,11 +2134,11 @@ def check_input_values(n_moments, n_lambda, external_big_number):
     #   3. The number of implied explanatory variables must be an integer
     k = int((np.sqrt(9 + 8 * n_moments) - 1) / 2)
     assert (2 * (n_moments + 1)) == int(k ** 2 + k)
-    # Check to make sure n_lambda is a valid (i.e., positive) value
+    # Check to make sure n_rc is a valid (i.e., positive) value
     #   1. It should be positive.
-    assert n_lambda > 0
+    assert n_rc > 0
     #   2. For now, it should be one.
-    assert n_lambda == 1
+    assert n_rc == 1
     # Check to make sure external_big_number is a valid value
     assert external_big_number > 0.0
     # If external_big_number is bigger than sys.float_info.max, then issue a
@@ -2163,16 +2163,16 @@ def write_results(result_matrix, outfile):
         write_to_logfile("RCR successfully concluded.\n")
 
 
-def write_details(thetavec, lambdavec, detail_file):
-    """Outputs thetavec and lambdavec to _detail_file."""
+def write_details(effectvec, rcvec, detail_file):
+    """Outputs effectvec and rcvec to _detail_file."""
     if len(detail_file) > 0:
         try:
             with open(detail_file,
                       mode="w",
                       encoding="utf-8") as d_file:
-                d_file.write("theta, lambda \n")
-                for i, theta in enumerate(thetavec):
-                    d_file.write(f"{theta}, {lambdavec[i]} \n")
+                d_file.write("effect, rc \n")
+                for i, effect in enumerate(effectvec):
+                    d_file.write(f"{effect}, {rcvec[i]} \n")
         except OSError:
             warn(f"Cannot write to detail file {detail_file}.")
 
@@ -2231,11 +2231,11 @@ def stata_exe(argv):
 
     # Read in the data from INFILE
     (external_big_number0, moment_vector0,
-        lambda_range0) = read_data(infile0)[2:5]
+        rc_range0) = read_data(infile0)[2:5]
 
     # Perform the calculations and put the results in result_matrix
-    (result_matrix0, thetavec0, lambdavec0) = estimate_model(moment_vector0,
-                                                             lambda_range0)
+    (result_matrix0, effectvec0, rcvec0) = estimate_model(moment_vector0,
+                                                          rc_range0)
 
     # Write out the data to OUTFILE
     write_results(translate_result(result_matrix0,
@@ -2244,7 +2244,7 @@ def stata_exe(argv):
                   outfile0)
 
     if detail_file0 != "":
-        write_details(thetavec0, lambdavec0, detail_file0)
+        write_details(effectvec0, rcvec0, detail_file0)
 
     # Close the log file
     set_logfile(None)

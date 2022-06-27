@@ -356,3 +356,63 @@ def test_rc_badci(endog, exog):
         pass
     else:
         raise AssertionError
+
+
+def test_rc_copy(model):
+    """copy an RCR object"""
+    true_nobs = model.nobs
+    model_copy = model.copy()
+    # confirm that model_copy matches model
+    assert np.all(model_copy.nobs == model.nobs)
+    assert np.all(model_copy.endog == model.endog)
+    assert np.all(model_copy.exog == model.exog)
+    assert np.all(model_copy.lambda_range == model.lambda_range)
+    assert np.all(model_copy.cov_type == model.cov_type)
+    assert np.all(model_copy.vceadj == model.vceadj)
+    assert np.all(model_copy.citype == model.citype)
+    assert np.all(model_copy.cilevel == model.cilevel)
+    assert np.all(model_copy.weights == model.weights)
+    assert np.all(model_copy.groupvar == model.groupvar)
+    assert np.all(model_copy.endog_names == model.endog_names)
+    assert np.all(model_copy.exog_names == model.exog_names)
+    assert np.all(model_copy.depvar == model.depvar)
+    assert np.all(model_copy.treatvar == model.treatvar)
+    assert np.all(model_copy.controlvars == model.controlvars)
+    # confirm that model_copy is a separate object
+    model_copy.nobs = 0
+    assert model_copy.nobs == 0
+    assert model.nobs == true_nobs
+
+
+def test_rc_copy_modify(model, endog_df, exog_df, clusters):
+    """copy and modify an RCR object"""
+    true_nobs = model.nobs
+    model_copy = model.copy(endog=endog_df[1:],
+                            exog=exog_df[1:],
+                            lambda_range=(0.0, 2.0),
+                            cov_type="nonrobust",
+                            vceadj=2.0,
+                            citype="Imbens-Manski",
+                            cilevel=90,
+                            weights=np.ones(true_nobs - 1),
+                            groupvar=clusters[1:])
+    # confirm that model_copy matches its inputs
+    assert np.all(model_copy.nobs == model.nobs - 1)
+    assert np.all(model_copy.endog == model.endog[1:])
+    assert np.all(model_copy.exog == model.exog[1:])
+    assert np.all(model_copy.lambda_range == np.array([0., 2.]))
+    assert np.all(model_copy.cov_type == "nonrobust")
+    assert np.all(model_copy.vceadj == 2.0)
+    assert np.all(model_copy.citype == "Imbens-Manski")
+    assert np.all(model_copy.cilevel == 90)
+    assert np.all(model_copy.weights == 1.0)
+    assert np.all(model_copy.groupvar == clusters[1:])
+    assert np.all(model_copy.endog_names == model.endog_names)
+    assert np.all(model_copy.exog_names == model.exog_names)
+    assert np.all(model_copy.depvar == model.depvar)
+    assert np.all(model_copy.treatvar == model.treatvar)
+    assert np.all(model_copy.controlvars == model.controlvars)
+    # confirm that model_copy is a separate object
+    model_copy.nobs = 0
+    assert model_copy.nobs == 0
+    assert model.nobs == true_nobs

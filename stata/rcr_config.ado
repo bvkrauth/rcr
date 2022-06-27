@@ -56,13 +56,13 @@ program define rcr_config, rclass
 			di "    2. If you do not have a compatible version of Python available,"
 			di "       you can install one from {browse www.anaconda.com/products/distribution} "
 			di "    3. Once you have a compatible version of Python installed,"
-			di "       use {help python: python set exec} to tell Stata where it is." _newline
+			di "       you may need to use {help python: python set exec} to tell Stata where it is." _newline
 			local py = 0
 		}
 	}
 
 	if `py' == 1 {
-		di "STEP 3: Does your python installation include all required modules?"
+		di "STEP 3: Does your Python installation include all required modules?"
 		local missing_modules ""
 		foreach module in `requirements' {
 			capture python which `module'

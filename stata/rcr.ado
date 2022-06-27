@@ -18,9 +18,6 @@
 capture program drop rcr;
 * set type double, permanently; /* I removed this because we don't want to make any persistent hidden changes to the user's environment */
 program define rcr , eclass byable(recall) /* sortpreserve [I took this out because it generated an error msg with detail option */;
-	/* Specify the version number.  The program uses ERETURN, which requires at least version 8.0 */
-	/* Version 9.x will work fine here too, but then users with version 8.0 wouldn't be able to use it. */
-	version 8.0; 
 	
 	/* If we are "replaying" (i.e. the user typed RCR with no arguments, or ESTIMATES REPLAY) just display the most recent results */
 	if (replay()){;
@@ -35,7 +32,9 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 			[if] [in] [fw aw pw iw] /* Standard estimation command arguments, handled in the standard way */
 			[, CLuster(varname) /* Standard option for cluster-corrected standard errors */
 								/* We don't have the robust option - the program uses Stata's MEAN command, which doesn't support it */
+			vce(namelist min = 2 max = 2) /* alternative to cluster */
 			SAVe /* Undocumented option to save intermediate files */
+			exe(string) /* Option to force a particular version */
 			vceadj(real 1.0) 
 			DETails /* Option to save details */
 			citype(string) /* This is a special option for the type of confidence interval to calculate for BetaX */
@@ -46,7 +45,6 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	tempname lamb length moments lambf results V b gradient;
 														
 /***** (1) Process the command options ******/	
-
 	/* Process varlist */
 	/* The first variable name in varlist refers to the outcome variable and will be stored in DEPVAR */
 	gettoken depvar indepvar: varlist;
@@ -72,11 +70,28 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		di as error "Negative values for vceadj not allowed";
 		error 111;
 	};
+	/* Process vce */
+	if "`vce'" != "" {;
+		gettoken vce1 vce2: vce;
+		if "`vce1'" != "cluster" {;
+			di as error "vce option `vce1' not allowed";
+			error 198;
+		};
+		confirm variable `vce2';
+		unab vce2 : `vce2';
+		if "`cluster'" == "" {;
+			local cluster "`vce2'";
+		};
+		if "`cluster'" != "`vce2'" {;
+			di as error "options cluster() and vce(cluster) are in conflict";
+			error 100;
+		};
+	};
 /******** (2) Set the appropriate matsize **********/
 	/*** The number of explanatory variables is limited by the value of matsize.  The algorithm is based on the second moment ***/
 	/*** matrix of the data.  With K variables (1 outcome, 1 explanatory, K-2 control), that matrix is ***/
 	/*** (K+1)*(K+1) because of the intercept.   So there can be no more than:  ***/
-	/***      no more than 25 = floor(sqrt(800)-3) control variables for Stata IC ***/
+	/***      no more than 25 = floor(sqrt(800)-3) control variables for Stata BE/IC ***/
 	/***      no more than 101 = floor(sqrt(11000)-3) control variables for Stata SE/MP ***/
 	/*** NOTE: The second moment matrix is symmetric, so the code could be rewritten to take advantage of that.  ***/
 	/*** By my calculation this would raise the Stata IC limit to 36 control variables, and the Stata SE limit to 146.  ***/
@@ -89,7 +104,8 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		di as error "Too many (" (`numall' - 2)	") explanatory variables. Maximum number for this Stata version is " (floor(sqrt(c(max_matsize)))-3);
 		exit 103;
 	};
-	if (`mat_needed' > `mat_current') {;
+	/* matsize does not apply for Stata version 16 and up */
+	if (`mat_needed' > `mat_current') & (c(stata_version) < 16) {;
 		set matsize `mat_needed';
 	};
 	
@@ -230,19 +246,33 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	quietly mat2txt, matrix(`lambf') saving("`input_file'") append; /*lambda vector*/	
 
 /***** (6) Call the RCR program *****/
+	/* See if Python is supported in this environment */
+	quietly rcr_config;
+	if "`exe'" == "" {;
+		local exe = r(default_version);
+	};
 	/***** the "RCR" should be stored in an ADO folder along with RCR program*************/
 	/* Find the RCR program */
-	if (c(os) == "Windows") {;
+	if ("`exe'" == "python"){;
+		quietly findfile "rcrbounds.py";
+		local rcr_py = r(fn);
+	};
+	else if ("`exe'" == "windows-fortran") {;
 		quietly findfile "rcr.exe";
+		local rcr_exe = r(fn);
 	};
-	if (c(os) == "Unix") {;
+	else if ("`exe'" == "unix-fortran") {;
 		quietly findfile "rcr";
+		local rcr_exe = r(fn);
 	};
-	local rcr_exe = r(fn);
-	/* Check to see if the output_file already exists */
-	capture confirm file "`output_file'";
+	else {;
+		di "Executable `exe' is not supported.  Run rcr_config to check configuration.";
+		return;
+	};
 	/* Input path(s) to libraries required by RCR (this is machine-specific) */
 	local path_to_libs "LD_LIBRARY_PATH=/opt/apps/rhel7/gcc-5.4.0/lib64:/lib64/:/hpchome/econ/tmr17/lib/OpenBLAS/lib/";
+	/* Check to see if the output_file already exists */
+	capture confirm file "`output_file'";
 	/* Delete it if it does exist */
 	if (_rc == 0) {;
 		erase "`output_file'";	
@@ -254,10 +284,13 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		erase "`log_file'";	
 	};
 	/* Execute the RCR program.  */
-	if (c(os) == "Windows") {;
+	if ("`exe'" == "python"){;
+		python script `rcr_py', args("`input_file'" "`output_file'" "`log_file'" "`detail_file'");
+	};
+	else if ("`exe'" == "windows-fortran") {;
 		winexec "`rcr_exe'" "`input_file'" "`output_file'" "`log_file'" "`detail_file'";
 	};
-	if (c(os) == "Unix") {;
+	else if ("`exe'" == "unix-fortran") {;
 		shell `path_to_libs' `rcr_exe' `input_file' `output_file' `log_file' `detail_file'; /* quotes around local macros won't work in Linux shell! */
 	};
 	/* The following lines of code pauses the Stata program until the RCR program has ended.  */
@@ -361,8 +394,10 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 	di_rcr, level(`level'); /*refer to the program "di_rcr" below for more information on di_rcr program*/
 	Footer_rcr, level(`level'); /*refer to the program "Footer" below for more information on Footer program*/
 
-	/* Reset MATSIZE to its original value.  */
-	set matsize `mat_current';	
+	/* Reset MATSIZE to its original value (not needed for Stata version 16 and up).  */
+	if (c(stata_version) < 16) {;
+		set matsize `mat_current';
+	};
 	if "`details'" == "details" {;
 		quietly insheet using `detail_file', clear comma;
 		rename theta betax;
@@ -492,7 +527,8 @@ program define ci_imbensmanski, rclass;
 	/* Otherwise, we need to calculate the critical value based on Imbens-Manski (2004), Econometrica Vol. 72*/
 		while ((`cv_max' - `cv_min') > epsfloat()) {;
 			scalar `cv' = 0.5*(`cv_min' + `cv_max');
-			if ((norm (`cv' + `delta' )  - norm( - `cv')) - (`level'/100) < 0) scalar `cv_min' = `cv';			
+			/* The NORM function was renamed in later Stata versions */
+			version 8: if ((norm (`cv' + `delta' )  - norm( - `cv')) - (`level'/100) < 0) scalar `cv_min' = `cv';
 			else scalar `cv_max' = `cv';				
 		};
 	};

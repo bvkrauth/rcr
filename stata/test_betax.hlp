@@ -1,5 +1,5 @@
 {smcl}
-{* 16Mar2020}{...}
+{* 01Jul2022}{...}
 {cmd:help test_betax}{right:also see:  {helpb rcr}}
 {hline}
 
@@ -55,6 +55,11 @@ This command is a postestimation command for {help rcr}.
 {synoptset 20 tabbed}{...}
 {p2col 5 20 24 2: Scalars}{p_end}
 {synopt:{cmd:r(p)}}p-value of test{p_end}
+
+{pstd}
+There is no conventional test statistic since the test is constructed by inverting
+the confidence interval.
+{p_end}
 
 {title:Also see}
 

@@ -1,5 +1,5 @@
 {smcl}
-{* 16Mar2020}{...}
+{* 01Jul2022}{...}
 {cmd:help rcr_config}{right:also see:  {helpb rcr}}
 {hline}
 
@@ -28,16 +28,18 @@ it can be reconfigured to better support it.
 {pstd}
 For background, {cmd:rcr} uses an external program to do most of
 its calculations. The most recent version of that program is
-written in Python, which is supported in Stata versions 16 and
-higher.  There is also an older executable program written in
-Fortran that can be used if your Stata version does not support
-Python and you are running Stata for Windows or Stata for Linux.
-The rcr command is not supported in Stata for MacOS versions below 16.
+a Python module, which will be used if you have Stata version 16 or
+higher and have a suitable Python configuration. There is also an
+older executable program written in Fortran that can be used if 
+your system does not meet these requirements and you are running
+Stata for Windows or Stata for Linux. The rcr command is not supported
+in Stata for MacOS versions below 16.
 {p_end}
 
 {pstd}
 {cmd:rcr} will automatically select the best available program,
-but you can run {cmd:rcr_config} to review your configuration.
+but you can run {cmd:rcr_config} to review your configuration and
+fix any problems.
 {p_end}
 
 {marker results}{...}

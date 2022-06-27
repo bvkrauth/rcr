@@ -1,6 +1,6 @@
 {smcl}
-{* 16Mar2020}{...}
-{cmd:help rcr}{right:also see:  {helpb rcr postestimation}}
+{* 01Jul2022}{...}
+{cmd:help rcr}{right:also see:  {helpb rcr postestimation}, {helpb rcr_config}}
 {hline}
 
 {title:Title}

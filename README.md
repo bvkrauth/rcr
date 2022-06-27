@@ -1,56 +1,31 @@
-# rcr - Relative correlation restrictions (Krauth 2016)
+# rcr: Bounding a linear causal effect using relative correlation restrictions
 
-This repository contains the RCR Stata package to implement the estimator described in my paper
+This repository contains the Stata and Python packages to implement the estimator described in my paper
 "Bounding a linear causal effect using relative correlation restrictions" (Journal of Econometric Methods 2016).
 
-It also contains the Fortran source code, and support files for compiling and testing.
+- The Stata package is called **rcr** and is available in the 
+  [stata](stata) folder.
+- The Python module is called **rcrbounds**  and is available
+  in the [python](python) folder.
 
-## Installing the package in Windows
-
-### Current general release
-
-The current general release of the package can be obtained by executing the
-Stata command:
-
-```stata
-net install rcr, from("http://www.sfu.ca/~bkrauth/code")
-```
-
-To see how the command works, you can call `help rcr`.  You can
-also download and execute a sample file by executing
-
-```stata
-net get rcr, from("http://www.sfu.ca/~bkrauth/code")
-do rcr_example
-```
-
-### Current developmental version
-
-The current developmental version can be obtained from this site by executing the Stata command:
-
-```stata
-net install rcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
-```
-
-To see how the command works, you can call `help rcr`.  You can
-also download and execute a sample file by executinge
-
-```stata
-net get rcr, from("https://raw.githubusercontent.com/bvkrauth/rcr/master/stata/")
-do rcr_example
-```
-
-## Installing the package in Linux
-
-Tyler Ransom has ported the code to Linux. It is available on his site at https://github.com/tyleransom/rcr.
+The repository also contains Fortran source code for an older version of the
+Stata package, and various support files for testing.
 
 ## Folder structure
 
-The folder structure is
+The folder structure is:
 
-  - stata: Stata package
-  - src: Fortran source 
-  - bin: binary executables for Windows and Linux
-  - test: files for testing
+  - [python](python): Python module
+  - [stata](stata): Stata package
+  - [test](test): support files for testing Stata package
+  - [bin](bin): binary executables for Fortran version (deprecated)
+  - [src](src): Fortran source code (deprecated)
   
-Please see the README.md file in each folder for additional details.
+Please see the *README.md* file in each of these folders for additional
+details.
+
+## Support
+
+Please feel free to email me at <bkrauth@sfu.ca> with questions,
+bugs, or feature requests.  You can also add bugs or feature
+requests as [Github Issues](https://github.com/bvkrauth/rcr/issues).

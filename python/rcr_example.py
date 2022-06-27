@@ -97,16 +97,16 @@ print("Basic RCR bounds example\n",
 
 # Model specification options
 if SHOW_ALL:
-    # lambda_range:
+    # rc_range:
     #
     # By default, bounds will be estimated for a relative correlation
-    # parameter lambda betwen 0 and 1.  You can specify the lambda range
-    # with the lambda_range optional argument:
+    # parameter rc betwen 0 and 1.  You can specify the rc range
+    # with the rc_range optional argument:
     #
-    lambda_example = RCR(endog, exog, lambda_range=(-1.0, 1.0)).fit().summary()
-    print("lambda_range example\n",
-          "  RCR(endog, exog, lambda_range=(-1.0, 1.0)).fit().summary()\n\n",
-          lambda_example,
+    rc_example = RCR(endog, exog, rc_range=(-1.0, 1.0)).fit().summary()
+    print("rc_range example\n",
+          "  RCR(endog, exog, rc_range=(-1.0, 1.0)).fit().summary()\n\n",
+          rc_example,
           "\n\n")
     #
     # weights:
@@ -187,7 +187,7 @@ if SHOW_ALL:
     # citype
     #
     # The default confidence interval for the parameter of
-    # interest (betax_ci) is conservative in the sense that it does not
+    # interest (effect_ci) is conservative in the sense that it does not
     # account for the width of the identified set. The Imbens-Manski
     # confidence interval is also available, and accounts for the width
     # of the identified set.  You can also produce one-tailed confidence
@@ -216,7 +216,7 @@ if SHOW_ALL:
     print("The results object also includes the original model object:",
           rcr_results.model,
           "\nwhich you can use to re-fit the model with other settings:\n\n",
-          rcr_results.model.fit(lambda_range=(0, 2)).summary(),
+          rcr_results.model.fit(rc_range=(0, 2)).summary(),
           "\n\n")
     #
     # Simple object methods
@@ -232,16 +232,16 @@ if SHOW_ALL:
     print("the params_pvalue() method calculates p-values",
           "(for the null parameter value of zero):\n",
           rcr_results.params_pvalue())
-    print("the betax_ci() method calculates a confidence interval",
+    print("the effect_ci() method calculates a confidence interval",
           "for the parameter of interest:\n",
-          rcr_results.betax_ci(citype="Imbens-Manski"))
+          rcr_results.effect_ci(citype="Imbens-Manski"))
     print("the params_ci() method calculates confidence intervals",
           "for the other (point-identified) parameters:\n",
           rcr_results.params_ci())
-    print("the test_betax() method performs hypothesis tests",
+    print("the test_effect() method performs hypothesis tests",
           "for the parameter of interest:\n",
-          "P-value for H0: betax = 0:", rcr_results.test_betax(), "\n",
-          "P-value for H0: betax = 5:", rcr_results.test_betax(5), "\n")
+          "P-value for H0: effect = 0:", rcr_results.test_effect(), "\n",
+          "P-value for H0: effect = 5:", rcr_results.test_effect(5), "\n")
     #
     # summary() method
     #
@@ -261,7 +261,7 @@ if SHOW_ALL:
     # it if you want to create plots.
     #
     if PLT:
-        # The base plot shows the lambda(betax) function over the range
+        # The base plot shows the rc(effect) function over the range
         # from -50 to 50
         fig, axes = plt.subplots()
         ax = rcr_results.rcrplot(ax=axes)

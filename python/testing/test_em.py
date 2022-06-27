@@ -10,19 +10,19 @@ from rcrbounds import estimate_model
 # Basic functionality
 def test_em_realdata(moment_vector, true_result):
     """estimate parameters and gradient with real data"""
-    lambda_range = np.array([0.0, 1.0])
+    rc_range = np.array([0.0, 1.0])
     true_em = np.array([12.31059909,  8.16970996, 28.93548917,
                         5.13504376,  5.20150257])
-    test_result = estimate_model(moment_vector, lambda_range)[0]
+    test_result = estimate_model(moment_vector, rc_range)[0]
     # Check parameter estimates
     assert test_result[:, 0] == pytest.approx(true_em)
     # Check parameter estimates and gradient
     assert test_result == pytest.approx(true_result, rel=1e-04, abs=1e-04)
 
 
-# Special cases for lambda_range
-def test_em_lambdapoint(moment_vector):
-    """estimate when lambda_range is a single point"""
+# Special cases for rc_range
+def test_em_rcpoint(moment_vector):
+    """estimate when rc_range is a single point"""
     lr0 = np.array([0, 0])
     true_em = np.array([12.31059909,  8.16970996, 28.93548917,
                         5.20150257,  5.20150257])
@@ -31,8 +31,8 @@ def test_em_lambdapoint(moment_vector):
     # need to check gradient too
 
 
-def test_em_nolambdalow(moment_vector):
-    """estimate when lambda_range has no lower bound"""
+def test_em_norclow(moment_vector):
+    """estimate when rc_range has no lower bound"""
     lr0 = np.array([-np.inf, 1])
     true_em = np.array([12.31059909,  8.16970996, 28.93548917,
                         5.13504376,  8.16970996])
@@ -42,8 +42,8 @@ def test_em_nolambdalow(moment_vector):
     # need to check gradient too
 
 
-def test_em_nolambdahigh(moment_vector):
-    """estimate when lambda_range has no upper bound"""
+def test_em_norchigh(moment_vector):
+    """estimate when rc_range has no upper bound"""
     lr0 = np.array([0, np.inf])
     true_em = np.array([12.31059909,  8.16970996, 28.93548917,
                         -np.inf, np.inf])

@@ -32,10 +32,10 @@ def test_rc_patsy(endog, exog):
                     "Teacher_Experience Masters_Degree")
     assert model.controlvars == control_vars
     assert model.nobs == 5839
-    assert isinstance(model.lambda_range, np.ndarray)
-    assert model.lambda_range.shape == (2, )
-    assert model.lambda_range[0] == 0.0
-    assert model.lambda_range[1] == 1.0
+    assert isinstance(model.rc_range, np.ndarray)
+    assert model.rc_range.shape == (2, )
+    assert model.rc_range[0] == 0.0
+    assert model.rc_range[1] == 1.0
     assert model.cov_type == "nonrobust"
     assert model.vceadj == 1.0
     assert model.citype == "conservative"
@@ -64,10 +64,10 @@ def test_rc_patsy_df(endog_df, exog_df):
                     "Teacher_Experience Masters_Degree")
     assert model.controlvars == control_vars
     assert model.nobs == 5839
-    assert isinstance(model.lambda_range, np.ndarray)
-    assert model.lambda_range.shape == (2, )
-    assert model.lambda_range[0] == 0.0
-    assert model.lambda_range[1] == 1.0
+    assert isinstance(model.rc_range, np.ndarray)
+    assert model.rc_range.shape == (2, )
+    assert model.rc_range[0] == 0.0
+    assert model.rc_range[1] == 1.0
 
 
 def test_rc_dataframe(endog_df, exog_df):
@@ -91,10 +91,10 @@ def test_rc_dataframe(endog_df, exog_df):
              "Teacher_Experience Masters_Degree")
     assert model.controlvars == cvars
     assert model.nobs == 5839
-    assert isinstance(model.lambda_range, np.ndarray)
-    assert model.lambda_range.shape == (2, )
-    assert model.lambda_range[0] == 0.0
-    assert model.lambda_range[1] == 1.0
+    assert isinstance(model.rc_range, np.ndarray)
+    assert model.rc_range.shape == (2, )
+    assert model.rc_range[0] == 0.0
+    assert model.rc_range[1] == 1.0
 
 
 def test_rc_array(endog, exog):
@@ -116,26 +116,26 @@ def test_rc_array(endog, exog):
     assert model.treatvar == "treatment"
     assert model.controlvars == 'x1 x2 x3 x4 x5 x6'
     assert model.nobs == 5839
-    assert isinstance(model.lambda_range, np.ndarray)
-    assert model.lambda_range.shape == (2, )
-    assert model.lambda_range[0] == 0.0
-    assert model.lambda_range[1] == 1.0
+    assert isinstance(model.rc_range, np.ndarray)
+    assert model.rc_range.shape == (2, )
+    assert model.rc_range[0] == 0.0
+    assert model.rc_range[1] == 1.0
 
 
 # pylint: disable=duplicate-code
-# lambda_range arguments
+# rc_range arguments
 def test_rc_setlr(endog, exog):
-    """set custom (finite) lambda range for RCR model object"""
-    model = RCR(endog, exog, lambda_range=np.asarray([-1.0, 5.0]))
-    assert model.lambda_range[0] == -1.0
-    assert model.lambda_range[1] == 5.0
+    """set custom (finite) rc range for RCR model object"""
+    model = RCR(endog, exog, rc_range=np.asarray([-1.0, 5.0]))
+    assert model.rc_range[0] == -1.0
+    assert model.rc_range[1] == 5.0
 
 
 def test_rc_setlrinf(endog, exog):
-    """set custom (non-finite) lambda range for RCR model object"""
-    model = RCR(endog, exog, lambda_range=np.asarray([-np.inf, np.inf]))
-    assert np.isneginf(model.lambda_range[0])
-    assert np.isposinf(model.lambda_range[1])
+    """set custom (non-finite) rc range for RCR model object"""
+    model = RCR(endog, exog, rc_range=np.asarray([-np.inf, np.inf]))
+    assert np.isneginf(model.rc_range[0])
+    assert np.isposinf(model.rc_range[1])
 
 
 # Exceptions
@@ -210,9 +210,9 @@ def test_rc_nobsnoteq(endog_df, exog_df):
 
 
 def test_rc_lr2d(endog_df, exog_df):
-    """raise exception if lambda_range is a 2-d array"""
+    """raise exception if rc_range is a 2-d array"""
     try:
-        RCR(endog_df, exog_df, lambda_range=np.asarray(endog_df))
+        RCR(endog_df, exog_df, rc_range=np.asarray(endog_df))
     except TypeError:
         pass
     else:
@@ -220,9 +220,9 @@ def test_rc_lr2d(endog_df, exog_df):
 
 
 def test_rc_lr1e(endog_df, exog_df):
-    """raise exception if lambda_range has wrong # of elements"""
+    """raise exception if rc_range has wrong # of elements"""
     try:
-        RCR(endog_df, exog_df, lambda_range=np.zeros(1))
+        RCR(endog_df, exog_df, rc_range=np.zeros(1))
     except TypeError:
         pass
     else:
@@ -230,9 +230,9 @@ def test_rc_lr1e(endog_df, exog_df):
 
 
 def test_rc_lrnan(endog_df, exog_df):
-    """raise exception if lambda_range includes NaN values (inf is OK)"""
+    """raise exception if rc_range includes NaN values (inf is OK)"""
     try:
-        RCR(endog_df, exog_df, lambda_range=np.asarray([0, np.nan]))
+        RCR(endog_df, exog_df, rc_range=np.asarray([0, np.nan]))
     except ValueError:
         pass
     else:
@@ -240,9 +240,9 @@ def test_rc_lrnan(endog_df, exog_df):
 
 
 def test_rc_lrnotsorted(endog_df, exog_df):
-    """raise exception if lambda_range out of order"""
+    """raise exception if rc_range out of order"""
     try:
-        RCR(endog_df, exog_df, lambda_range=np.asarray([1., 0.]))
+        RCR(endog_df, exog_df, rc_range=np.asarray([1., 0.]))
     except ValueError:
         pass
     else:
@@ -366,7 +366,7 @@ def test_rc_copy(model):
     assert np.all(model_copy.nobs == model.nobs)
     assert np.all(model_copy.endog == model.endog)
     assert np.all(model_copy.exog == model.exog)
-    assert np.all(model_copy.lambda_range == model.lambda_range)
+    assert np.all(model_copy.rc_range == model.rc_range)
     assert np.all(model_copy.cov_type == model.cov_type)
     assert np.all(model_copy.vceadj == model.vceadj)
     assert np.all(model_copy.citype == model.citype)
@@ -389,7 +389,7 @@ def test_rc_copy_modify(model, endog_df, exog_df, clusters):
     true_nobs = model.nobs
     model_copy = model.copy(endog=endog_df[1:],
                             exog=exog_df[1:],
-                            lambda_range=(0.0, 2.0),
+                            rc_range=(0.0, 2.0),
                             cov_type="nonrobust",
                             vceadj=2.0,
                             citype="Imbens-Manski",
@@ -400,7 +400,7 @@ def test_rc_copy_modify(model, endog_df, exog_df, clusters):
     assert np.all(model_copy.nobs == model.nobs - 1)
     assert np.all(model_copy.endog == model.endog[1:])
     assert np.all(model_copy.exog == model.exog[1:])
-    assert np.all(model_copy.lambda_range == np.array([0., 2.]))
+    assert np.all(model_copy.rc_range == np.array([0., 2.]))
     assert np.all(model_copy.cov_type == "nonrobust")
     assert np.all(model_copy.vceadj == 2.0)
     assert np.all(model_copy.citype == "Imbens-Manski")

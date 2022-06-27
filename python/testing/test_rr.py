@@ -83,8 +83,8 @@ def test_rr_cineg(results):
 def test_rr_bciconservative(results):
     """conservative confidence interval, default options"""
     trueci = np.asarray([3.25948071, 6.48808526])
-    ci1 = results.betax_ci_conservative()
-    ci2 = results.betax_ci(citype="conservative")
+    ci1 = results.effect_ci_conservative()
+    ci2 = results.effect_ci(citype="conservative")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
@@ -92,8 +92,8 @@ def test_rr_bciconservative(results):
 def test_rr_bciupper(results):
     """upper confidence interval, default options"""
     trueci = np.asarray([3.56102163, np.inf])
-    ci1 = results.betax_ci_upper()
-    ci2 = results.betax_ci(citype="upper")
+    ci1 = results.effect_ci_upper()
+    ci2 = results.effect_ci(citype="upper")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
@@ -101,8 +101,8 @@ def test_rr_bciupper(results):
 def test_rr_bcilower(results):
     """lower confidence interval, default options"""
     trueci = np.asarray([-np.inf, 6.281236804882139])
-    ci1 = results.betax_ci_lower()
-    ci2 = results.betax_ci(citype="lower")
+    ci1 = results.effect_ci_lower()
+    ci2 = results.effect_ci(citype="lower")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
@@ -110,23 +110,23 @@ def test_rr_bcilower(results):
 def test_rr_bciimbensmanski(results):
     """Imbens-Manski confidence interval, default options"""
     trueci = np.asarray([3.29158006, 6.46606603])
-    ci1 = results.betax_ci_imbensmanski()
-    ci2 = results.betax_ci(citype="Imbens-Manski")
+    ci1 = results.effect_ci_imbensmanski()
+    ci2 = results.effect_ci(citype="Imbens-Manski")
     assert ci1 == pytest.approx(trueci)
     assert ci2 == pytest.approx(trueci)
 
 
 def test_rr_bcibad(results):
     """incorrectly-named confidence interval, should return NaN"""
-    ci1 = results.betax_ci(citype="Some Unsupported Type")
+    ci1 = results.effect_ci(citype="Some Unsupported Type")
     assert np.all(np.isnan(ci1))
 
 
-def test_rr_testbetax(results):
-    """test_betax() method with default options"""
-    test_t0 = results.test_betax()
-    test_t1 = results.test_betax(0.)
-    test_t2 = results.test_betax(5.2)
+def test_rr_testeffect(results):
+    """test_effect() method with default options"""
+    test_t0 = results.test_effect()
+    test_t1 = results.test_effect(0.)
+    test_t2 = results.test_effect(5.2)
     assert test_t0 == pytest.approx(1.1920928955078125e-07)
     assert test_t1 == pytest.approx(1.1920928955078125e-07)
     assert test_t2 == 1.0
@@ -161,7 +161,7 @@ def test_rr_summary_cluster(model, clusters):
 
 def test_rr_noid(model):
     """handle when identified set is (-inf, inf)"""
-    results = model.fit(lambda_range=np.asarray([0.0, np.inf]))
+    results = model.fit(rc_range=np.asarray([0.0, np.inf]))
     assert np.isneginf(results.params[3])
     assert np.isposinf(results.params[4])
     msk = np.full((5, 5), True)
@@ -173,11 +173,11 @@ def test_rr_noid(model):
     assert all(results.params_pvalue()[3:] == 0.0)
     assert all(np.isneginf(results.params_ci()[:, 3]))
     assert all(np.isposinf(results.params_ci()[:, 4]))
-    assert np.isneginf(results.betax_ci_conservative()[0])
-    assert np.isposinf(results.betax_ci_conservative()[1])
-    assert np.isneginf(results.betax_ci_upper()[0])
-    assert np.isposinf(results.betax_ci_upper()[1])
-    assert np.isneginf(results.betax_ci_lower()[0])
-    assert np.isposinf(results.betax_ci_lower()[1])
-    assert np.isneginf(results.betax_ci_imbensmanski()[0])
-    assert np.isposinf(results.betax_ci_imbensmanski()[1])
+    assert np.isneginf(results.effect_ci_conservative()[0])
+    assert np.isposinf(results.effect_ci_conservative()[1])
+    assert np.isneginf(results.effect_ci_upper()[0])
+    assert np.isposinf(results.effect_ci_upper()[1])
+    assert np.isneginf(results.effect_ci_lower()[0])
+    assert np.isposinf(results.effect_ci_lower()[1])
+    assert np.isneginf(results.effect_ci_imbensmanski()[0])
+    assert np.isposinf(results.effect_ci_imbensmanski()[1])

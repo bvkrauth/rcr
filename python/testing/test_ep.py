@@ -6,7 +6,7 @@ TEST_EP.PY: Unit tests for estimate_parameter()
 import numpy as np
 import pytest
 
-from rcrbounds import estimate_parameter, thetastar, lambdastar, \
+from rcrbounds import estimate_parameter, effectinf, rcinf, \
     simplify_moments
 
 
@@ -42,12 +42,12 @@ def test_ep_realdata(moment_vector):
 def test_ep_inf():
     """when the function is inf, derivative is zeros"""
     moment_vector = np.array([0, 0, 0, 1, 0.5, 0, 1, 0.5, 1])
-    test_ep = estimate_parameter(lambdastar, moment_vector)
+    test_ep = estimate_parameter(rcinf, moment_vector)
     assert test_ep[0] == np.inf and all(test_ep[1:] == 0.)
 
 
 def test_ep_nan():
     """when the function is nan, derivative is zeros"""
     moment_vector = np.array([0, 0, 0, 1, 0.5, 0, 1, 0.5, 1])
-    test_ep = estimate_parameter(thetastar, moment_vector)
+    test_ep = estimate_parameter(effectinf, moment_vector)
     assert np.isnan(test_ep[0]) and all(test_ep[1:] == 0.)

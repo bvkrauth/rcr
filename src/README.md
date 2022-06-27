@@ -1,50 +1,66 @@
-# rcr/src: Fortran source code for RCR executable
+# rcr/src: Fortran source code for RCR executable (DEPRECATED)
 
-This directory contains the Fortran source code for the RCR package executable.
+This directory contains the Fortran source code for the rcr
+executable that is called by the Stata **rcr** package.
 
-## Compiling the Windows executable (RCR.EXE) using the Intel Fortran Compiler
+Please note that this executable is maintained only for compatibility
+with older versions of Stata that do not support Python integration,
+and will not be developed further.
 
-To compile the Windows executable using the Intel Fortran Compiler (IFC) and Math Kernel Library (MKL):
+## Overview
+
+The code is written in Fortran 95 and can be compiled using any
+modern Fortran compiler.  
+
+The main complication is that it uses the LAPACK and BLAS 
+libraries. These libraries are commonly available either
+open source or packaged with the compiler (as in Intel's Math Kernel Library).
+However they may require installation and/or configuration.
+
+
+## Compiling the Windows executable using the Intel Fortran Compiler
+
+To compile the Windows executable *rcr.exe* using the Intel Fortran Compiler (IFC) and Math Kernel Library (MKL):
 
  1. Generate any needed MKL library files (see below)
  2. Open a command window with the appropriate build environment (start menu item "Fortran Build Environment for applications running on IA-32")
- 3. Run COMPILE.BAT to compile and link.  The source code files to be compiled are:
-    - RCR.F90		The source code (main program)  
-    - RCRUTIL.F90		The source code (utility functions)
-    - RCRLIB_IFC.F90	The source code (compiler-specific functions for the Intel Fortran Compiler)
- 4. You can run a *very* basic test after compilation by simply typing "rcr".
-    If no error message, then the program exists and runs.
+ 3. Run *COMPILE.BAT* to compile and link.  The source code files to be compiled are:
+    - *RCR.F90*		The source code (main program)  
+    - *RCRUTIL.F90*		The source code (utility functions)
+    - *RCRLIB_IFC.F90*	The source code (compiler-specific functions for the Intel Fortran Compiler)
+ 4. You can run a *very* basic test after compilation by simply executing *rcr* from
+    the command prompt. If no error message, then the program exists and runs.
 
 ### Generating the needed MKL library files
 
 This program links in all of its libraries statically so that everything can be distributed as a single executable.  
 
-This means that we need some library files mkl_blas95.lib and mkl_lapack95.lib that do not exist when IFC/MKL is installed.  
+This means that we need some library files *mkl_blas95.lib* and *mkl_lapack95.lib* that do not exist when IFC/MKL is installed. 
 They need to be generated. This only needs to be done once for a given installation of the compiler.
 Instructions for doing so are copied below from the MKL User Guide.
 
 #### Fortran 95 Interfaces and Wrappers to LAPACK and BLAS (copied from Intel MKL User Guide)
 
-Fortran 95 interfaces are provided for pure procedures and along with wrappers are
-delivered as sources. (For more information, see Compiler-dependent Functions and
-Fortran 90 Modules). The simplest way to use them is building corresponding libraries and
-linking them as user's libraries. 
-
-To do this, you must have administrator rights. [More specifically you must be running the command window as administrator].
-
-Provided the product directory is open for writing, the procedure is simple:
-
-1. Go to the respective directory <mkl_directory>\interfaces\blas95 or
+> Fortran 95 interfaces are provided for pure procedures and along with wrappers are
+> delivered as sources. (For more information, see Compiler-dependent Functions and
+> Fortran 90 Modules). The simplest way to use them is building corresponding libraries and
+> linking them as user's libraries. 
+> 
+> To do this, you must have administrator rights. [More specifically you must be running the command window as administrator].
+> 
+> Provided the product directory is open for writing, the procedure is simple:
+> 
+> 1. Go to the respective directory <mkl_directory>\interfaces\blas95 or
 <mkl_directory>\interfaces\lapack95
-
-2. Type one of the following commands:
-
-  - nmake PLAT=win32 lib - for IA-32 architecture
-  - nmake PLAT=win32e lib - for Intel® 64 architecture
-  - nmake PLAT=win64 lib - for IA-64 architecture.
-
-As a result, the required library and a respective .mod file will be built and installed in the
-standard catalog of the release.
+> 
+> 2. Type one of the following commands:
+> 
+>   - nmake PLAT=win32 lib - for IA-32 architecture
+>   - nmake PLAT=win32e lib - for Intel® 64 architecture
+>   - nmake PLAT=win64 lib - for IA-64 architecture.
+> 
+> As a result, the required library and a respective .mod file will be built and installed in the
+> standard catalog of the release.
 
 ## Compiling in Linux using open-source versions of LAPACK and BLAS
 
@@ -58,10 +74,10 @@ You can also access his code directly at https://github.com/tyleransom/rcr.
 Additional files have been made available for use in compiling on Linux systems using the open-source compiler `gfortran` and 
 open-source version of the LAPACK and BLAS libraries.
 
- - COMPILE.LINUX	Script for compiling program in Linux.
- - RCR_GNU.F90		The source code (main program)  
- - RCRUTIL_GNU.F90	The source code (utility functions)
- - RCRLIB_GNU.F90	The source code (compiler-specific functions for GCC/GFortran compiler and open-source versions of BLAS and LAPACK)
+ - *COMPILE.LINUX*	Script for compiling program in Linux.
+ - *RCR_GNU.F90*		The source code (main program)  
+ - *RCRUTIL_GNU.F90*	The source code (utility functions)
+ - *RCRLIB_GNU.F90*	The source code (compiler-specific functions for GCC/GFortran compiler and open-source versions of BLAS and LAPACK)
 
 ### BLAS & LAPACK libraries (OpenBLAS)
 
@@ -103,8 +119,8 @@ To test the validity of the build, execute the script `test.compile` and then ex
 
 If you have access to different tools, or are in a different operating system, you will need to:
   1. Rewrite the RCRLIB module to fit your environment.
-     - RCRLIB_AAA.F90		A template for your new RCRLIB module.
-     - RCRLIB_IBM.F90		An RCRLIB module I wrote for the IBM compiler.  It is not maintained.
+     - *RCRLIB_AAA.F90*		A template for your new RCRLIB module.
+     - *RCRLIB_IBM.F90*		An RCRLIB module I wrote for the IBM compiler.  It is not maintained.
   2. Adapt the compilation script to fit your environment.
 
  

@@ -1,30 +1,30 @@
 """
-TEST_ET.PY: Unit tests for estimate_theta()
+TEST_ET.PY: Unit tests for estimate_effect()
 """
 
 
 import pytest
 import numpy as np
 
-from rcrbounds import estimate_theta_segments, estimate_theta
+from rcrbounds import estimate_effect_segments, estimate_effect
 
 
 # Basic functionality
 def test_et_basic():
-    """estimate theta from simple data"""
+    """estimate effect from simple data"""
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
-    ts1 = estimate_theta_segments(mv1)[0]
+    ts1 = estimate_effect_segments(mv1)[0]
     et_true = np.array([-0.33333333, 1.])
     with pytest.warns(UserWarning, match="Inaccurate SE"):
-        test_et = estimate_theta(mv1, lr1, ts1)
+        test_et = estimate_effect(mv1, lr1, ts1)
     assert test_et[:, 0] == pytest.approx(et_true, rel=1e-04)
 
 
 def test_et_realdata(moment_vector):
-    """estimate theta from real data"""
-    lambda_range = np.array([0.0, 1.0])
-    theta_segments = estimate_theta_segments(moment_vector)[0]
+    """estimate effect from real data"""
+    rc_range = np.array([0.0, 1.0])
+    effect_segments = estimate_effect_segments(moment_vector)[0]
     et_true = np.array([[5.13504376e+00, 6.15418928e+01, 2.90135406e+01,
                          -9.12983158e+01, 5.90041894e+01, -8.93300435e-01,
                          -7.88725310e+01, -1.35242174e+00, -1.82475877e+02,
@@ -55,16 +55,16 @@ def test_et_realdata(moment_vector):
                          -8.82443477e-02, 1.23080405e-02, -1.36003054e+00,
                          2.16359819e-01, 3.60818788e-01, 1.05554479e+00,
                          1.10295995e-18, 4.89021069e+00, -2.54364435e+01]])
-    test_et = estimate_theta(moment_vector, lambda_range, theta_segments)
+    test_et = estimate_effect(moment_vector, rc_range, effect_segments)
     assert test_et[:, 0] == pytest.approx(et_true[:, 0])
     assert test_et == pytest.approx(et_true, rel=1.0e-4, abs=1e-04)
 
 
-# Varying lambda_range
-def test_et_lambdapoint(moment_vector):
-    """estimate theta when lambda_range is a single point"""
+# Varying rc_range
+def test_et_rcpoint(moment_vector):
+    """estimate effect when rc_range is a single point"""
     lr0 = np.array([0.0, 0.0])
-    theta_segments = estimate_theta_segments(moment_vector)[0]
+    effect_segments = estimate_effect_segments(moment_vector)[0]
     et_true = np.array([[5.20150257e+00, 1.40841120e+01, 6.64793094e+00,
                          -2.09059332e+01, 1.33309588e+01, -1.97134309e-01,
                          -1.78586773e+01, -1.44338171e+00, -2.22802321e+02,
@@ -95,26 +95,26 @@ def test_et_lambdapoint(moment_vector):
                          -8.82443477e-02, 1.23080405e-02, -1.36003054e+00,
                          2.16359819e-01, 3.60818788e-01, 1.05554479e+00,
                          1.10295995e-18, 4.89021069e+00, -2.54364435e+01]])
-    test_et = estimate_theta(moment_vector, lr0, theta_segments)
+    test_et = estimate_effect(moment_vector, lr0, effect_segments)
     assert test_et[:, 0] == pytest.approx(et_true[:, 0])
     assert test_et == pytest.approx(et_true, rel=1.0e-4, abs=1.0e-4)
 
 
-def test_et_nolambdalow(moment_vector):
-    """estimate theta when lambda_range has no lower bound"""
+def test_et_norclow(moment_vector):
+    """estimate effect when rc_range has no lower bound"""
     lr0 = np.array([-np.inf, 1])
-    theta_segments = estimate_theta_segments(moment_vector)[0]
+    effect_segments = estimate_effect_segments(moment_vector)[0]
     et_true = np.array([5.13504376,  8.16970996])
     with pytest.warns(UserWarning, match="Inaccurate SE"):
-        test_et = estimate_theta(moment_vector, lr0, theta_segments)
+        test_et = estimate_effect(moment_vector, lr0, effect_segments)
     assert test_et[:, 0] == pytest.approx(et_true)
 
 
-def test_et_nolambdahigh(moment_vector):
-    """estimate theta when lambda_range has no upper bound"""
+def test_et_norchigh(moment_vector):
+    """estimate effect when rc_range has no upper bound"""
     lr0 = np.array([0, np.inf])
-    theta_segments = estimate_theta_segments(moment_vector)[0]
-    test_et = estimate_theta(moment_vector, lr0, theta_segments)
+    effect_segments = estimate_effect_segments(moment_vector)[0]
+    test_et = estimate_effect(moment_vector, lr0, effect_segments)
     assert test_et[0, 0] == -np.inf
     assert test_et[1, 0] == np.inf
     assert np.all(test_et[:, 1:] == 0.0)
@@ -122,25 +122,25 @@ def test_et_nolambdahigh(moment_vector):
 
 # Special cases for moments
 def test_et_nearrct():
-    """estimate theta for near-perfect RCT"""
+    """estimate effect for near-perfect RCT"""
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.000001, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
-    ts1 = estimate_theta_segments(mv1)[0]
+    ts1 = estimate_effect_segments(mv1)[0]
     et_true = 0.5
-    test_et = estimate_theta(mv1, lr1, ts1)
+    test_et = estimate_effect(mv1, lr1, ts1)
     assert test_et[:, 0] == pytest.approx(et_true, rel=1e-04)
 
 
 def test_et_rct():
-    """estimate theta for perfect RCT"""
+    """estimate effect for perfect RCT"""
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.0, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
     et_true = 0.5
     # This test currently fails with an UnboundLocalError
     try:
-        ts1 = estimate_theta_segments(mv1)[0]
+        ts1 = estimate_effect_segments(mv1)[0]
     except UnboundLocalError:
         pass
     else:
-        test_et = estimate_theta(mv1, lr1, ts1)
+        test_et = estimate_effect(mv1, lr1, ts1)
         assert test_et[:, 0] == pytest.approx(et_true, rel=1e-04)

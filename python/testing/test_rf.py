@@ -37,32 +37,32 @@ def test_rf_basic(model):
     assert results.cov_params == pytest.approx(truecov)
     # We will not check values here, though maybe we should
     assert results.details.shape == (2, 30000)
-    assert results.param_names == ['lambdaInf',
-                                   'betaxInf',
-                                   'lambda0',
-                                   'betaxL',
-                                   'betaxH']
+    assert results.param_names == ['rcInf',
+                                   'effectInf',
+                                   'rc0',
+                                   'effectL',
+                                   'effectH']
 
 
-# Set lambda_range
+# Set rc_range
 def test_rf_lr(model, endog, exog):
-    """RCR.fit with finite lambda_range set"""
+    """RCR.fit with finite rc_range set"""
     trueparams = np.asarray([12.31059909,
                              8.16970997,
                              28.93548917,
                              5.20150257,
                              5.20150257])
-    results = model.fit(lambda_range=np.asarray([0.0, 0.0]))
+    results = model.fit(rc_range=np.asarray([0.0, 0.0]))
     assert results.params == pytest.approx(trueparams)
-    model = RCR(endog, exog, lambda_range=np.asarray([0.0, 0.0]))
+    model = RCR(endog, exog, rc_range=np.asarray([0.0, 0.0]))
     results = model.fit()
     assert results.params == pytest.approx(trueparams)
-    results = model.fit(lambda_range=np.asarray([0.0, 0.0]))
+    results = model.fit(rc_range=np.asarray([0.0, 0.0]))
     assert results.params == pytest.approx(trueparams)
 
 
 def test_rf_lrnolb(model):
-    """RCR.fit with lambda_range with no lower bound"""
+    """RCR.fit with rc_range with no lower bound"""
     trueparams = np.asarray([12.31059909,
                              8.16970997,
                              28.93548917,
@@ -70,12 +70,12 @@ def test_rf_lrnolb(model):
                              8.16970997])
     # This will produce a warning
     with pytest.warns(UserWarning, match="Inaccurate SE"):
-        results = model.fit(lambda_range=np.asarray([-np.inf, 1]))
+        results = model.fit(rc_range=np.asarray([-np.inf, 1]))
     assert results.params == pytest.approx(trueparams)
 
 
 def test_rf_lrnoub(model):
-    """RCR.fit with lambda_range with no upper bound"""
+    """RCR.fit with rc_range with no upper bound"""
     trueparams = np.asarray([12.31059909,
                              8.16970997,
                              28.93548917,
@@ -93,27 +93,27 @@ def test_rf_lrnoub(model):
                            0.00000000e+00,  0.00000000e+00],
                           [0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
                            0.00000000e+00,  0.00000000e+00]])
-    results = model.fit(lambda_range=np.asarray([0, np.inf]))
+    results = model.fit(rc_range=np.asarray([0, np.inf]))
     assert results.params == pytest.approx(trueparams)
     assert results.cov_params == pytest.approx(truecov)
 
 
-# Exceptions for lambda_range
+# Exceptions for rc_range
 def test_rf_lr2d(model):
-    """raise exception if lambda_range is a 2-d array"""
+    """raise exception if rc_range is a 2-d array"""
     try:
-        model.fit(lambda_range=np.zeros((2, 2)))
+        model.fit(rc_range=np.zeros((2, 2)))
     except TypeError:
         pass
     else:
         raise AssertionError
 
 
-# lambda_range has wrong number of elements
+# rc_range has wrong number of elements
 def test_rf_lr1e(model):
-    """raise exception if lambda_range has wrong # of elements"""
+    """raise exception if rc_range has wrong # of elements"""
     try:
-        model.fit(lambda_range=np.zeros(1))
+        model.fit(rc_range=np.zeros(1))
     except TypeError:
         pass
     else:
@@ -121,9 +121,9 @@ def test_rf_lr1e(model):
 
 
 def test_rf_lrnan(model):
-    """raise exception if lambda_range has NaN values"""
+    """raise exception if rc_range has NaN values"""
     try:
-        model.fit(lambda_range=np.asarray([0, np.nan]))
+        model.fit(rc_range=np.asarray([0, np.nan]))
     except ValueError:
         pass
     else:
@@ -131,9 +131,9 @@ def test_rf_lrnan(model):
 
 
 def test_rf_lrnotsorted(model):
-    """raise exception if lambda_range is out of order"""
+    """raise exception if rc_range is out of order"""
     try:
-        model.fit(lambda_range=np.asarray([1., 0.]))
+        model.fit(rc_range=np.asarray([1., 0.]))
     except ValueError:
         pass
     else:

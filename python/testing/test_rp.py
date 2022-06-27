@@ -8,7 +8,7 @@ import pytest
 # Basic functionality
 def test_rp_basic(results):
     """plot rcr function with default arguments"""
-    lambdavals, thetavals = results.model.lambdavals(add_thetastar=True)
+    rcvals, effectvals = results.model.rcvals(add_effectinf=True)
     test_ax = results.rcrplot()
     assert type(test_ax).__name__ == "AxesSubplot"
     assert test_ax.get_title() == ""
@@ -19,10 +19,10 @@ def test_rp_basic(results):
     assert test_ax.get_xlim() == (-55.0, 55.0)
     assert test_ax.get_ylim() == pytest.approx((-209.92807503735216,
                                                 398.0573074081345))
-    assert np.all(test_ax.get_lines()[0].get_xdata() == thetavals)
+    assert np.all(test_ax.get_lines()[0].get_xdata() == effectvals)
     assert np.all(np.logical_or(test_ax.get_lines()[0].get_ydata() ==
-                                lambdavals,
-                                np.isnan(lambdavals)))
+                                rcvals,
+                                np.isnan(rcvals)))
     assert test_ax.get_legend() is None
     test_ax.clear()
 
@@ -30,28 +30,28 @@ def test_rp_basic(results):
 def test_rp_xlim1(results):
     """plot rcr function with alternate xlim (pair)"""
     xlim = (0, 6)
-    thetavals = np.linspace(xlim[0], xlim[1], 100)
-    lambdavals, thetavals = results.model.lambdavals(thetavals,
-                                                     add_thetastar=True)
+    effectvals = np.linspace(xlim[0], xlim[1], 100)
+    rcvals, effectvals = results.model.rcvals(effectvals,
+                                              add_effectinf=True)
     test_ax = results.rcrplot(xlim=xlim)
-    assert np.all(test_ax.get_lines()[0].get_xdata() == thetavals)
+    assert np.all(test_ax.get_lines()[0].get_xdata() == effectvals)
     assert np.all(np.logical_or(test_ax.get_lines()[0].get_ydata() ==
-                                lambdavals,
-                                np.isnan(lambdavals)))
+                                rcvals,
+                                np.isnan(rcvals)))
     test_ax.clear()
 
 
 def test_rp_xlim2(results):
     """plot rcr function with alternate xlim (sequence)"""
     xlim = (0, 5, 6)
-    thetavals = np.asarray(xlim)
-    lambdavals, thetavals = results.model.lambdavals(thetavals,
-                                                     add_thetastar=True)
+    effectvals = np.asarray(xlim)
+    rcvals, effectvals = results.model.rcvals(effectvals,
+                                              add_effectinf=True)
     test_ax = results.rcrplot(xlim=xlim)
-    assert np.all(test_ax.get_lines()[0].get_xdata() == thetavals)
+    assert np.all(test_ax.get_lines()[0].get_xdata() == effectvals)
     assert np.all(np.logical_or(test_ax.get_lines()[0].get_ydata() ==
-                                lambdavals,
-                                np.isnan(lambdavals)))
+                                rcvals,
+                                np.isnan(rcvals)))
     test_ax.clear()
 
 
@@ -64,7 +64,7 @@ def test_rp_ylim(results):
 
 
 def test_rp_tsline(results):
-    """plot rcr function with optional thetastar line"""
+    """plot rcr function with optional effectinf line"""
     test_ax = results.rcrplot(tsline=True)
     assert test_ax.get_legend_handles_labels()[1][1] == '$\\beta_x^{\\infty}$'
     assert test_ax.get_lines()[1].get_xdata() == [results.params[1]] * 2
@@ -73,7 +73,7 @@ def test_rp_tsline(results):
 
 
 def test_rp_lsline(results):
-    """plot rcr function with optional lambdastar line"""
+    """plot rcr function with optional rcinf line"""
     test_ax = results.rcrplot(lsline=True)
     assert test_ax.get_legend_handles_labels()[1][1] == '$\\lambda^{\\infty}$'
     assert np.all(test_ax.get_lines()[1].get_xdata() == [0, 1])

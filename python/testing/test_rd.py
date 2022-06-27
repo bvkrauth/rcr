@@ -12,13 +12,13 @@ from rcrbounds import read_data
 # Basic functionality
 def test_rd_basic(infile):
     """read data from the specified text file"""
-    n_moments, n_lambda, external_big_number, moment_vector, \
-        lambda_range = read_data(infile)
+    n_moments, n_rc, external_big_number, moment_vector, \
+        rc_range = read_data(infile)
     assert n_moments == 44
-    assert n_lambda == 1
+    assert n_rc == 1
     assert external_big_number == pytest.approx(8.98846567e+306)
     assert moment_vector.shape == (44, )
-    assert lambda_range.shape == (2, )
+    assert rc_range.shape == (2, )
 
 # Exceptions
 
@@ -64,11 +64,11 @@ def test_rd_badnmoments(badin1):
     assert n_moments == 44
 
 
-def test_rd_badnlambda(badin2):
-    """reset n_lmambda and warn if it does not match lambda_range"""
-    with pytest.warns(UserWarning, match="n_lambda reset"):
-        n_lambda = read_data(badin2)[1]
-    assert n_lambda == 1
+def test_rd_badnrc(badin2):
+    """reset n_lmambda and warn if it does not match rc_range"""
+    with pytest.warns(UserWarning, match="n_rc reset"):
+        n_rc = read_data(badin2)[1]
+    assert n_rc == 1
 
 
 def test_rd_badmoments(badin3):
@@ -82,8 +82,8 @@ def test_rd_badmoments(badin3):
 
 
 @pytest.mark.skip(reason="not yet implemented")
-def test_rd_badlambda(badin4):
-    """raise exception if n_lambda is invalid"""
+def test_rd_badrc(badin4):
+    """raise exception if n_rc is invalid"""
     try:
         read_data(badin4)
     except AssertionError:

@@ -1,26 +1,34 @@
 # rcr/test: Files for testing Stata RCR package
 
-This folder contains files that can be used for testing the Stata RCR package
+This folder contains files that can be used to test the
+Stata RCR package.  
 
-## Testing the RCR executable
+Tests for the Python module are located in 
+[../python/tests](../python/tests).
 
-To perform a basic test of the executable without using Stata, 
-just open a command window in this folder and execute the command
-   ../bin/rcr
-This will read in the file in.txt, perform the rcr calculations, and output the results to out.txt
+## Tests available
 
-If this concludes without error, this means the rcr executable exists and runs.
+### Testing the full Stata package 
 
-## Testing the full Stata package 
+*rcr_certification.do* is a Stata do-file that thoroughly tests
+the entire Stata package.  To execute the tests, open
+that file in Stata and then execute the Stata command:
+```stata
+do rcr_certification
+```
+The do-file will run through various test cases, and will issue an
+error if any of these cases produce an unexpected result.
 
-The file rcr_certification.do is a Stata do-file that thoroughly tests the entire Stata package.
-
-## Bugs/issues
+### Bugs/issues
 
 The following Stata do-files reproduce a current bug/issue:
 
- - bug012.do
- - bug013.do
+ - *bug012.do*: Standard error results are not invariant to
+   adding constants to data.
+ - *bug013.do*: Standard error results are inaccurate when 
+    lambda_L = -infty.
+ - *bug014.do*: rcrplot doesn't work with xrange outside of 
+   (-50,50).
 
 
 

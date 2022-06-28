@@ -2170,7 +2170,7 @@ def write_details(effectvec, rcvec, detail_file):
             with open(detail_file,
                       mode="w",
                       encoding="utf-8") as d_file:
-                d_file.write("effect, rc \n")
+                d_file.write("theta, lambda \n")
                 for i, effect in enumerate(effectvec):
                     d_file.write(f"{effect}, {rcvec[i]} \n")
         except OSError:

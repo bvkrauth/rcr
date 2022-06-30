@@ -269,8 +269,15 @@ program define rcr , eclass byable(recall) /* sortpreserve [I took this out beca
 		di "Executable `exe' is not supported.  Run rcr_config to check configuration.";
 		return;
 	};
-	/* Input path(s) to libraries required by RCR (this is machine-specific) */
-	local path_to_libs "LD_LIBRARY_PATH=/opt/apps/rhel7/gcc-5.4.0/lib64:/lib64/:/hpchome/econ/tmr17/lib/OpenBLAS/lib/";
+	/* Input path(s) to libraries required by the Linux RCR executable (this is machine-specific) */
+    /* The user can set the path by hand using the global variable rcr_path, or will be set to some
+       standard Unix library locations */
+    if "${rcr_path}" == "" {;
+	    local path_to_libs "LD_LIBRARY_PATH=/lib64/:/usr/local/lib64/";
+    };
+    else {;
+        local path_to_libs "LD_LIBRARY_PATH=$rcr_path";
+    };
 	/* Check to see if the output_file already exists */
 	capture confirm file "`output_file'";
 	/* Delete it if it does exist */

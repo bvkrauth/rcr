@@ -61,6 +61,11 @@ else {
 	}
 }
 
+/* Set tolerances for numeric comparisons.  The Windows Python version
+   is the "base" version for regular testing.  So we need to catch
+   any changes to that even if fairly small.  For the other platforms,
+   we only need to make sure the results are close to those for the
+   Windows Python version.  So we use a higher relative tolerance. */ 
 if c(os) == "Windows" & "`exe'" == "python" {
     local tol "1E-8"
 }

@@ -21,3 +21,5 @@ out.txt
 /python/testing/__pycache__
 /python/testing/.pytest_cache
 /python/.vscode
+/python/rcrbounds.egg-info
+/python/.coverage

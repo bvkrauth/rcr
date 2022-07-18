@@ -2,19 +2,7 @@ test_that("install_rcrpy produces expected results", {
   skip("not yet tested")
 })
 
-test_that("upper and lower CI handled correctly", {
-  skip("need to fix")
-  # Background:right now, there are two problems
-  # with citypes upper and lower: 1. The column
-  # headings for confint.rcr are not adjusted
-  # 2. The one-tailed CI is only produced for
-  # effect; two-tailed CIs are reported for the
-  # point estimated parameters even when citype="upper".
-  # We should probably do this for the Python and
-  # Stata versions too...
-
-})
-test_that("rcr produces expected results", {
+test_that("rcr works with default options", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -380,56 +368,83 @@ test_that("confint method works with level option", {
 })
 
 
-test_that("confint method works with citype option", {
+test_that("confint method works with citype lower", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
-    Free_Lunch + White_Teacher +
-    Teacher_Experience + Masters_Degree
+        Free_Lunch + White_Teacher +
+        Teacher_Experience + Masters_Degree
   rcr1 <- rcr(f1,
-    data = testdata
-  )
-  true_ci <- rcr1$pyobj$effect_ci_conservative()
+              data = testdata)
+  true_effect_ci <- rcr1$pyobj$effect_ci_lower()
+  true_ci <- c(-Inf, -Inf, -Inf, -Inf, -Inf, -Inf,
+               15.76194378392, 58.5144872118226, 207.434139924289,
+               6.7090658968995, 6.28123680488214, 6.28123680488214)
   result <- confint(rcr1,
-    parm = "effect",
-    citype = "conservative"
-  )
-  expect_equal(
-    as.vector(result),
-    as.vector(true_ci)
-  )
-  true_ci <- rcr1$pyobj$effect_ci_lower()
-  result <- confint(rcr1,
-    parm = "effect",
     citype = "lower"
   )
   expect_equal(
     as.vector(result),
     as.vector(true_ci)
   )
-  true_ci <- rcr1$pyobj$effect_ci_upper()
+  expect_equal(
+    as.vector(result[6,]),
+    as.vector(true_effect_ci)
+  )
+})
+
+test_that("confint method works with citype upper", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  rcr1 <- rcr(f1,
+              data = testdata)
+  true_effect_ci <- rcr1$pyobj$effect_ci_upper()
+  true_ci <- c(8.85925440230886, -42.1750672817734, -149.563161584069,
+                   3.56102163306907, 4.12176834229165, 3.56102163306907,
+                   Inf, Inf, Inf, Inf, Inf, Inf)
   result <- confint(rcr1,
-    parm = "effect",
     citype = "upper"
   )
   expect_equal(
     as.vector(result),
     as.vector(true_ci)
   )
-  true_ci <- rcr1$pyobj$effect_ci_imbensmanski()
+  expect_equal(
+    as.vector(result[6,]),
+    as.vector(true_effect_ci)
+  )
+})
+
+test_that("confint method works with citype Imbens-Manksi", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  rcr1 <- rcr(f1,
+              data = testdata)
+  true_effect_ci <- rcr1$pyobj$effect_ci_imbensmanski()
+  true_ci <- c(8.19806823846957, -51.8197921989432, -183.758771908664,
+               3.25948071251956, 3.91491988225289, 3.29158005546998,
+               16.4231299477593, 68.1592121289925, 241.629750248883,
+               7.01060681744901, 6.4880852649209, 6.46606603235554)
   result <- confint(rcr1,
-    parm = "effect",
     citype = "Imbens-Manski"
   )
   expect_equal(
     as.vector(result),
     as.vector(true_ci)
   )
+  expect_equal(
+    as.vector(result[6,]),
+    as.vector(true_effect_ci)
+  )
+  # any other value should return error
   expect_error(
     confint(rcr1,
-      parm = "effect",
       citype = "nonexistent"
     ),
-    "Invalid citype: nonexistent"
+    "invalid citype nonexistent"
   )
 })
 

@@ -298,8 +298,22 @@ confint.rcr <- function(object,
   if (missing(parm)) {
     parm <- c(pnames, "effect")
   }
-  a <- (1 - level) / 2
-  a <- c(a, 1 - a)
+  a <- NULL
+  if (citype == "conservative" | citype == "Imbens-Manski") {
+    a <- (1 - level) / 2
+    a <- c(a, 1 - a)
+  } else {
+    if (citype == "lower") {
+      a <- c(0, level)
+    }
+    if (citype == "upper") {
+      a <- c(1 - level, 1)
+    }
+  }
+  if (is.null(a)){
+    msg <- paste("invalid citype",citype)
+    stop(msg)
+  }
   fac <- stats::qnorm(a)
   pct <- paste(format(100 * a, 3), " %")
   ci <- array(NA_real_,

@@ -285,22 +285,21 @@ test_that("confint method works with default options", {
   rcr1 <- rcr(f1,
     data = testdata
   )
-  true_ci <- t(rcr1$pyobj$params_ci())
+  true_ci <- t(cbind(rcr1$pyobj$params_ci(),
+                     rcr1$pyobj$effect_ci()))
   result <- confint(rcr1)
   expect_equal(
-    rownames(result[1:5,]),
-    names(rcr1$coefficients)
+    rownames(result),
+    c(names(rcr1$coefficients),"effect")
   )
   expect_equal(
     colnames(result),
     c("2.5  %", "97.5  %")
   )
   expect_equal(
-    as.vector(result[1:5,]),
+    as.vector(result),
     as.vector(true_ci)
   )
-  # need to check effect too
-  skip("not yet tested")
 })
 
 
@@ -349,22 +348,21 @@ test_that("confint method works with level option", {
   rcr1 <- rcr(f1,
     data = testdata
   )
-  true_ci <- t(rcr1$pyobj$params_ci(cilevel = 90))
+  true_ci <- t(cbind(rcr1$pyobj$params_ci(cilevel = 90),
+                     rcr1$pyobj$effect_ci(cilevel = 90)))
   result <- confint(rcr1, level = 0.9)
   expect_equal(
-    rownames(result[1:5,]),
-    names(rcr1$coefficients)
+    rownames(result),
+    c(names(rcr1$coefficients), "effect")
   )
   expect_equal(
     colnames(result),
     c("5  %", "95  %")
   )
   expect_equal(
-    as.vector(result[1:5,]),
+    as.vector(result),
     as.vector(true_ci)
   )
-  # need to check effect too
-  skip("not yet tested")
 })
 
 

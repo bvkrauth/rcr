@@ -476,17 +476,22 @@ effect_test <- function(object, h0 = 0.0) {
   pmin <- 0.0
   pmid <- 0.5
   pmax <- 1.0
-  while (pmax - pmin > 0.00000001) {
-    ci <- effect_ci(object,
-      citype = "Imbens-Manski",
-      level = pmid
-    )
-    if (h0 >= ci[1] & h0 <= ci[2]) {
-      pmax <- pmid
-    } else {
-      pmin <- pmid
+  if (h0 >= object$coefficients[4] & h0 <= object$coefficients[5]) {
+    pvalue <- 1.0
+  } else {
+    while (pmax - pmin > 0.0000001) {
+      pmid <- (pmax + pmin)/2.0
+      ci <- effect_ci(object,
+                      citype = "Imbens-Manski",
+                      level = pmid
+      )
+      if (h0 >= ci[1] & h0 <= ci[2]) {
+        pmax <- pmid
+      } else {
+        pmin <- pmid
+      }
     }
-    pmid <- (pmin + pmax) / 2
+    pvalue <- 1.0 - pmin
   }
-  1 - pmid
+  pvalue
 }

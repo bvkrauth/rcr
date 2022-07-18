@@ -468,7 +468,6 @@ test_that("effect_test method works", {
   )
   true_p <- rcr1$pyobj$test_effect(5.15)
   result <- effect_test(rcr1, h0 = 5.15)
-  skip("need to fix")
   expect_equal(result,
     true_p,
     tolerance = 0.001

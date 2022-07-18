@@ -235,7 +235,7 @@ test_that("rcr works with vceadj option", {
   )
 })
 
-test_that("print.rcr displays expected results", {
+test_that("print.rcr works with default options", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -261,7 +261,7 @@ test_that("print.rcr displays expected results", {
 })
 
 
-test_that("vcov method works as expected", {
+test_that("vcov method works with default options", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +

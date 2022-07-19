@@ -94,7 +94,7 @@ variables.
 rcr(weight ~ Time | Diet, ChickWeight)
 # Use rc_range to change the range of values for the
 # relative correlation (lambda) parameter
-rcr(weight ~ Time | Diet, ChickWeight, rc_range=c(0, 2))
+rcr(weight ~ Time | Diet, ChickWeight, rc_range = c(0, 2))
 }
 \seealso{
 \code{\link[=rcr.fit]{rcr.fit()}} the lower-level model fitting command,

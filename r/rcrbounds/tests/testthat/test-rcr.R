@@ -92,16 +92,18 @@ test_that("rcr works with default options", {
 
 test_that("rcr allows functions in formulas", {
   testdata <- readRDS(test_path("testdata.rds"))
-  f1 <- abs(SAT) ~ abs(Small_Class) | White_Asian*Girl +
+  f1 <- abs(SAT) ~ abs(Small_Class) | White_Asian * Girl +
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
-  true_coef <- c(13.8370293027089,
-                 8.16829969322228,
-                 38.8414928511089,
-                 5.49447815019125,
-                 5.54093792567284)
+  true_coef <- c(
+    13.8370293027089,
+    8.16829969322228,
+    38.8414928511089,
+    5.49447815019125,
+    5.54093792567284
+  )
   result <- rcr(f1,
-                data = testdata
+    data = testdata
   )
   # result$coefficients
   expect_equal(
@@ -116,11 +118,12 @@ test_that("rcr does not require data argument", {
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
   true_coef <- coef(rcr(f1,
-                    data = testdata))
+    data = testdata
+  ))
   result <- rcr(testdata$SAT ~ testdata$Small_Class | testdata$White_Asian +
-                  testdata$Girl + testdata$Free_Lunch +
-                  testdata$White_Teacher + testdata$Teacher_Experience +
-                  testdata$Masters_Degree)
+    testdata$Girl + testdata$Free_Lunch +
+    testdata$White_Teacher + testdata$Teacher_Experience +
+    testdata$Masters_Degree)
   # result$coefficients
   expect_equal(
     as.vector(result$coefficients),
@@ -134,12 +137,16 @@ test_that("rcr works with subset option", {
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
-  true_result <- rcr(f1,testdata[1:1000,])
-  result <- rcr(f1,testdata, subset=1:1000)
-  expect_equal(coef(result),
-               coef(true_result))
-  expect_equal(nrow(result$model),
-               1000)
+  true_result <- rcr(f1, testdata[1:1000, ])
+  result <- rcr(f1, testdata, subset = 1:1000)
+  expect_equal(
+    coef(result),
+    coef(true_result)
+  )
+  expect_equal(
+    nrow(result$model),
+    1000
+  )
 })
 
 test_that("rcr works with model and pyobj options", {
@@ -147,7 +154,7 @@ test_that("rcr works with model and pyobj options", {
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
-  result <- rcr(f1,testdata, model=FALSE, pyobj=FALSE)
+  result <- rcr(f1, testdata, model = FALSE, pyobj = FALSE)
   expect_true(is.null(result$model))
   expect_true(is.null(result$pyobj))
 })
@@ -159,14 +166,20 @@ test_that("rcr works with weights option", {
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
   wt <- testdata$TCHID %% 2
-  true_result <- rcr(f1,testdata[wt > 0.5,])
-  result <- rcr(f1,testdata, weights = wt)
-  expect_equal(coef(result),
-               coef(true_result))
-  expect_equal(result$weights,
-               wt)
-  expect_equal(result$model$`(weights)`,
-               wt)
+  true_result <- rcr(f1, testdata[wt > 0.5, ])
+  result <- rcr(f1, testdata, weights = wt)
+  expect_equal(
+    coef(result),
+    coef(true_result)
+  )
+  expect_equal(
+    result$weights,
+    wt
+  )
+  expect_equal(
+    result$model$`(weights)`,
+    wt
+  )
 })
 
 test_that("rcr works with na.action option", {
@@ -176,18 +189,26 @@ test_that("rcr works with na.action option", {
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
   obs <- (testdata$TCHID %% 2) > 0.5
-  true_result <- rcr(f1,
-                     testdata[obs,])
+  true_result <- rcr(
+    f1,
+    testdata[obs, ]
+  )
   altdata$SAT[!obs] <- NA
   result <- rcr(f1,
-                altdata,
-                na.action=na.omit)
-  expect_equal(coef(result),
-               coef(true_result))
-  expect_error(rcr(f1,
-                   altdata,
-                   na.action=na.fail),
-               "missing values in object")
+    altdata,
+    na.action = na.omit
+  )
+  expect_equal(
+    coef(result),
+    coef(true_result)
+  )
+  expect_error(
+    rcr(f1,
+      altdata,
+      na.action = na.fail
+    ),
+    "missing values in object"
+  )
 })
 
 test_that("rcr works with cluster option", {
@@ -195,26 +216,37 @@ test_that("rcr works with cluster option", {
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
-  true_cov <- c(69.168147160016, 126.630806365959, -121.5489537968,
-                -1.94406588069719, 0.122940162326544, 126.630806365959,
-                1904.95751929006, -6125.90888676137, -37.5141026937444,
-                3.6638148573893, -121.548953796798, -6125.90888676138,
-                21076.4577513673, 129.096256503117, -6.60769825544483,
-                -1.94406588069717, -37.5141026937447, 129.096256503117,
-                1.84604808673233, 1.00506873788518, 0.122940162326546,
-                3.66381485738799, -6.60769825544113, 1.00506873788517,
-                1.0621294617475)
+  true_cov <- c(
+    69.168147160016, 126.630806365959, -121.5489537968,
+    -1.94406588069719, 0.122940162326544, 126.630806365959,
+    1904.95751929006, -6125.90888676137, -37.5141026937444,
+    3.6638148573893, -121.548953796798, -6125.90888676138,
+    21076.4577513673, 129.096256503117, -6.60769825544483,
+    -1.94406588069717, -37.5141026937447, 129.096256503117,
+    1.84604808673233, 1.00506873788518, 0.122940162326546,
+    3.66381485738799, -6.60769825544113, 1.00506873788517,
+    1.0621294617475
+  )
   base_result <- rcr(f1, testdata)
   result <- rcr(f1, testdata,
-                cluster=testdata$TCHID)
-  expect_equal(coef(result),
-               coef(base_result))
-  expect_equal(as.vector(vcov(result)),
-               true_cov)
-  expect_equal(result$cluster,
-               testdata$TCHID)
-  expect_equal(result$model$`(cluster)`,
-               testdata$TCHID)
+    cluster = testdata$TCHID
+  )
+  expect_equal(
+    coef(result),
+    coef(base_result)
+  )
+  expect_equal(
+    as.vector(vcov(result)),
+    true_cov
+  )
+  expect_equal(
+    result$cluster,
+    testdata$TCHID
+  )
+  expect_equal(
+    result$model$`(cluster)`,
+    testdata$TCHID
+  )
 })
 
 test_that("rcr works with rc_range option", {
@@ -323,12 +355,14 @@ test_that("confint method works with default options", {
   rcr1 <- rcr(f1,
     data = testdata
   )
-  true_ci <- t(cbind(rcr1$pyobj$params_ci(),
-                     rcr1$pyobj$effect_ci()))
+  true_ci <- t(cbind(
+    rcr1$pyobj$params_ci(),
+    rcr1$pyobj$effect_ci()
+  ))
   result <- confint(rcr1)
   expect_equal(
     rownames(result),
-    c(names(rcr1$coefficients),"effect")
+    c(names(rcr1$coefficients), "effect")
   )
   expect_equal(
     colnames(result),
@@ -386,8 +420,10 @@ test_that("confint method works with level option", {
   rcr1 <- rcr(f1,
     data = testdata
   )
-  true_ci <- t(cbind(rcr1$pyobj$params_ci(cilevel = 90),
-                     rcr1$pyobj$effect_ci(cilevel = 90)))
+  true_ci <- t(cbind(
+    rcr1$pyobj$params_ci(cilevel = 90),
+    rcr1$pyobj$effect_ci(cilevel = 90)
+  ))
   result <- confint(rcr1, level = 0.9)
   expect_equal(
     rownames(result),
@@ -407,14 +443,17 @@ test_that("confint method works with level option", {
 test_that("confint method works with citype lower", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
-        Free_Lunch + White_Teacher +
-        Teacher_Experience + Masters_Degree
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
   rcr1 <- rcr(f1,
-              data = testdata)
+    data = testdata
+  )
   true_effect_ci <- rcr1$pyobj$effect_ci_lower()
-  true_ci <- c(-Inf, -Inf, -Inf, -Inf, -Inf, -Inf,
-               15.76194378392, 58.5144872118226, 207.434139924289,
-               6.7090658968995, 6.28123680488214, 6.28123680488214)
+  true_ci <- c(
+    -Inf, -Inf, -Inf, -Inf, -Inf, -Inf,
+    15.76194378392, 58.5144872118226, 207.434139924289,
+    6.7090658968995, 6.28123680488214, 6.28123680488214
+  )
   result <- confint(rcr1,
     citype = "lower"
   )
@@ -423,7 +462,7 @@ test_that("confint method works with citype lower", {
     as.vector(true_ci)
   )
   expect_equal(
-    as.vector(result[6,]),
+    as.vector(result[6, ]),
     as.vector(true_effect_ci)
   )
 })
@@ -434,11 +473,14 @@ test_that("confint method works with citype upper", {
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
   rcr1 <- rcr(f1,
-              data = testdata)
+    data = testdata
+  )
   true_effect_ci <- rcr1$pyobj$effect_ci_upper()
-  true_ci <- c(8.85925440230886, -42.1750672817734, -149.563161584069,
-                   3.56102163306907, 4.12176834229165, 3.56102163306907,
-                   Inf, Inf, Inf, Inf, Inf, Inf)
+  true_ci <- c(
+    8.85925440230886, -42.1750672817734, -149.563161584069,
+    3.56102163306907, 4.12176834229165, 3.56102163306907,
+    Inf, Inf, Inf, Inf, Inf, Inf
+  )
   result <- confint(rcr1,
     citype = "upper"
   )
@@ -447,7 +489,7 @@ test_that("confint method works with citype upper", {
     as.vector(true_ci)
   )
   expect_equal(
-    as.vector(result[6,]),
+    as.vector(result[6, ]),
     as.vector(true_effect_ci)
   )
 })
@@ -458,12 +500,15 @@ test_that("confint method works with citype Imbens-Manksi", {
     Free_Lunch + White_Teacher +
     Teacher_Experience + Masters_Degree
   rcr1 <- rcr(f1,
-              data = testdata)
+    data = testdata
+  )
   true_effect_ci <- rcr1$pyobj$effect_ci_imbensmanski()
-  true_ci <- c(8.19806823846957, -51.8197921989432, -183.758771908664,
-               3.25948071251956, 3.91491988225289, 3.29158005546998,
-               16.4231299477593, 68.1592121289925, 241.629750248883,
-               7.01060681744901, 6.4880852649209, 6.46606603235554)
+  true_ci <- c(
+    8.19806823846957, -51.8197921989432, -183.758771908664,
+    3.25948071251956, 3.91491988225289, 3.29158005546998,
+    16.4231299477593, 68.1592121289925, 241.629750248883,
+    7.01060681744901, 6.4880852649209, 6.46606603235554
+  )
   result <- confint(rcr1,
     citype = "Imbens-Manski"
   )
@@ -472,7 +517,7 @@ test_that("confint method works with citype Imbens-Manksi", {
     as.vector(true_ci)
   )
   expect_equal(
-    as.vector(result[6,]),
+    as.vector(result[6, ]),
     as.vector(true_effect_ci)
   )
   # any other value should return error

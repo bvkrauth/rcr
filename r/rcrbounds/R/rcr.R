@@ -105,7 +105,7 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #' rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use rc_range to change the range of values for the
 #' # relative correlation (lambda) parameter
-#' rcr(weight ~ Time | Diet, ChickWeight, rc_range=c(0, 2))
+#' rcr(weight ~ Time | Diet, ChickWeight, rc_range = c(0, 2))
 #' @export
 rcr <- function(formula,
                 data,
@@ -127,7 +127,7 @@ rcr <- function(formula,
   # here to keep the code just like the code for lm.
   m <- match(c(
     "formula", "data", "subset", "weights", "na.action",
-    "offset","cluster"
+    "offset", "cluster"
   ), names(mf), 0L)
   mf <- mf[c(1L, m)]
   mf$drop.unused.levels <- TRUE
@@ -143,7 +143,7 @@ rcr <- function(formula,
   exog <- stats::model.matrix(mtZ, mf, contrasts)
   endog <- cbind(Y, X)
   weights <- stats::model.weights(mf)
-  if (is.null(cluster)){
+  if (is.null(cluster)) {
     cov_type <- "nonrobust"
   } else {
     cov_type <- "cluster"
@@ -154,7 +154,8 @@ rcr <- function(formula,
     rc_range = rc_range,
     weights = weights,
     cov_type = cov_type,
-    groupvar = cluster)
+    groupvar = cluster
+  )
   result$coefficients <- python_result$params
   names(result$coefficients) <- python_result$param_names
   result$cov.unscaled <- python_result$cov_params
@@ -167,7 +168,7 @@ rcr <- function(formula,
   if (model) {
     result$model <- mf
   }
-  if (pyobj){
+  if (pyobj) {
     result$pyobj <- python_result
   }
   result$weights <- weights
@@ -252,12 +253,14 @@ rcr.fit <- function(endog,
 #' @returns `print.rcr()` returns its input object `x` invisibly.
 #' @seealso [rcr()] to estimate the model
 #' @export
-print.rcr <- function(x,...){
+print.rcr <- function(x, ...) {
   cat("\nCall:\n")
   print(x$call)
   cat("\nCoefficients:\n")
-  print(stats::coefficients(x,...),
-    ...)
+  print(
+    stats::coefficients(x, ...),
+    ...
+  )
   cat("\n")
   invisible(x)
 }
@@ -337,8 +340,8 @@ confint.rcr <- function(object,
       a <- c(1 - level, 1)
     }
   }
-  if (is.null(a)){
-    msg <- paste("invalid citype",citype)
+  if (is.null(a)) {
+    msg <- paste("invalid citype", citype)
     stop(msg)
   }
   fac <- stats::qnorm(a)
@@ -534,10 +537,10 @@ effect_test <- function(object, h0 = 0.0) {
     pvalue <- 1.0
   } else {
     while (pmax - pmin > 0.0000001) {
-      pmid <- (pmax + pmin)/2.0
+      pmid <- (pmax + pmin) / 2.0
       ci <- effect_ci(object,
-                      citype = "Imbens-Manski",
-                      level = pmid
+        citype = "Imbens-Manski",
+        level = pmid
       )
       if (h0 >= ci[1] & h0 <= ci[2]) {
         pmax <- pmid

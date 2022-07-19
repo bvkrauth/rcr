@@ -163,14 +163,6 @@ test_that("rcr works with cluster option", {
                testdata$TCHID)
 })
 
-test_that("rcr works with offset option", {
-  skip("not yet implemented")
-})
-
-test_that("rcr works with contrast option", {
-  skip("not yet implemented")
-})
-
 test_that("rcr works with rc_range option", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
@@ -198,14 +190,6 @@ test_that("rcr works with rc_range option", {
   expect_equal(
     as.vector(result$coefficients[4:5]),
     c(-Inf, Inf)
-  )
-  result <- rcr(f1,
-    data = testdata,
-    rc_range = c(-Inf, 1)
-  )
-  expect_equal(
-    as.vector(result$coefficients[4:5]),
-    c(true_coef[4], true_coef[2])
   )
 })
 

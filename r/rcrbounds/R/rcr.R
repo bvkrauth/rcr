@@ -65,14 +65,6 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #'        default is na.omit. Another possible value is NULL, no action.
 #'        Value na.exclude can be useful.
 #' @param model description goes here.
-#' @param contrasts an optional list. See the contrasts.arg of
-#'        model.matrix.default.
-#' @param offset this can be used to specify an a priori known component
-#'        to be included in the linear predictor during fitting. This
-#'        should be NULL or a numeric vector or matrix of extents matching
-#'        those of the response. One or more offset terms can be included
-#'        in the formula instead or as well, and if more than one are
-#'        specified their sum is used. See model.offset.
 #' @param cluster An optional vector defining groups for cluster-robust
 #'        covariance matrix estimation. Should be NULL or a numeric
 #'        vector. See also ‘Details’,
@@ -108,16 +100,17 @@ rcr <- function(formula,
                 weights,
                 na.action,
                 model = TRUE,
-                contrasts = NULL,
-                offset,
                 cluster = NULL,
                 rc_range = c(0, 1),
                 vceadj = 1.0) {
+  contrasts <- NULL
   cl <- match.call()
   if (missing(data)) {
     data <- environment(formula)
   }
   mf <- match.call(expand.dots = FALSE)
+  # offset and contrasts are not arguments to the function but are kept
+  # here to keep the code just like the code for lm.
   m <- match(c(
     "formula", "data", "subset", "weights", "na.action",
     "offset"
@@ -154,7 +147,6 @@ rcr <- function(formula,
   rownames(result$cov.unscaled) <- pyobj$param_names
   colnames(result$cov.unscaled) <- pyobj$param_names
   result$na.action <- attr(mf, "na.action")
-  result$contrasts <- attr(mf, "contrasts")
   result$xlevels <- stats::.getXlevels(mt, mf)
   result$call <- cl
   result$terms <- mt

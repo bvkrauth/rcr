@@ -90,6 +90,45 @@ test_that("rcr works with default options", {
   expect_true(is.null(result$cluster))
 })
 
+test_that("rcr allows functions in formulas", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- abs(SAT) ~ abs(Small_Class) | White_Asian*Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  true_coef <- c(13.8370293027089,
+                 8.16829969322228,
+                 38.8414928511089,
+                 5.49447815019125,
+                 5.54093792567284)
+  result <- rcr(f1,
+                data = testdata
+  )
+  # result$coefficients
+  expect_equal(
+    as.vector(result$coefficients),
+    true_coef
+  )
+})
+
+test_that("rcr does not require data argument", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  true_coef <- coef(rcr(f1,
+                    data = testdata))
+  result <- rcr(testdata$SAT ~ testdata$Small_Class | testdata$White_Asian +
+                  testdata$Girl + testdata$Free_Lunch +
+                  testdata$White_Teacher + testdata$Teacher_Experience +
+                  testdata$Masters_Degree)
+  # result$coefficients
+  expect_equal(
+    as.vector(result$coefficients),
+    as.vector(true_coef)
+  )
+})
+
+
 test_that("rcr works with subset option", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +

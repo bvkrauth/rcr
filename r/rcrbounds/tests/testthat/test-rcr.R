@@ -103,6 +103,17 @@ test_that("rcr works with subset option", {
                1000)
 })
 
+test_that("rcr works with model and pyobj options", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  result <- rcr(f1,testdata, model=FALSE, pyobj=FALSE)
+  expect_true(is.null(result$model))
+  expect_true(is.null(result$pyobj))
+})
+
+
 test_that("rcr works with weights option", {
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +

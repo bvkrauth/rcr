@@ -38,8 +38,8 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 
 #' Estimate an RCR model
 #'
-#' `rcr()` estimates the linear casual effect of one explanatory
-#' variable on an outcome, under a relative correlation restriction
+#' `rcr()` estimates the linear casual effect of a scalar explanatory
+#' variable on a scalar outcome, under a relative correlation restriction
 #' of the form described in Krauth (2016).
 #'
 #' Most of the calculation is done in an external Python function which
@@ -64,7 +64,8 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #'        of options, and is na.fail if that is unset. The ‘factory-fresh’
 #'        default is na.omit. Another possible value is NULL, no action.
 #'        Value na.exclude can be useful.
-#' @param model description goes here.
+#' @param model,pyobj logicals. If TRUE the corresponding intermediate components
+#'        of the fit (the model frame, the Python object) are returned.
 #' @param cluster An optional vector defining groups for cluster-robust
 #'        covariance matrix estimation. Should be NULL or a numeric
 #'        vector. See also ‘Details’,
@@ -100,6 +101,7 @@ rcr <- function(formula,
                 weights,
                 na.action,
                 model = TRUE,
+                pyobj = TRUE,
                 cluster = NULL,
                 rc_range = c(0, 1),
                 vceadj = 1.0) {
@@ -135,17 +137,17 @@ rcr <- function(formula,
     cov_type <- "cluster"
   }
   result <- list()
-  pyobj <- rcr.fit(endog, exog,
+  python_result <- rcr.fit(endog, exog,
     vceadj = vceadj,
     rc_range = rc_range,
     weights = weights,
     cov_type = cov_type,
     groupvar = cluster)
-  result$coefficients <- pyobj$params
-  names(result$coefficients) <- pyobj$param_names
-  result$cov.unscaled <- pyobj$cov_params
-  rownames(result$cov.unscaled) <- pyobj$param_names
-  colnames(result$cov.unscaled) <- pyobj$param_names
+  result$coefficients <- python_result$params
+  names(result$coefficients) <- python_result$param_names
+  result$cov.unscaled <- python_result$cov_params
+  rownames(result$cov.unscaled) <- python_result$param_names
+  colnames(result$cov.unscaled) <- python_result$param_names
   result$na.action <- attr(mf, "na.action")
   result$xlevels <- stats::.getXlevels(mt, mf)
   result$call <- cl
@@ -153,9 +155,11 @@ rcr <- function(formula,
   if (model) {
     result$model <- mf
   }
+  if (pyobj){
+    result$pyobj <- python_result
+  }
   result$weights <- weights
   result$cluster <- cluster
-  result$pyobj <- pyobj
   class(result) <- c("rcr")
   result
 }

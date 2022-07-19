@@ -11,8 +11,7 @@ rcr(
   weights,
   na.action,
   model = TRUE,
-  contrasts = NULL,
-  offset,
+  pyobj = TRUE,
   cluster = NULL,
   rc_range = c(0, 1),
   vceadj = 1
@@ -42,17 +41,8 @@ of options, and is na.fail if that is unset. The ‘factory-fresh’
 default is na.omit. Another possible value is NULL, no action.
 Value na.exclude can be useful.}
 
-\item{model}{description goes here.}
-
-\item{contrasts}{an optional list. See the contrasts.arg of
-model.matrix.default.}
-
-\item{offset}{this can be used to specify an a priori known component
-to be included in the linear predictor during fitting. This
-should be NULL or a numeric vector or matrix of extents matching
-those of the response. One or more offset terms can be included
-in the formula instead or as well, and if more than one are
-specified their sum is used. See model.offset.}
+\item{model, pyobj}{logicals. If TRUE the corresponding intermediate components
+of the fit (the model frame, the Python object) are returned.}
 
 \item{cluster}{An optional vector defining groups for cluster-robust
 covariance matrix estimation. Should be NULL or a numeric
@@ -85,8 +75,8 @@ by \code{\link[=rcr.fit]{rcr.fit()}}. }
 }
 }
 \description{
-\code{rcr()} estimates the linear casual effect of one explanatory
-variable on an outcome, under a relative correlation restriction
+\code{rcr()} estimates the linear casual effect of a scalar explanatory
+variable on a scalar outcome, under a relative correlation restriction
 of the form described in Krauth (2016).
 }
 \details{

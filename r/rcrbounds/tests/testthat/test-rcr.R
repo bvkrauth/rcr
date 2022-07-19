@@ -115,6 +115,8 @@ test_that("rcr works with weights option", {
                coef(true_result))
   expect_equal(result$weights,
                wt)
+  expect_equal(result$model$`(weights)`,
+               wt)
 })
 
 test_that("rcr works with na.action option", {

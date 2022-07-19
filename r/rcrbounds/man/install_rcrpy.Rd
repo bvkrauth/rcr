@@ -16,19 +16,18 @@ available on Windows.}
 \code{reticulate} to automatically find an appropriate \code{conda} binary.
 See \strong{Finding Conda} and \code{\link[reticulate:conda_binary]{conda_binary()}} for more details.}
 }
-\description{
-The rcrbounds R package is a wrapper to a Python
-package, also called "rcrbounds". This function
-installs the required Python package from the
-Python Package Index (PyPI), and may need to be
-run once before using the functions in the R
-package.
+\value{
+\code{install_rcrpy()} returns whatever is returned by the
+call to \link[reticulate:py_install]{reticulate::py_install}, usually \code{NULL}.
 }
-\details{
+\description{
+\code{install_rcrpy()} is a utility function to install the rcrbounds
+Python package from the Python Package Index (PyPI). This function
+may need to be run once before using the rcrbounds R package.
 For most users, this function can be run once with the default
 arguments and then ignored.
 }
 \seealso{
-\code{\link[=rcr]{rcr()}}
+\code{\link[=rcr]{rcr()}} to estimate an RCR model,
 \code{\link[reticulate:py_install]{reticulate::py_install()}} which this function wraps.
 }

@@ -7,16 +7,28 @@
 \method{vcov}{rcr}(object, ...)
 }
 \arguments{
-\item{object}{an object of class "rcr", usually the result of a call
-to \code{rcr}.}
+\item{object}{An object of class "\code{rcr}", usually the result of a call
+to \code{\link[=rcr]{rcr()}}.}
 
 \item{...}{Additional arguments (not used).}
 }
 \value{
-A symmetric 5-by-5 matrix with row and column names corresponding
-to the parameter names in \code{coef(object)}.
+\code{vcov()} returns the variance-covariance matrix of the main
+point-identified parameters of the rcr model object.
 }
 \description{
-\code{vcov()} Returns the variance-covariance matrix of the main parameters
-of the rcr model object.
+\code{vcov()} returns the variance-covariance matrix of the main parameters
+of an rcr model object.
+}
+\examples{
+# Estimate the model
+result <- rcr(weight ~ Time | Diet, ChickWeight)
+# Use coef() to recover the coefficients
+coef(result)
+# Use vcov() to recover the covariance matrix
+vcov(result)
+}
+\seealso{
+\code{\link[=rcr]{rcr()}} to estimate the model, \code{\link[=coef]{coef()}} to retrieve coefficient
+estimates
 }

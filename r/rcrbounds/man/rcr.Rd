@@ -7,58 +7,57 @@
 rcr(
   formula,
   data,
+  rc_range = c(0, 1),
   subset,
   weights,
+  cluster = NULL,
   na.action,
   model = TRUE,
   pyobj = TRUE,
-  cluster = NULL,
-  rc_range = c(0, 1),
   vceadj = 1
 )
 }
 \arguments{
-\item{formula}{An object of class "formula" (or one that
+\item{formula}{An object of class "\code{formula}" (or one that
 can be coerced to that class): a symbolic description
 of the model to be fitted. The details of model specification
 are given under 'Details'.}
 
-\item{data}{an optional data frame, list or environment (or object
-coercible by as.data.frame to a data frame) containing the
+\item{data}{An optional \verb{data frame}, \code{list} or environment (or object
+coercible by \code{as.data.frame} to a data frame) containing the
 variables in the model. If not found in data, the variables
-are taken from environment(formula), typically the environment
-from which rcr is called.}
-
-\item{subset}{an optional vector specifying a subset of observations
-to be used in the fitting process.}
-
-\item{weights}{an optional vector of weights to be used in the fitting
-process. Should be NULL or a numeric vector.}
-
-\item{na.action}{a function which indicates what should happen when
-the data contain NAs. The default is set by the na.action setting
-of options, and is na.fail if that is unset. The ‘factory-fresh’
-default is na.omit. Another possible value is NULL, no action.
-Value na.exclude can be useful.}
-
-\item{model, pyobj}{logicals. If TRUE the corresponding intermediate components
-of the fit (the model frame, the Python object) are returned.}
-
-\item{cluster}{An optional vector defining groups for cluster-robust
-covariance matrix estimation. Should be NULL or a numeric
-vector. See also ‘Details’,}
+are taken from \code{environment(formula)}, typically the environment
+from which \code{rcr} is called.}
 
 \item{rc_range}{An optional numeric vector of length two indicating
 the assumed range for the relative correlation parameter
 lambda.\code{-Inf} is allowed for the lower bound, and \code{Inf} is
 allowed for the upper bound.}
 
+\item{subset}{An optional vector specifying a subset of observations
+to be used in the fitting process.}
+
+\item{weights}{An optional vector of weights to be used in the fitting
+process.}
+
+\item{cluster}{An optional vector defining groups for cluster-robust
+covariance matrix estimation.}
+
+\item{na.action}{An optional function which indicates what should happen when
+the data contain \code{NA}s. The default is set by the \code{na.action} setting
+of options, and is \code{na.fail} if that is unset. The ‘factory-fresh’
+default is \code{na.omit}. Another possible value is \code{NULL}, no action.
+Value \code{na.exclude} can be useful.}
+
+\item{model, pyobj}{Optional logicals. If \code{TRUE}, the corresponding intermediate components
+of the fit (the model frame and the Python object) are returned.}
+
 \item{vceadj}{An optional adjustment factor to perform degrees-of-freedom
 adjustments for the estimated covariance matrix.  That is,
-the estimated covariance matrix will be multiplied by \code{vceadj}.}
+the estimated covariance matrix will be multiplied by the value of \code{vceadj}.}
 }
 \value{
-\code{rcr()} returns an object of class "rcr", which is
+\code{rcr()} returns an object of class "\code{rcr}", which is
 a list containing the following components:
 \describe{
 \item{\code{coefficients}}{a named vector of coefficients}
@@ -70,7 +69,7 @@ a list containing the following components:
 \item{\code{model}}{if requested (the default), the model frame used.}
 \item{\code{weights}}{(where relevant) the specified weights.}
 \item{\code{cluster}}{(where relevant) the specified cluster identifier.}
-\item{\code{pyobj}}{a pointer to the Python object returned
+\item{\code{pyobj}}{if requested (the default), a pointer to the Python object returned
 by \code{\link[=rcr.fit]{rcr.fit()}}. }
 }
 }
@@ -80,13 +79,28 @@ variable on a scalar outcome, under a relative correlation restriction
 of the form described in Krauth (2016).
 }
 \details{
-Most of the calculation is done in an external Python function which
-is called by \code{rcr()}. You may need to use the \code{\link[=install_rcrpy]{install_rcrpy()}} function
+Most of the calculations are done in an external Python function which
+is called by \code{rcr()}. You may need to call the \code{\link[=install_rcrpy]{install_rcrpy()}} function
 to install the package the first time you wish to use this function.
+
+The \code{formula} argument should be in the form
+\code{outcome ~ treatment | c1 + c2 + c3},
+where \code{outcome} is the outcome variable, \code{treatment} is
+the treatment variable, and \code{c1}, \code{c2}, etc. are the control
+variables.
 }
 \examples{
-f1 <- 1
+# A simple example with default options
+rcr(weight ~ Time | Diet, ChickWeight)
+# Use rc_range to change the range of values for the
+# relative correlation (lambda) parameter
+rcr(weight ~ Time | Diet, ChickWeight, rc_range=c(0, 2))
 }
 \seealso{
-\code{\link[=rcr.fit]{rcr.fit()}},
+\code{\link[=rcr.fit]{rcr.fit()}} the lower-level model fitting command,
+\code{\link[=coefficients]{coefficients()}} to retrieve coefficient estimates,
+\code{\link[=vcov.rcr]{vcov.rcr()}} to retrieve the covariance matrix,
+\code{\link[=summary.rcr]{summary.rcr()}} to produce a table summarizing results,
+\code{\link[=confint.rcr]{confint.rcr()}} to produce confidence intervals,
+\code{\link[=effect_test]{effect_test()}} to test null hypotheses
 }

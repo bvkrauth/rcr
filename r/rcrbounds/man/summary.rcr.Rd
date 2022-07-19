@@ -10,28 +10,48 @@
 \method{print}{summary.rcr}(x, ...)
 }
 \arguments{
-\item{object}{an object of class "rcr", usually the result of a call
-to \code{rcr}.}
+\item{object}{An object of class "\code{rcr}", usually the result of a call
+to \code{\link[=rcr]{rcr()}}.}
 
-\item{level}{the confidence level required.}
+\item{level}{The confidence level required, on a scale
+of 0 to 1. Default is 0.95.}
 
-\item{citype}{the confidence interval type: "\code{conservative}" (the default)
+\item{citype}{The confidence interval type: "\code{conservative}" (the default)
 "\code{upper}", "\code{lower}" or "\code{Imbens-Manski}".}
 
 \item{...}{Additional arguments (e.g., \code{digits}) to be
 passed to \code{print()}}
 
-\item{x}{an object of class "summary.rcr", usually the result
+\item{x}{An object of class "\code{summary.rcr}", usually the result
 of a call to \code{summary.rcr}.}
 }
 \value{
-\code{summary.rcr()} returns an rcr.summary object, which
-is a list with the following components:
+\code{summary.rcr()} returns an object of class "\code{rcr.summary}", which
+is a list containing the following components:
+\describe{
+\item{\code{call}}{the matched call.}
+\item{\code{terms}}{the terms object used.}
+\item{\code{coefficients}}{a matrix of coefficient estimates, standard errors,
+t-statistics and p-values}
+\item{\code{cov.unscaled}}{the estimated covariance matrix for \code{coefficients}}
+\item{\code{effect_ci}}{the confidence interval for the causal effect}
+\item{\code{citype}}{the confidence interval type used for \code{effect_ci}}
+\item{\code{level}}{the confidence level used for \code{effect_ci}}
+}
+\code{print.summary.rcr()} returns its own \code{x} argument invisibly.
 }
 \description{
 \code{summary.rcr()} produces a tabular summary of rcr model
 results estimated by the \code{\link[=rcr]{rcr()}} function.
 }
+\examples{
+# Estimate the model
+result <- rcr(weight ~ Time | Diet, ChickWeight)
+# Use summary() to produce the summary
+summary(result)
+}
 \seealso{
-\code{\link[=rcr]{rcr()}}.
+\code{\link[=rcr]{rcr()}} to estimate the model,
+\code{\link[=confint.rcr]{confint.rcr()}} to construct confidence intervals for other parameters,
+\code{\link[=effect_test]{effect_test()}} to test null hypotheses on the causal effect
 }

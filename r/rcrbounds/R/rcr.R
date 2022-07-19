@@ -14,18 +14,16 @@ rcrpy <- NULL
 
 #' Install rcrbounds Python package
 #'
-#' The rcrbounds R package is a wrapper to a Python
-#' package, also called "rcrbounds". This function
-#' installs the required Python package from the
-#' Python Package Index (PyPI), and may need to be
-#' run once before using the functions in the R
-#' package.
-#'
+#' `install_rcrpy()` is a utility function to install the rcrbounds
+#' Python package from the Python Package Index (PyPI). This function
+#' may need to be run once before using the rcrbounds R package.
 #' For most users, this function can be run once with the default
 #' arguments and then ignored.
 #'
 #' @inheritParams reticulate::py_install
-#' @seealso [rcr()]
+#' @returns `install_rcrpy()` returns whatever is returned by the
+#'           call to [reticulate::py_install], usually `NULL`.
+#' @seealso [rcr()] to estimate an RCR model,
 #'          [reticulate::py_install()] which this function wraps.
 #' @export
 install_rcrpy <- function(method = "auto", conda = "auto") {
@@ -42,41 +40,46 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #' variable on a scalar outcome, under a relative correlation restriction
 #' of the form described in Krauth (2016).
 #'
-#' Most of the calculation is done in an external Python function which
-#' is called by `rcr()`. You may need to use the [install_rcrpy()] function
+#' Most of the calculations are done in an external Python function which
+#' is called by `rcr()`. You may need to call the [install_rcrpy()] function
 #' to install the package the first time you wish to use this function.
 #'
-#' @param formula An object of class "formula" (or one that
+#' The `formula` argument should be in the form
+#' `outcome ~ treatment | c1 + c2 + c3`,
+#' where `outcome` is the outcome variable, `treatment` is
+#' the treatment variable, and `c1`, `c2`, etc. are the control
+#' variables.
+#'
+#' @param formula An object of class "`formula`" (or one that
 #'        can be coerced to that class): a symbolic description
 #'        of the model to be fitted. The details of model specification
 #'        are given under 'Details'.
-#' @param data an optional data frame, list or environment (or object
-#'        coercible by as.data.frame to a data frame) containing the
+#' @param data An optional `data frame`, `list` or environment (or object
+#'        coercible by `as.data.frame` to a data frame) containing the
 #'        variables in the model. If not found in data, the variables
-#'        are taken from environment(formula), typically the environment
-#'        from which rcr is called.
-#' @param subset an optional vector specifying a subset of observations
-#'        to be used in the fitting process.
-#' @param weights an optional vector of weights to be used in the fitting
-#'        process. Should be NULL or a numeric vector.
-#' @param na.action a function which indicates what should happen when
-#'        the data contain NAs. The default is set by the na.action setting
-#'        of options, and is na.fail if that is unset. The ‘factory-fresh’
-#'        default is na.omit. Another possible value is NULL, no action.
-#'        Value na.exclude can be useful.
-#' @param model,pyobj logicals. If TRUE the corresponding intermediate components
-#'        of the fit (the model frame, the Python object) are returned.
-#' @param cluster An optional vector defining groups for cluster-robust
-#'        covariance matrix estimation. Should be NULL or a numeric
-#'        vector. See also ‘Details’,
+#'        are taken from `environment(formula)`, typically the environment
+#'        from which `rcr` is called.
 #' @param rc_range An optional numeric vector of length two indicating
 #'        the assumed range for the relative correlation parameter
 #'        lambda.`-Inf` is allowed for the lower bound, and `Inf` is
 #'        allowed for the upper bound.
+#' @param subset An optional vector specifying a subset of observations
+#'        to be used in the fitting process.
+#' @param weights An optional vector of weights to be used in the fitting
+#'        process.
+#' @param cluster An optional vector defining groups for cluster-robust
+#'        covariance matrix estimation.
+#' @param na.action An optional function which indicates what should happen when
+#'        the data contain `NA`s. The default is set by the `na.action` setting
+#'        of options, and is `na.fail` if that is unset. The ‘factory-fresh’
+#'        default is `na.omit`. Another possible value is `NULL`, no action.
+#'        Value `na.exclude` can be useful.
+#' @param model,pyobj Optional logicals. If `TRUE`, the corresponding intermediate components
+#'        of the fit (the model frame and the Python object) are returned.
 #' @param vceadj An optional adjustment factor to perform degrees-of-freedom
 #'        adjustments for the estimated covariance matrix.  That is,
-#'        the estimated covariance matrix will be multiplied by `vceadj`.
-#' @returns `rcr()` returns an object of class "rcr", which is
+#'        the estimated covariance matrix will be multiplied by the value of `vceadj`.
+#' @returns `rcr()` returns an object of class "`rcr`", which is
 #' a list containing the following components:
 #' \describe{
 #'   \item{`coefficients`}{a named vector of coefficients}
@@ -88,22 +91,31 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #'   \item{`model`}{if requested (the default), the model frame used.}
 #'   \item{`weights`}{(where relevant) the specified weights.}
 #'   \item{`cluster`}{(where relevant) the specified cluster identifier.}
-#'   \item{`pyobj`}{a pointer to the Python object returned
+#'   \item{`pyobj`}{if requested (the default), a pointer to the Python object returned
 #'          by [rcr.fit()]. }
 #' }
-#' @seealso [rcr.fit()],
+#' @seealso [rcr.fit()] the lower-level model fitting command,
+#'          [coefficients()] to retrieve coefficient estimates,
+#'          [vcov.rcr()] to retrieve the covariance matrix,
+#'          [summary.rcr()] to produce a table summarizing results,
+#'          [confint.rcr()] to produce confidence intervals,
+#'          [effect_test()] to test null hypotheses
 #' @examples
-#' f1 <- 1
+#' # A simple example with default options
+#' rcr(weight ~ Time | Diet, ChickWeight)
+#' # Use rc_range to change the range of values for the
+#' # relative correlation (lambda) parameter
+#' rcr(weight ~ Time | Diet, ChickWeight, rc_range=c(0, 2))
 #' @export
 rcr <- function(formula,
                 data,
+                rc_range = c(0, 1),
                 subset,
                 weights,
+                cluster = NULL,
                 na.action,
                 model = TRUE,
                 pyobj = TRUE,
-                cluster = NULL,
-                rc_range = c(0, 1),
                 vceadj = 1.0) {
   contrasts <- NULL
   cl <- match.call()
@@ -167,41 +179,42 @@ rcr <- function(formula,
 #' Fitting function for RCR model
 #'
 #' `rcr.fit()` is a bare-bones wrapper function to call the Python
-#' function that estimates the RCR model. It is not intended for
+#' code to estimate the RCR model. It is not intended for
 #' most users; you should use [rcr()] unless you wish to interact
 #' more directly with the Python code.
 #'
 #' The object returned by `rcr.fit()` is a pointer to a Python object of
 #' class "`rcrbounds.RCRResults`" and not a normal R object. All attributes
 #' *and methods* of the Python object are available within R. See the
-#' documentation for the Python rcrbounds module for details on these
+#' documentation for the Python `rcrbounds` module for details on these
 #' attributes and methods.
 #'
 #' Note that the Python object ceases to exist when the R session ends,
-#' and cannot be saved in .RData or any other file. The pointer
-#' to the Python object then becomes a NULL pointer.
+#' and cannot be saved in `.RData` or any other file. The pointer
+#' to the Python object then becomes a null pointer.
 #'
 #' @inheritParams rcr
-#' @param endog a matrix or `data.frame` representing the
+#' @param endog A matrix or `data.frame` representing the
 #'              endogenous (outcome and treatment) variables
 #'              in the model
-#' @param exog a matix or `data.frame` representing
+#' @param exog A matix or `data.frame` representing
 #'              the exogenous (control) variables in the model.
 #'              Its first column must be an intercept.
-#' @param groupvar an optional cluster ID variable for
+#' @param groupvar An optional cluster ID variable for
 #'                 cluster-robust covariance matrix estimates,
 #'                 or NULL
-#' @param cov_type the type of covariance matrix to
+#' @param cov_type The type of covariance matrix to
 #'                 estimate, either "`nonrobust`" (the
 #'                 default) or "`cluster`"
-#' @param citype the confidence interval type, either
+#' @param citype The confidence interval type, either
 #'               "`conservative`" (the default), "`upper`",
 #'               "`lower`", or "`Imbens-Manski`"
-#' @param cilevel the desired confidence level,
+#' @param cilevel The desired confidence level,
 #'                on a 0-100 scale.
 #' @returns `rcr.fit()` returns a pointer to the Python object of class
 #'          "`rcrbounds.RCRResults`" as returned by the Python call.
-#' @seealso [rcr()]
+#' @seealso [rcr()] the high-level version of this function which
+#'          should be used by most users.
 #' @export
 rcr.fit <- function(endog,
                     exog,
@@ -230,14 +243,14 @@ rcr.fit <- function(endog,
 
 #' Print method for RCR results
 #'
-#' `print.rcr()` prints the main results of estimating an RCR model
+#' `print.rcr()` prints the main results of estimating an RCR model.
 #'
-#' @param x an object of class "`rcr`", usually the result of a call
+#' @param x An object of class "`rcr`", usually the result of a call
 #'        to `rcr`
 #' @param ... Additional arguments to be passed on to `print()`,
 #'            for example `digits=`.
 #' @returns `print.rcr()` returns its input object `x` invisibly.
-#' @seealso [rcr()], [print.summary.rcr()]
+#' @seealso [rcr()] to estimate the model
 #' @export
 print.rcr <- function(x,...){
   cat("\nCall:\n")
@@ -251,14 +264,23 @@ print.rcr <- function(x,...){
 
 #' Calculate covariance matrix for RCR coefficients
 #'
-#' `vcov()` Returns the variance-covariance matrix of the main parameters
-#'  of the rcr model object.
+#' `vcov()` returns the variance-covariance matrix of the main parameters
+#'  of an rcr model object.
 #'
-#' @param object an object of class "rcr", usually the result of a call
-#'        to `rcr`.
+#' @param object An object of class "`rcr`", usually the result of a call
+#'        to [rcr()].
 #' @param ... Additional arguments (not used).
-#' @returns A symmetric 5-by-5 matrix with row and column names corresponding
-#'          to the parameter names in `coef(object)`.
+#' @returns `vcov()` returns the variance-covariance matrix of the main
+#'           point-identified parameters of the rcr model object.
+#' @seealso [rcr()] to estimate the model, [coef()] to retrieve coefficient
+#'          estimates
+#' @examples
+#' # Estimate the model
+#' result <- rcr(weight ~ Time | Diet, ChickWeight)
+#' # Use coef() to recover the coefficients
+#' coef(result)
+#' # Use vcov() to recover the covariance matrix
+#' vcov(result)
 #' @export
 vcov.rcr <- function(object, ...) {
   object$cov.unscaled
@@ -266,22 +288,31 @@ vcov.rcr <- function(object, ...) {
 
 #' Confidence intervals for RCR results
 #'
-#' Computes confidence intervals for one or more parameters in an RCR model.
+#' `confint.rcr()` computes confidence intervals for one or more parameters
+#' in an RCR model.
 #'
-#' @param object an object of class "rcr", usually the result of a call
-#'        to `rcr`.
-#' @param parm a specification of which parameters are to be given
+#' @param object An object of class "`rcr`", usually the result of a call
+#'        to [rcr()].
+#' @param parm An optional specification of which parameters are to be given
 #'        confidence intervals, either a vector of numbers or a vector
 #'        of names. Available parameters include "`rcInf`", "`effectInf`",
 #'        "`rc0`", "`effectL`", "`effectH`", and "`effect`".
 #'        If missing, all parameters are considered.
-#' @param level the confidence level required.
-#' @param citype the confidence interval type: "`conservative`" (the default)
+#' @param level The confidence level required, on a scale
+#'        of 0 to 1. Default is 0.95.
+#' @param citype The confidence interval type: "`conservative`" (the default)
 #'        "`upper`", "`lower`" or "`Imbens-Manski`".
-#' @param ... additional arguments (not used).
-#' @returns `confint.rcr()` returns a matrix with columns giving
-#'          upper and lower confidence limits for each parameter
-#' @seealso [rcr()]
+#' @param ... Additional arguments (not used).
+#' @returns `confint.rcr()` returns a matrix with rows corresponding to
+#'          the elements of `parm` and columns giving upper and lower
+#'          confidence limits for each parameter
+#' @seealso [rcr()] to estimate the model, [effect_test()] to perform
+#'          hypothesis tests on the causal effect.
+#' @examples
+#' # Estimate the model
+#' result <- rcr(weight ~ Time | Diet, ChickWeight)
+#' # Use confint() to produce the confidence intervals
+#' confint(result)
 #' @export
 confint.rcr <- function(object,
                         parm,
@@ -337,13 +368,31 @@ confint.rcr <- function(object,
 #' results estimated by the [rcr()] function.
 #'
 #' @inheritParams confint.rcr
-#' @param x an object of class "summary.rcr", usually the result
+#' @param x An object of class "`summary.rcr`", usually the result
 #'        of a call to `summary.rcr`.
 #' @param ... Additional arguments (e.g., `digits`) to be
 #'        passed to `print()`
-#' @returns `summary.rcr()` returns an rcr.summary object, which
-#'          is a list with the following components:
-#' @seealso [rcr()].
+#' @returns `summary.rcr()` returns an object of class "`rcr.summary`", which
+#' is a list containing the following components:
+#' \describe{
+#'   \item{`call`}{the matched call.}
+#'   \item{`terms`}{the terms object used.}
+#'   \item{`coefficients`}{a matrix of coefficient estimates, standard errors,
+#'         t-statistics and p-values}
+#'   \item{`cov.unscaled`}{the estimated covariance matrix for `coefficients`}
+#'   \item{`effect_ci`}{the confidence interval for the causal effect}
+#'   \item{`citype`}{the confidence interval type used for `effect_ci`}
+#'   \item{`level`}{the confidence level used for `effect_ci`}
+#' }
+#' `print.summary.rcr()` returns its own `x` argument invisibly.
+#' @seealso [rcr()] to estimate the model,
+#'          [confint.rcr()] to construct confidence intervals for other parameters,
+#'          [effect_test()] to test null hypotheses on the causal effect
+#' @examples
+#' # Estimate the model
+#' result <- rcr(weight ~ Time | Diet, ChickWeight)
+#' # Use summary() to produce the summary
+#' summary(result)
 #' @export
 summary.rcr <- function(object,
                         level = 0.95,
@@ -454,19 +503,28 @@ effect_ci <- function(object,
 #' `effect_test()` allows a user to test a point null hypothesis on the
 #' (interval identified) causal effect parameter in the RCR model.
 #'
-#' The hypothesis test is based on inverting the Imbens-Manski confidence
+#' The test is based on inverting the Imbens-Manski confidence
 #' interval rather than on a specific test statistic or set of critical
 #' values.  For example, we reject the null hypothesis at 5% significance
 #' if the value under the null is outside of the 95% Imbens-Manski
-#' confidence interval.
+#' confidence interval.  As a result, this function reports a p-value but
+#' there is no test statistic.
 #'
-#' @param object an object of class "rcr", usually the result of a call
-#'        to `rcr`.
-#' @param h0 the value of the parameter under the null hypothesis.  Default
+#' @param object An object of class "`rcr`", usually the result of a call
+#'        to [rcr()].
+#' @param h0 The value of the parameter under the null hypothesis.  Default
 #'           is zero.
 #' @returns `effect_test()` returns the p-value associated with the
 #'          specified null hypothesis.
-#' @seealso [rcr()], [confint.rcr()]
+#' @seealso [rcr()] to estimate the model, [confint.rcr()] to construct
+#'          confidence intervals.
+#' @examples
+#' # Estimate the model
+#' result <- rcr(weight ~ Time | Diet, ChickWeight)
+#' # Use effect_test() with no options to test the null of zero effect
+#' effect_test(result)
+#' # This tests the null that the effect is equal to 8.0
+#' effect_test(result, 8.0)
 #' @export
 effect_test <- function(object, h0 = 0.0) {
   pmin <- 0.0

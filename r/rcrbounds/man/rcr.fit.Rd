@@ -17,11 +17,11 @@ rcr.fit(
 )
 }
 \arguments{
-\item{endog}{a matrix or \code{data.frame} representing the
+\item{endog}{A matrix or \code{data.frame} representing the
 endogenous (outcome and treatment) variables
 in the model}
 
-\item{exog}{a matix or \code{data.frame} representing
+\item{exog}{A matix or \code{data.frame} representing
 the exogenous (control) variables in the model.
 Its first column must be an intercept.}
 
@@ -30,26 +30,26 @@ the assumed range for the relative correlation parameter
 lambda.\code{-Inf} is allowed for the lower bound, and \code{Inf} is
 allowed for the upper bound.}
 
-\item{weights}{an optional vector of weights to be used in the fitting
-process. Should be NULL or a numeric vector.}
+\item{weights}{An optional vector of weights to be used in the fitting
+process.}
 
-\item{groupvar}{an optional cluster ID variable for
+\item{groupvar}{An optional cluster ID variable for
 cluster-robust covariance matrix estimates,
 or NULL}
 
-\item{cov_type}{the type of covariance matrix to
+\item{cov_type}{The type of covariance matrix to
 estimate, either "\code{nonrobust}" (the
 default) or "\code{cluster}"}
 
 \item{vceadj}{An optional adjustment factor to perform degrees-of-freedom
 adjustments for the estimated covariance matrix.  That is,
-the estimated covariance matrix will be multiplied by \code{vceadj}.}
+the estimated covariance matrix will be multiplied by the value of \code{vceadj}.}
 
-\item{citype}{the confidence interval type, either
+\item{citype}{The confidence interval type, either
 "\code{conservative}" (the default), "\code{upper}",
 "\code{lower}", or "\code{Imbens-Manski}"}
 
-\item{cilevel}{the desired confidence level,
+\item{cilevel}{The desired confidence level,
 on a 0-100 scale.}
 }
 \value{
@@ -58,7 +58,7 @@ on a 0-100 scale.}
 }
 \description{
 \code{rcr.fit()} is a bare-bones wrapper function to call the Python
-function that estimates the RCR model. It is not intended for
+code to estimate the RCR model. It is not intended for
 most users; you should use \code{\link[=rcr]{rcr()}} unless you wish to interact
 more directly with the Python code.
 }
@@ -66,13 +66,14 @@ more directly with the Python code.
 The object returned by \code{rcr.fit()} is a pointer to a Python object of
 class "\code{rcrbounds.RCRResults}" and not a normal R object. All attributes
 \emph{and methods} of the Python object are available within R. See the
-documentation for the Python rcrbounds module for details on these
+documentation for the Python \code{rcrbounds} module for details on these
 attributes and methods.
 
 Note that the Python object ceases to exist when the R session ends,
-and cannot be saved in .RData or any other file. The pointer
-to the Python object then becomes a NULL pointer.
+and cannot be saved in \code{.RData} or any other file. The pointer
+to the Python object then becomes a null pointer.
 }
 \seealso{
-\code{\link[=rcr]{rcr()}}
+\code{\link[=rcr]{rcr()}} the high-level version of this function which
+should be used by most users.
 }

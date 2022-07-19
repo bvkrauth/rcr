@@ -7,7 +7,7 @@
 \method{print}{rcr}(x, ...)
 }
 \arguments{
-\item{x}{an object of class "\code{rcr}", usually the result of a call
+\item{x}{An object of class "\code{rcr}", usually the result of a call
 to \code{rcr}}
 
 \item{...}{Additional arguments to be passed on to \code{print()},
@@ -17,8 +17,8 @@ for example \verb{digits=}.}
 \code{print.rcr()} returns its input object \code{x} invisibly.
 }
 \description{
-\code{print.rcr()} prints the main results of estimating an RCR model
+\code{print.rcr()} prints the main results of estimating an RCR model.
 }
 \seealso{
-\code{\link[=rcr]{rcr()}}, \code{\link[=print.summary.rcr]{print.summary.rcr()}}
+\code{\link[=rcr]{rcr()}} to estimate the model
 }

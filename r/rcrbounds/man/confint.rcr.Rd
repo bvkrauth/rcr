@@ -7,29 +7,39 @@
 \method{confint}{rcr}(object, parm, level = 0.95, citype = "conservative", ...)
 }
 \arguments{
-\item{object}{an object of class "rcr", usually the result of a call
-to \code{rcr}.}
+\item{object}{An object of class "\code{rcr}", usually the result of a call
+to \code{\link[=rcr]{rcr()}}.}
 
-\item{parm}{a specification of which parameters are to be given
+\item{parm}{An optional specification of which parameters are to be given
 confidence intervals, either a vector of numbers or a vector
 of names. Available parameters include "\code{rcInf}", "\code{effectInf}",
 "\code{rc0}", "\code{effectL}", "\code{effectH}", and "\code{effect}".
 If missing, all parameters are considered.}
 
-\item{level}{the confidence level required.}
+\item{level}{The confidence level required, on a scale
+of 0 to 1. Default is 0.95.}
 
-\item{citype}{the confidence interval type: "\code{conservative}" (the default)
+\item{citype}{The confidence interval type: "\code{conservative}" (the default)
 "\code{upper}", "\code{lower}" or "\code{Imbens-Manski}".}
 
-\item{...}{additional arguments (not used).}
+\item{...}{Additional arguments (not used).}
 }
 \value{
-\code{confint.rcr()} returns a matrix with columns giving
-upper and lower confidence limits for each parameter
+\code{confint.rcr()} returns a matrix with rows corresponding to
+the elements of \code{parm} and columns giving upper and lower
+confidence limits for each parameter
 }
 \description{
-Computes confidence intervals for one or more parameters in an RCR model.
+\code{confint.rcr()} computes confidence intervals for one or more parameters
+in an RCR model.
+}
+\examples{
+# Estimate the model
+result <- rcr(weight ~ Time | Diet, ChickWeight)
+# Use confint() to produce the confidence intervals
+confint(result)
 }
 \seealso{
-\code{\link[=rcr]{rcr()}}
+\code{\link[=rcr]{rcr()}} to estimate the model, \code{\link[=effect_test]{effect_test()}} to perform
+hypothesis tests on the causal effect.
 }

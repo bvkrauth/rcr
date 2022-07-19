@@ -161,6 +161,8 @@ test_that("rcr works with cluster option", {
                true_cov)
   expect_equal(result$cluster,
                testdata$TCHID)
+  expect_equal(result$model$`(cluster)`,
+               testdata$TCHID)
 })
 
 test_that("rcr works with rc_range option", {

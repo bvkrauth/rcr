@@ -113,7 +113,7 @@ rcr <- function(formula,
   # here to keep the code just like the code for lm.
   m <- match(c(
     "formula", "data", "subset", "weights", "na.action",
-    "offset"
+    "offset","cluster"
   ), names(mf), 0L)
   mf <- mf[c(1L, m)]
   mf$drop.unused.levels <- TRUE

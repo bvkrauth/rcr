@@ -17,7 +17,16 @@ to \code{\link[=rcr]{rcr()}}.}
 of 0 to 1. Default is 0.95.}
 
 \item{citype}{The confidence interval type: "\code{conservative}" (the default)
-"\code{upper}", "\code{lower}" or "\code{Imbens-Manski}".}
+"\code{upper}", "\code{lower}" or "\code{Imbens-Manski}". The "\code{conservative}"
+option produces a two-tailed confidence interval for "\code{effect}"
+that covers the \emph{entire} identified set with the specified
+asymptotic probability, while the "\code{Imbens-Manski}" option produces
+a two-tailed confidence interval for "\code{effect}" that covers
+\emph{each value} in the identified set with the specified asymptotic
+probability. Both options produce a conventional two-tailed
+confidence interval for all other parameters. The "\code{upper}" and
+"\code{lower}" options produce one-tailed confidence intervals for all
+parameters.}
 
 \item{...}{Additional arguments (e.g., \code{digits}) to be
 passed to \code{print()}}

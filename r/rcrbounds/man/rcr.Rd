@@ -96,6 +96,12 @@ rcr(weight ~ Time | Diet, ChickWeight)
 # relative correlation (lambda) parameter
 rcr(weight ~ Time | Diet, ChickWeight, rc_range = c(0, 2))
 }
+\references{
+Krauth, B. V. (2016). "Bounding a linear causal effect using
+relative correlation restrictions"
+\emph{Journal of Econometric Methods} 5(1): 117-141.
+\link{https://bvkrauth.github.io/publication/rcr}.
+}
 \seealso{
 \code{\link[=rcr.fit]{rcr.fit()}} the lower-level model fitting command,
 \code{\link[=coefficients]{coefficients()}} to retrieve coefficient estimates,

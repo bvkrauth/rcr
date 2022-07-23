@@ -100,6 +100,10 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #'          [summary.rcr()] to produce a table summarizing results,
 #'          [confint.rcr()] to produce confidence intervals,
 #'          [effect_test()] to test null hypotheses
+#' @references Krauth, B. V. (2016). "Bounding a linear causal effect using
+#'             relative correlation restrictions"
+#'             *Journal of Econometric Methods* 5(1): 117-141.
+#'             [https://bvkrauth.github.io/publication/rcr].
 #' @examples
 #' # A simple example with default options
 #' rcr(weight ~ Time | Diet, ChickWeight)
@@ -304,7 +308,16 @@ vcov.rcr <- function(object, ...) {
 #' @param level The confidence level required, on a scale
 #'        of 0 to 1. Default is 0.95.
 #' @param citype The confidence interval type: "`conservative`" (the default)
-#'        "`upper`", "`lower`" or "`Imbens-Manski`".
+#'        "`upper`", "`lower`" or "`Imbens-Manski`". The "`conservative`"
+#'        option produces a two-tailed confidence interval for "`effect`"
+#'        that covers the *entire* identified set with the specified
+#'        asymptotic probability, while the "`Imbens-Manski`" option produces
+#'        a two-tailed confidence interval for "`effect`" that covers
+#'        *each value* in the identified set with the specified asymptotic
+#'        probability. Both options produce a conventional two-tailed
+#'        confidence interval for all other parameters. The "`upper`" and
+#'        "`lower`" options produce one-tailed confidence intervals for all
+#'        parameters.
 #' @param ... Additional arguments (not used).
 #' @returns `confint.rcr()` returns a matrix with rows corresponding to
 #'          the elements of `parm` and columns giving upper and lower

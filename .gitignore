@@ -23,3 +23,8 @@ out.txt
 /python/.vscode
 /python/rcrbounds.egg-info
 /python/.coverage
+
+# Compiled and auto-generated R files
+.Rproj.user
+*.Rproj
+.Rhistory

@@ -103,7 +103,6 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #' @references Krauth, B. V. (2016). "Bounding a linear causal effect using
 #'             relative correlation restrictions"
 #'             *Journal of Econometric Methods* 5(1): 117-141.
-#'             [https://bvkrauth.github.io/publication/rcr].
 #' @examples
 #' # A simple example with default options
 #' rcr(weight ~ Time | Diet, ChickWeight)

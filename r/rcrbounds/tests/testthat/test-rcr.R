@@ -1,3 +1,14 @@
+save_png <- function(code, width = 400, height = 400) {
+  path <- tempfile(fileext = ".png")
+  png(path, width = width, height = height)
+  on.exit(dev.off())
+  code
+  path
+}
+
+path <- save_png(plot(1:5))
+path
+
 test_that("install_rcrpy produces expected results", {
   skip("not yet tested")
 })
@@ -630,4 +641,75 @@ test_that("summary method works with default options", {
   expect_equal(result$citype, "conservative")
   # level
   expect_equal(result$level, 0.95)
+})
+
+
+test_that("plot method works with default options", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  rcr1 <- rcr(f1,
+    data = testdata
+  )
+  announce_snapshot_file(name = "plt.png")
+  path <- save_png(plot(rcr1))
+  expect_snapshot_file(path, name = "plt.png")
+})
+
+
+test_that("plot method works with xlim and ylim options", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  rcr1 <- rcr(f1,
+    data = testdata
+  )
+  # Test 1: narrow xlim; rcInf and effectInf disappear
+  announce_snapshot_file(name = "plt-xlim1.png")
+  path <- save_png(plot(rcr1, xlim = c(5, 6)))
+  expect_snapshot_file(path, name = "plt-xlim1.png")
+  # Test 2: slightly narrower ylim
+  announce_snapshot_file(name = "plt-ylim1.png")
+  path <- save_png(plot(rcr1, ylim = c(-40, 100)))
+  expect_snapshot_file(path, name = "plt-ylim1.png")
+})
+
+test_that("plot method works with col and lty options", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  rcr1 <- rcr(f1,
+    data = testdata
+  )
+  # Test 1: colors
+  announce_snapshot_file(name = "plt-col1.png")
+  path <- save_png(plot(rcr1, col = c("blue", "green", "red")))
+  expect_snapshot_file(path, name = "plt-col1.png")
+  # Test 2: line types
+  announce_snapshot_file(name = "plt-lty1.png")
+  path <- save_png(plot(rcr1, lty = c("dashed", "dotted", "solid")))
+  expect_snapshot_file(path, name = "plt-lty1.png")
+})
+
+
+test_that("plot method works with label options", {
+  testdata <- readRDS(test_path("testdata.rds"))
+  f1 <- SAT ~ Small_Class | White_Asian + Girl +
+    Free_Lunch + White_Teacher +
+    Teacher_Experience + Masters_Degree
+  rcr1 <- rcr(f1,
+    data = testdata
+  )
+  # Test 1: labels
+  announce_snapshot_file(name = "plt-lab1.png")
+  path <- save_png(plot(rcr1,
+    xlab = "Effect",
+    ylab = "RC",
+    main = "Main title",
+    sub = "subtitle"
+  ))
+  expect_snapshot_file(path, name = "plt-lab1.png")
 })

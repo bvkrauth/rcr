@@ -107,5 +107,6 @@ relative correlation restrictions"
 \code{\link[=vcov.rcr]{vcov.rcr()}} to retrieve the covariance matrix,
 \code{\link[=summary.rcr]{summary.rcr()}} to produce a table summarizing results,
 \code{\link[=confint.rcr]{confint.rcr()}} to produce confidence intervals,
-\code{\link[=effect_test]{effect_test()}} to test null hypotheses
+\code{\link[=effect_test]{effect_test()}} to test null hypotheses, and
+\code{\link[=plot.rcr]{plot.rcr()}} to plot the results.
 }

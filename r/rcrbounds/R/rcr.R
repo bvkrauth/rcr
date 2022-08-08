@@ -99,7 +99,8 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #'          [vcov.rcr()] to retrieve the covariance matrix,
 #'          [summary.rcr()] to produce a table summarizing results,
 #'          [confint.rcr()] to produce confidence intervals,
-#'          [effect_test()] to test null hypotheses
+#'          [effect_test()] to test null hypotheses, and
+#'          [plot.rcr()] to plot the results.
 #' @references Krauth, B. V. (2016). "Bounding a linear causal effect using
 #'             relative correlation restrictions"
 #'             *Journal of Econometric Methods* 5(1): 117-141.
@@ -563,4 +564,107 @@ effect_test <- function(object, h0 = 0.0) {
     pvalue <- 1.0 - pmin
   }
   pvalue
+}
+
+
+#' Plot method for RCR results
+#'
+#' `plot.rcr()` plots the main results of estimating an RCR model. The plot
+#' will display three elements: the `lambda(beta_x)` function, the value of `effectInf`,
+#' and the value of `rcInf`.
+#'
+#' It is recommended that you create an initial plot with the default
+#' values of `xlim` and `ylim`, and then adjust these values as needed
+#' to zero in on the portion of the graph that is of interest to you.
+#'
+#' It is also recommended that you use `plot.rcr()` during the same R
+#' session in which you created the `rcr` object using the [rcr()]
+#' command, and ideally shortly after you create the object. The
+#' reason for this is that it uses Python code embedded in the
+#' `rcr` object, and this code will typically not be available if the
+#' current Python session ends (e.g., by an end in the R session).
+#'
+#' @param x An object of class "`rcr`", usually the result of a call
+#'        to `rcr`
+#' @param xlab,ylab Axis labels for x-axis and y-axis, respectively
+#' @param xlim,ylim Range of values for x-axis and y-axis, respectively.
+#' @param col A vector of colors to be used for the model elements.  `col[1]`
+#'            will be the color of the `lambda(beta_x)` function, `col[2]` will
+#'            be the color of the vertical line depicting `effectInf`, and
+#'            `col[3]`will be the color of the horizontal line depicting `rcInf`.
+#'            If fewer than 3 colors are provided, `plot.rcr` will cycle
+#'            through the provided colors. Colors can be provided as simple
+#'            names, or in any other form described in the "Color Specification"
+#'            section of the documentation for [par()].
+#' @param lty A vector of line types to be used for the model elements. `lty[1]`
+#'            will be the type of the `lambda(beta_x)` function, `lty[2]` will
+#'            be the type of the vertical line depicting `effectInf`, and
+#'            `lty[3]`will be the type of the horizontal line depicting `rcInf`.
+#'            If fewer than 3 line types are provided, `plot.rcr` will cycle
+#'            through the provided line types. Line types can be provided as simple
+#'            names, or in any other form described in the "Line Type Specification"
+#'            section of the documentation for [par()].
+#' @param ... Additional graphical parameters to be passed on to [plot.default()].
+#' @returns `plot.rcr()` returns its input object `x` invisibly.
+#' @seealso [rcr()] to estimate the model
+#' @export
+plot.rcr <- function(x,
+                     xlab = expression(beta[x]),
+                     ylab = expression(lambda),
+                     xlim = c(-50, 50),
+                     ylim = NULL,
+                     col = "black",
+                     lty = c("solid", "dotted", "dashed"),
+                     ...) {
+  # Regenerate Python object if needed
+  if (reticulate::py_is_null_xptr(x$pyobj)) {
+    x <- eval(x$call)
+  }
+  # Extend colors and line types
+  colors <- rep_len(col, 3)
+  ltypes <- rep_len(lty, 3)
+  # Get function values
+  xvals <- seq(xlim[1], xlim[2], length.out = 100)
+  rcvals <- x$pyobj$model$rcvals(xvals, TRUE)
+  # Plot function values
+  plot(rcvals[[2]], rcvals[[1]],
+    type = "l",
+    xlab = xlab,
+    ylab = ylab,
+    col = colors[1],
+    lty = ltypes[1],
+    ylim = ylim,
+    ...
+  )
+  # Add vertical line at effectInf
+  effectInf <- x$coefficients[2]
+  if (effectInf >= min(xlim) & effectInf <= max(xlim)) {
+    graphics::abline(
+      v = effectInf,
+      lty = ltypes[2],
+      col = colors[2]
+    )
+    graphics::mtext(expression(beta[x]^infinity),
+      side = 3,
+      at = effectInf,
+      col = colors[2]
+    )
+  }
+  # Add horizontal line at rcInf
+  rcInf <- x$coefficients[1]
+  plotrange <- graphics::par("usr")
+  if (rcInf >= plotrange[3] & rcInf <= plotrange[4]) {
+    graphics::abline(
+      h = rcInf,
+      lty = ltypes[3],
+      col = colors[3]
+    )
+    graphics::mtext(expression(lambda^infinity),
+      side = 4,
+      at = rcInf,
+      col = colors[3]
+    )
+  }
+  # Return original object invisibly
+  invisible(x)
 }

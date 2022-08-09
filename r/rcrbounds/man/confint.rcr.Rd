@@ -43,10 +43,12 @@ confidence limits for each parameter
 in an RCR model.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available("rcrbounds")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Estimate the model
 result <- rcr(weight ~ Time | Diet, ChickWeight)
 # Use confint() to produce the confidence intervals
 confint(result)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rcr]{rcr()}} to estimate the model, \code{\link[=effect_test]{effect_test()}} to perform

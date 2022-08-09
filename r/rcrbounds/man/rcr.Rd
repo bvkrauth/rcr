@@ -90,11 +90,13 @@ the treatment variable, and \code{c1}, \code{c2}, etc. are the control
 variables.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available("rcrbounds")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # A simple example with default options
 rcr(weight ~ Time | Diet, ChickWeight)
 # Use rc_range to change the range of values for the
 # relative correlation (lambda) parameter
 rcr(weight ~ Time | Diet, ChickWeight, rc_range = c(0, 2))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Krauth, B. V. (2016). "Bounding a linear causal effect using

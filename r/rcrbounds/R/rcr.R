@@ -7,7 +7,7 @@
 rcrpy <- NULL
 
 .onLoad <- function(libname, pkgname) {
-  # use superassignment to update global reference to scipy
+  # use superassignment to update global reference to rcrbounds
   rcrpy <<- reticulate::import("rcrbounds", delay_load = TRUE)
 }
 
@@ -104,7 +104,7 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #' @references Krauth, B. V. (2016). "Bounding a linear causal effect using
 #'             relative correlation restrictions"
 #'             *Journal of Econometric Methods* 5(1): 117-141.
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # A simple example with default options
 #' rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use rc_range to change the range of values for the
@@ -281,7 +281,7 @@ print.rcr <- function(x, ...) {
 #'           point-identified parameters of the rcr model object.
 #' @seealso [rcr()] to estimate the model, [coef()] to retrieve coefficient
 #'          estimates
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use coef() to recover the coefficients
@@ -324,7 +324,7 @@ vcov.rcr <- function(object, ...) {
 #'          confidence limits for each parameter
 #' @seealso [rcr()] to estimate the model, [effect_test()] to perform
 #'          hypothesis tests on the causal effect.
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use confint() to produce the confidence intervals
@@ -404,7 +404,7 @@ confint.rcr <- function(object,
 #' @seealso [rcr()] to estimate the model,
 #'          [confint.rcr()] to construct confidence intervals for other parameters,
 #'          [effect_test()] to test null hypotheses on the causal effect
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use summary() to produce the summary
@@ -534,7 +534,7 @@ effect_ci <- function(object,
 #'          specified null hypothesis.
 #' @seealso [rcr()] to estimate the model, [confint.rcr()] to construct
 #'          confidence intervals.
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use effect_test() with no options to test the null of zero effect

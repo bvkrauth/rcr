@@ -54,10 +54,12 @@ t-statistics and p-values}
 results estimated by the \code{\link[=rcr]{rcr()}} function.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available("rcrbounds")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Estimate the model
 result <- rcr(weight ~ Time | Diet, ChickWeight)
 # Use summary() to produce the summary
 summary(result)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rcr]{rcr()}} to estimate the model,

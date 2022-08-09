@@ -21,12 +21,14 @@ point-identified parameters of the rcr model object.
 of an rcr model object.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available("rcrbounds")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Estimate the model
 result <- rcr(weight ~ Time | Diet, ChickWeight)
 # Use coef() to recover the coefficients
 coef(result)
 # Use vcov() to recover the covariance matrix
 vcov(result)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rcr]{rcr()}} to estimate the model, \code{\link[=coef]{coef()}} to retrieve coefficient

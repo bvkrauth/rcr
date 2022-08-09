@@ -2,7 +2,7 @@ Type: Package
 Package: rcrbounds
 Title: Bounds for Linear Causal Effect under Relative Correlation
     Restrictions
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person("Brian", "Krauth", , "bkrauth@sfu.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-4114-5690"))

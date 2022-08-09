@@ -1,7 +1,7 @@
 skip_if_no_rcrpy <- function() {
   have_rcrpy <- reticulate::py_module_available("rcrbounds")
   if (!have_rcrpy)
-    skip("rcrbounds Python module not available for testing")
+    testthat::skip("rcrbounds Python module not available for testing")
 }
 save_png <- function(code, width = 400, height = 400) {
   path <- tempfile(fileext = ".png")

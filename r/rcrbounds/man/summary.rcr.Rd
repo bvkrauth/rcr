@@ -63,6 +63,7 @@ summary(result)
 }
 \seealso{
 \code{\link[=rcr]{rcr()}} to estimate the model,
-\code{\link[=confint.rcr]{confint.rcr()}} to construct confidence intervals for other parameters,
+\code{\link[=confint.rcr]{confint.rcr()}} to construct confidence intervals for other
+parameters,
 \code{\link[=effect_test]{effect_test()}} to test null hypotheses on the causal effect
 }

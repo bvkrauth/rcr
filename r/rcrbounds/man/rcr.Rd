@@ -49,12 +49,14 @@ of options, and is \code{na.fail} if that is unset. The ‘factory-fresh’
 default is \code{na.omit}. Another possible value is \code{NULL}, no action.
 Value \code{na.exclude} can be useful.}
 
-\item{model, pyobj}{Optional logicals. If \code{TRUE}, the corresponding intermediate components
-of the fit (the model frame and the Python object) are returned.}
+\item{model, pyobj}{Optional logicals. If \code{TRUE}, the corresponding
+intermediate components of the fit (the model frame and the Python
+object) are returned.}
 
 \item{vceadj}{An optional adjustment factor to perform degrees-of-freedom
 adjustments for the estimated covariance matrix.  That is,
-the estimated covariance matrix will be multiplied by the value of \code{vceadj}.}
+the estimated covariance matrix will be multiplied by the value of
+\code{vceadj}.}
 }
 \value{
 \code{rcr()} returns an object of class "\code{rcr}", which is
@@ -62,15 +64,17 @@ a list containing the following components:
 \describe{
 \item{\code{coefficients}}{a named vector of coefficients}
 \item{\code{cov.unscaled}}{the estimated covariance matrix for \code{coefficients}}
-\item{\code{na.action}}{(where relevant) information returned by model.frame on the special handling of NAs..}
-\item{\code{xlevels}}{(where relevant) a record of the levels of the factors used in fitting..}
+\item{\code{na.action}}{(where relevant) information returned by model.frame on
+the special handling of NAs..}
+\item{\code{xlevels}}{(where relevant) a record of the levels of the factors
+used in fitting..}
 \item{\code{call}}{the matched call.}
 \item{\code{terms}}{the terms object used.}
 \item{\code{model}}{if requested (the default), the model frame used.}
 \item{\code{weights}}{(where relevant) the specified weights.}
 \item{\code{cluster}}{(where relevant) the specified cluster identifier.}
-\item{\code{pyobj}}{if requested (the default), a pointer to the Python object returned
-by \code{\link[=rcr.fit]{rcr.fit()}}. }
+\item{\code{pyobj}}{if requested (the default), a pointer to the Python object
+returned by \code{\link[=rcr_fit]{rcr_fit()}}. }
 }
 }
 \description{
@@ -90,11 +94,13 @@ the treatment variable, and \code{c1}, \code{c2}, etc. are the control
 variables.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available("rcrbounds")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # A simple example with default options
 rcr(weight ~ Time | Diet, ChickWeight)
 # Use rc_range to change the range of values for the
 # relative correlation (lambda) parameter
 rcr(weight ~ Time | Diet, ChickWeight, rc_range = c(0, 2))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Krauth, B. V. (2016). "Bounding a linear causal effect using
@@ -102,7 +108,7 @@ relative correlation restrictions"
 \emph{Journal of Econometric Methods} 5(1): 117-141.
 }
 \seealso{
-\code{\link[=rcr.fit]{rcr.fit()}} the lower-level model fitting command,
+\code{\link[=rcr_fit]{rcr_fit()}} the lower-level model fitting command,
 \code{\link[=coefficients]{coefficients()}} to retrieve coefficient estimates,
 \code{\link[=vcov.rcr]{vcov.rcr()}} to retrieve the covariance matrix,
 \code{\link[=summary.rcr]{summary.rcr()}} to produce a table summarizing results,

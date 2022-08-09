@@ -1,3 +1,8 @@
+skip_if_no_rcrpy <- function() {
+  have_rcrpy <- reticulate::py_module_available("rcrbounds")
+  if (!have_rcrpy)
+    testthat::skip("rcrbounds Python module not available for testing")
+}
 save_png <- function(code, width = 400, height = 400) {
   path <- tempfile(fileext = ".png")
   png(path, width = width, height = height)
@@ -14,6 +19,7 @@ test_that("install_rcrpy produces expected results", {
 })
 
 test_that("rcr works with default options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -102,6 +108,7 @@ test_that("rcr works with default options", {
 })
 
 test_that("rcr allows functions in formulas", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- abs(SAT) ~ abs(Small_Class) | White_Asian * Girl +
     Free_Lunch + White_Teacher +
@@ -124,6 +131,7 @@ test_that("rcr allows functions in formulas", {
 })
 
 test_that("rcr does not require data argument", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -144,6 +152,7 @@ test_that("rcr does not require data argument", {
 
 
 test_that("rcr works with subset option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -161,6 +170,7 @@ test_that("rcr works with subset option", {
 })
 
 test_that("rcr works with model and pyobj options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -172,6 +182,7 @@ test_that("rcr works with model and pyobj options", {
 
 
 test_that("rcr works with weights option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -194,6 +205,7 @@ test_that("rcr works with weights option", {
 })
 
 test_that("rcr works with na.action option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   altdata <- testdata
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
@@ -223,6 +235,7 @@ test_that("rcr works with na.action option", {
 })
 
 test_that("rcr works with cluster option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -261,6 +274,7 @@ test_that("rcr works with cluster option", {
 })
 
 test_that("rcr works with rc_range option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -291,6 +305,7 @@ test_that("rcr works with rc_range option", {
 })
 
 test_that("rcr works with vceadj option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -317,6 +332,7 @@ test_that("rcr works with vceadj option", {
 })
 
 test_that("print.rcr works with default options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -343,6 +359,7 @@ test_that("print.rcr works with default options", {
 
 
 test_that("vcov method works with default options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -359,6 +376,7 @@ test_that("vcov method works with default options", {
 })
 
 test_that("confint method works with default options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -387,6 +405,7 @@ test_that("confint method works with default options", {
 
 
 test_that("confint method works with parm option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -424,6 +443,7 @@ test_that("confint method works with parm option", {
 })
 
 test_that("confint method works with level option", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -452,6 +472,7 @@ test_that("confint method works with level option", {
 
 
 test_that("confint method works with citype lower", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -479,6 +500,7 @@ test_that("confint method works with citype lower", {
 })
 
 test_that("confint method works with citype upper", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -506,6 +528,7 @@ test_that("confint method works with citype upper", {
 })
 
 test_that("confint method works with citype Imbens-Manksi", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -541,6 +564,7 @@ test_that("confint method works with citype Imbens-Manksi", {
 })
 
 test_that("effect_test method works", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -570,6 +594,7 @@ test_that("effect_test method works", {
 
 
 test_that("summary method works with default options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -645,6 +670,7 @@ test_that("summary method works with default options", {
 
 
 test_that("plot method works with default options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -659,6 +685,7 @@ test_that("plot method works with default options", {
 
 
 test_that("plot method works with xlim and ylim options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -677,6 +704,7 @@ test_that("plot method works with xlim and ylim options", {
 })
 
 test_that("plot method works with col and lty options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +
@@ -696,6 +724,7 @@ test_that("plot method works with col and lty options", {
 
 
 test_that("plot method works with label options", {
+  skip_if_no_rcrpy()
   testdata <- readRDS(test_path("testdata.rds"))
   f1 <- SAT ~ Small_Class | White_Asian + Girl +
     Free_Lunch + White_Teacher +

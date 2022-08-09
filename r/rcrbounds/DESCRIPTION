@@ -2,15 +2,15 @@ Type: Package
 Package: rcrbounds
 Title: Bounds for Linear Causal Effect under Relative Correlation
     Restrictions
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person("Brian", "Krauth", , "bkrauth@sfu.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-4114-5690"))
-Description: This package estimates bounds on a linear causal effect under
+Description: Estimates bounds on a linear causal effect under
     a user-specified interval restriction on the (unknown)` correlation
-    between the variable of interest and unobservables relative to the
-    (known) correlation between the variable of interest and observables.
-    The details of the estimation method are described in my paper
+    between the variable of interest and missing/unobserved variables relative
+	to the (known) correlation between the variable of interest and observable
+	variables. The details of the estimation method are described in my paper
     "Bounding a linear causal effect using relative correlation
     restrictions" (Journal of Econometric Methods 2016).
 License: MIT + file LICENSE
@@ -22,7 +22,13 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Imports: 
     Formula,
     reticulate
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "rcrbounds", pip = TRUE)
+    )
+  )

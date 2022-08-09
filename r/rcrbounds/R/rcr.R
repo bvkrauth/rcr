@@ -7,7 +7,7 @@
 rcrpy <- NULL
 
 .onLoad <- function(libname, pkgname) {
-  # use superassignment to update global reference to scipy
+  # use superassignment to update global reference to rcrbounds
   rcrpy <<- reticulate::import("rcrbounds", delay_load = TRUE)
 }
 
@@ -74,27 +74,31 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #'        of options, and is `na.fail` if that is unset. The ‘factory-fresh’
 #'        default is `na.omit`. Another possible value is `NULL`, no action.
 #'        Value `na.exclude` can be useful.
-#' @param model,pyobj Optional logicals. If `TRUE`, the corresponding intermediate components
-#'        of the fit (the model frame and the Python object) are returned.
+#' @param model,pyobj Optional logicals. If `TRUE`, the corresponding
+#'        intermediate components of the fit (the model frame and the Python
+#'        object) are returned.
 #' @param vceadj An optional adjustment factor to perform degrees-of-freedom
 #'        adjustments for the estimated covariance matrix.  That is,
-#'        the estimated covariance matrix will be multiplied by the value of `vceadj`.
+#'        the estimated covariance matrix will be multiplied by the value of
+#'        `vceadj`.
 #' @returns `rcr()` returns an object of class "`rcr`", which is
 #' a list containing the following components:
 #' \describe{
 #'   \item{`coefficients`}{a named vector of coefficients}
 #'   \item{`cov.unscaled`}{the estimated covariance matrix for `coefficients`}
-#'   \item{`na.action`}{(where relevant) information returned by model.frame on the special handling of NAs..}
-#'   \item{`xlevels`}{(where relevant) a record of the levels of the factors used in fitting..}
+#'   \item{`na.action`}{(where relevant) information returned by model.frame on
+#'     the special handling of NAs..}
+#'   \item{`xlevels`}{(where relevant) a record of the levels of the factors
+#'     used in fitting..}
 #'   \item{`call`}{the matched call.}
 #'   \item{`terms`}{the terms object used.}
 #'   \item{`model`}{if requested (the default), the model frame used.}
 #'   \item{`weights`}{(where relevant) the specified weights.}
 #'   \item{`cluster`}{(where relevant) the specified cluster identifier.}
-#'   \item{`pyobj`}{if requested (the default), a pointer to the Python object returned
-#'          by [rcr.fit()]. }
+#'   \item{`pyobj`}{if requested (the default), a pointer to the Python object
+#'          returned by [rcr_fit()]. }
 #' }
-#' @seealso [rcr.fit()] the lower-level model fitting command,
+#' @seealso [rcr_fit()] the lower-level model fitting command,
 #'          [coefficients()] to retrieve coefficient estimates,
 #'          [vcov.rcr()] to retrieve the covariance matrix,
 #'          [summary.rcr()] to produce a table summarizing results,
@@ -104,7 +108,7 @@ install_rcrpy <- function(method = "auto", conda = "auto") {
 #' @references Krauth, B. V. (2016). "Bounding a linear causal effect using
 #'             relative correlation restrictions"
 #'             *Journal of Econometric Methods* 5(1): 117-141.
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # A simple example with default options
 #' rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use rc_range to change the range of values for the
@@ -139,13 +143,13 @@ rcr <- function(formula,
   mf$formula <- formula
   mf[[1L]] <- as.name("model.frame")
   mf <- eval(mf, parent.frame())
-  Y <- stats::model.response(mf, "numeric")
+  y <- stats::model.response(mf, "numeric")
   mt <- stats::terms(formula, data = data)
-  mtX <- stats::terms(stats::update(formula, ~ . - 1), data = data, rhs = 1)
-  X <- stats::model.matrix(mtX, mf, contrasts)
-  mtZ <- stats::delete.response(stats::terms(formula, data = data, rhs = 2))
-  exog <- stats::model.matrix(mtZ, mf, contrasts)
-  endog <- cbind(Y, X)
+  mt_x <- stats::terms(stats::update(formula, ~ . - 1), data = data, rhs = 1)
+  x <- stats::model.matrix(mt_x, mf, contrasts)
+  mt_z <- stats::delete.response(stats::terms(formula, data = data, rhs = 2))
+  exog <- stats::model.matrix(mt_z, mf, contrasts)
+  endog <- cbind(y, x)
   weights <- stats::model.weights(mf)
   if (is.null(cluster)) {
     cov_type <- "nonrobust"
@@ -153,7 +157,7 @@ rcr <- function(formula,
     cov_type <- "cluster"
   }
   result <- list()
-  python_result <- rcr.fit(endog, exog,
+  python_result <- rcr_fit(endog, exog,
     vceadj = vceadj,
     rc_range = rc_range,
     weights = weights,
@@ -183,12 +187,12 @@ rcr <- function(formula,
 
 #' Fitting function for RCR model
 #'
-#' `rcr.fit()` is a bare-bones wrapper function to call the Python
+#' `rcr_fit()` is a bare-bones wrapper function to call the Python
 #' code to estimate the RCR model. It is not intended for
 #' most users; you should use [rcr()] unless you wish to interact
 #' more directly with the Python code.
 #'
-#' The object returned by `rcr.fit()` is a pointer to a Python object of
+#' The object returned by `rcr_fit()` is a pointer to a Python object of
 #' class "`rcrbounds.RCRResults`" and not a normal R object. All attributes
 #' *and methods* of the Python object are available within R. See the
 #' documentation for the Python `rcrbounds` module for details on these
@@ -216,12 +220,12 @@ rcr <- function(formula,
 #'               "`lower`", or "`Imbens-Manski`"
 #' @param cilevel The desired confidence level,
 #'                on a 0-100 scale.
-#' @returns `rcr.fit()` returns a pointer to the Python object of class
+#' @returns `rcr_fit()` returns a pointer to the Python object of class
 #'          "`rcrbounds.RCRResults`" as returned by the Python call.
 #' @seealso [rcr()] the high-level version of this function which
 #'          should be used by most users.
 #' @export
-rcr.fit <- function(endog,
+rcr_fit <- function(endog,
                     exog,
                     rc_range = c(0.0, 1.0),
                     weights = NULL,
@@ -281,7 +285,7 @@ print.rcr <- function(x, ...) {
 #'           point-identified parameters of the rcr model object.
 #' @seealso [rcr()] to estimate the model, [coef()] to retrieve coefficient
 #'          estimates
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use coef() to recover the coefficients
@@ -324,7 +328,7 @@ vcov.rcr <- function(object, ...) {
 #'          confidence limits for each parameter
 #' @seealso [rcr()] to estimate the model, [effect_test()] to perform
 #'          hypothesis tests on the causal effect.
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use confint() to produce the confidence intervals
@@ -342,7 +346,7 @@ confint.rcr <- function(object,
     parm <- c(pnames, "effect")
   }
   a <- NULL
-  if (citype == "conservative" | citype == "Imbens-Manski") {
+  if (citype == "conservative" || citype == "Imbens-Manski") {
     a <- (1 - level) / 2
     a <- c(a, 1 - a)
   } else {
@@ -402,9 +406,10 @@ confint.rcr <- function(object,
 #' }
 #' `print.summary.rcr()` returns its own `x` argument invisibly.
 #' @seealso [rcr()] to estimate the model,
-#'          [confint.rcr()] to construct confidence intervals for other parameters,
+#'          [confint.rcr()] to construct confidence intervals for other
+#'          parameters,
 #'          [effect_test()] to test null hypotheses on the causal effect
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use summary() to produce the summary
@@ -534,7 +539,7 @@ effect_ci <- function(object,
 #'          specified null hypothesis.
 #' @seealso [rcr()] to estimate the model, [confint.rcr()] to construct
 #'          confidence intervals.
-#' @examples
+#' @examplesIf reticulate::py_module_available("rcrbounds")
 #' # Estimate the model
 #' result <- rcr(weight ~ Time | Diet, ChickWeight)
 #' # Use effect_test() with no options to test the null of zero effect
@@ -546,7 +551,7 @@ effect_test <- function(object, h0 = 0.0) {
   pmin <- 0.0
   pmid <- 0.5
   pmax <- 1.0
-  if (h0 >= object$coefficients[4] & h0 <= object$coefficients[5]) {
+  if (h0 >= object$coefficients[4] && h0 <= object$coefficients[5]) {
     pvalue <- 1.0
   } else {
     while (pmax - pmin > 0.0000001) {
@@ -555,7 +560,7 @@ effect_test <- function(object, h0 = 0.0) {
         citype = "Imbens-Manski",
         level = pmid
       )
-      if (h0 >= ci[1] & h0 <= ci[2]) {
+      if (h0 >= ci[1] && h0 <= ci[2]) {
         pmax <- pmid
       } else {
         pmin <- pmid
@@ -570,8 +575,8 @@ effect_test <- function(object, h0 = 0.0) {
 #' Plot method for RCR results
 #'
 #' `plot.rcr()` plots the main results of estimating an RCR model. The plot
-#' will display three elements: the `lambda(beta_x)` function, the value of `effectInf`,
-#' and the value of `rcInf`.
+#' will display three elements: the `lambda(beta_x)` function, the value of
+#' `effectInf`, and the value of `rcInf`.
 #'
 #' It is recommended that you create an initial plot with the default
 #' values of `xlim` and `ylim`, and then adjust these values as needed
@@ -591,20 +596,21 @@ effect_test <- function(object, h0 = 0.0) {
 #' @param col A vector of colors to be used for the model elements.  `col[1]`
 #'            will be the color of the `lambda(beta_x)` function, `col[2]` will
 #'            be the color of the vertical line depicting `effectInf`, and
-#'            `col[3]`will be the color of the horizontal line depicting `rcInf`.
-#'            If fewer than 3 colors are provided, `plot.rcr` will cycle
-#'            through the provided colors. Colors can be provided as simple
-#'            names, or in any other form described in the "Color Specification"
-#'            section of the documentation for [par()].
+#'            `col[3]`will be the color of the horizontal line depicting
+#'            `rcInf`. If fewer than 3 colors are provided, `plot.rcr` will
+#'            cycle through the provided colors. Colors can be provided as
+#'            simple names, or in any other form described in the "Color
+#'            Specification" section of the documentation for [par()].
 #' @param lty A vector of line types to be used for the model elements. `lty[1]`
 #'            will be the type of the `lambda(beta_x)` function, `lty[2]` will
 #'            be the type of the vertical line depicting `effectInf`, and
 #'            `lty[3]`will be the type of the horizontal line depicting `rcInf`.
 #'            If fewer than 3 line types are provided, `plot.rcr` will cycle
-#'            through the provided line types. Line types can be provided as simple
-#'            names, or in any other form described in the "Line Type Specification"
-#'            section of the documentation for [par()].
-#' @param ... Additional graphical parameters to be passed on to [plot.default()].
+#'            through the provided line types. Line types can be provided as
+#'            simple names, or in any other form described in the "Line Type
+#'            Specification" section of the documentation for [par()].
+#' @param ... Additional graphical parameters to be passed on to
+#'            [plot.default()].
 #' @returns `plot.rcr()` returns its input object `x` invisibly.
 #' @seealso [rcr()] to estimate the model
 #' @export
@@ -637,31 +643,31 @@ plot.rcr <- function(x,
     ...
   )
   # Add vertical line at effectInf
-  effectInf <- x$coefficients[2]
-  if (effectInf >= min(xlim) & effectInf <= max(xlim)) {
+  effect_inf <- x$coefficients[2]
+  if (effect_inf >= min(xlim) && effect_inf <= max(xlim)) {
     graphics::abline(
-      v = effectInf,
+      v = effect_inf,
       lty = ltypes[2],
       col = colors[2]
     )
     graphics::mtext(expression(beta[x]^infinity),
       side = 3,
-      at = effectInf,
+      at = effect_inf,
       col = colors[2]
     )
   }
   # Add horizontal line at rcInf
-  rcInf <- x$coefficients[1]
+  rc_inf <- x$coefficients[1]
   plotrange <- graphics::par("usr")
-  if (rcInf >= plotrange[3] & rcInf <= plotrange[4]) {
+  if (rc_inf >= plotrange[3] && rc_inf <= plotrange[4]) {
     graphics::abline(
-      h = rcInf,
+      h = rc_inf,
       lty = ltypes[3],
       col = colors[3]
     )
     graphics::mtext(expression(lambda^infinity),
       side = 4,
-      at = rcInf,
+      at = rc_inf,
       col = colors[3]
     )
   }

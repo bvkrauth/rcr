@@ -26,30 +26,31 @@ to \code{rcr}}
 \item{col}{A vector of colors to be used for the model elements.  \code{col[1]}
 will be the color of the \code{lambda(beta_x)} function, \code{col[2]} will
 be the color of the vertical line depicting \code{effectInf}, and
-\code{col[3]}will be the color of the horizontal line depicting \code{rcInf}.
-If fewer than 3 colors are provided, \code{plot.rcr} will cycle
-through the provided colors. Colors can be provided as simple
-names, or in any other form described in the "Color Specification"
-section of the documentation for \code{\link[=par]{par()}}.}
+\code{col[3]}will be the color of the horizontal line depicting
+\code{rcInf}. If fewer than 3 colors are provided, \code{plot.rcr} will
+cycle through the provided colors. Colors can be provided as
+simple names, or in any other form described in the "Color
+Specification" section of the documentation for \code{\link[=par]{par()}}.}
 
 \item{lty}{A vector of line types to be used for the model elements. \code{lty[1]}
 will be the type of the \code{lambda(beta_x)} function, \code{lty[2]} will
 be the type of the vertical line depicting \code{effectInf}, and
 \code{lty[3]}will be the type of the horizontal line depicting \code{rcInf}.
 If fewer than 3 line types are provided, \code{plot.rcr} will cycle
-through the provided line types. Line types can be provided as simple
-names, or in any other form described in the "Line Type Specification"
-section of the documentation for \code{\link[=par]{par()}}.}
+through the provided line types. Line types can be provided as
+simple names, or in any other form described in the "Line Type
+Specification" section of the documentation for \code{\link[=par]{par()}}.}
 
-\item{...}{Additional graphical parameters to be passed on to \code{\link[=plot.default]{plot.default()}}.}
+\item{...}{Additional graphical parameters to be passed on to
+\code{\link[=plot.default]{plot.default()}}.}
 }
 \value{
 \code{plot.rcr()} returns its input object \code{x} invisibly.
 }
 \description{
 \code{plot.rcr()} plots the main results of estimating an RCR model. The plot
-will display three elements: the \code{lambda(beta_x)} function, the value of \code{effectInf},
-and the value of \code{rcInf}.
+will display three elements: the \code{lambda(beta_x)} function, the value of
+\code{effectInf}, and the value of \code{rcInf}.
 }
 \details{
 It is recommended that you create an initial plot with the default

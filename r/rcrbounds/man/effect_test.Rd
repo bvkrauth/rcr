@@ -30,12 +30,14 @@ confidence interval.  As a result, this function reports a p-value but
 there is no test statistic.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available("rcrbounds")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Estimate the model
 result <- rcr(weight ~ Time | Diet, ChickWeight)
 # Use effect_test() with no options to test the null of zero effect
 effect_test(result)
 # This tests the null that the effect is equal to 8.0
 effect_test(result, 8.0)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rcr]{rcr()}} to estimate the model, \code{\link[=confint.rcr]{confint.rcr()}} to construct

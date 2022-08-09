@@ -1,12 +1,14 @@
 # rcr: Bounding a linear causal effect using relative correlation restrictions
 
-This repository contains the Stata and Python packages to implement the estimator described in my paper
-"Bounding a linear causal effect using relative correlation restrictions" (Journal of Econometric Methods 2016).
+This repository contains Stata, R, and Python packages to implement the estimator described in my paper
+"Bounding a linear causal effect using relative correlation restrictions" (*Journal of Econometric Methods* 2016).
 
-- The Stata package is called **rcr** and is available in the 
-  [stata](stata) folder.
 - The Python module is called **rcrbounds**  and is available
   in the [python](python) folder.
+- The Stata package is called **rcr** and is available in the
+  [stata](stata) folder.
+- The R package is called **rcrbounds**  and is available
+  in the [r](r) folder.
 
 The repository also contains Fortran source code for an older version of the
 Stata package, and various support files for testing.
@@ -17,6 +19,7 @@ The folder structure is:
 
   - [python](python): Python module
   - [stata](stata): Stata package
+  - [r](r): R package
   - [test](test): support files for testing Stata package
   - [bin](bin): binary executables for Fortran version (deprecated)
   - [src](src): Fortran source code (deprecated)

@@ -199,7 +199,7 @@ def test_rf_vceneg(model):
 
 def test_rf_weighted(endog, exog, weights):
     """estimate with weights"""
-    msk = (weights > 0.5)
+    msk = weights > 0.5
     model0 = RCR(endog[msk], exog[msk])
     model1 = RCR(endog, exog, weights=weights)
     model2 = RCR(endog, exog)

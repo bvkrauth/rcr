@@ -1543,8 +1543,8 @@ def rcfast(effect, simplified_moments):
     lf0_denom = (y - yhat -
                  (2.0) * effect * (yz - yzhat) +
                  effect ** 2 * (z - zhat))
-    lf1_num = (yz - yzhat - effect * (z - zhat))
-    lf1_denom = (yzhat - effect * zhat)
+    lf1_num = yz - yzhat - effect * (z - zhat)
+    lf1_denom = yzhat - effect * zhat
     msk = ((lf0_denom != 0.0) &
            (lf1_denom != 0.0) &
            (np.sign(lf0_num) == np.sign(lf0_denom)))

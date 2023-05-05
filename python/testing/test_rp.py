@@ -10,7 +10,7 @@ def test_rp_basic(results):
     """plot rcr function with default arguments"""
     rcvals, effectvals = results.model.rcvals(add_effectinf=True)
     test_ax = results.rcrplot()
-    assert type(test_ax).__name__ == "AxesSubplot"
+    assert type(test_ax).__name__ == "Axes"
     assert test_ax.get_title() == ""
     assert test_ax.get_xlabel() == 'Effect ($\\beta_x$)'
     assert test_ax.get_ylabel() == 'Relative correlation ($\\lambda$)'

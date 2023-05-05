@@ -141,13 +141,13 @@ def fixture_exog_df(dat, rcr_formula):
 
 @pytest.fixture(name="model")
 def fixture_model(endog, exog):
-    """construct RCR mdodel"""
+    """construct RCR model"""
     return RCR(endog, exog)
 
 
 @pytest.fixture(name="results")
 def fixture_results(model):
-    """fit RCR mdodel"""
+    """fit RCR model"""
     return model.fit()
 
 

@@ -20,7 +20,7 @@ local fname "rcr_example.dta"
 capture confirm file `fname'
 /* Otherwise use the web version */
 if (_rc != 0) {
-	local fname "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
+    local fname "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
 }
 di "Using data file `fname'"
 use "`fname'", clear
@@ -30,15 +30,15 @@ quietly gen zero = 0
 quietly gen one = 1
 quietly gen two = 2
 if (c(version) >= 14) {
-	local rng = c(rng)
-	set rng kiss32
+    local rng = c(rng)
+    set rng kiss32
 }
 set seed 53
 forvalues i = 1 / 20 {
-	quietly gen x`i' = runiform()
+    quietly gen x`i' = runiform()
 }
 if (c(version) >= 14) {
-	set rng `rng'
+    set rng `rng'
 }
 quietly egen ID = seq()
 quietly gen SAT1000 = SAT*1000
@@ -50,15 +50,15 @@ quietly gen Small_Class0001 = Small_Class*0.0001
 local os = c(os)
 capture rcr_config
 if !_rc {
-	local exe = r(default_version)
+    local exe = r(default_version)
 }
 else {
-	if "`os'" == "Windows" {
-		local exe "windows-fortran"
-	}
-	else if "`os'" == "Unix" {
-		local exe "unix-fortran"
-	}
+    if "`os'" == "Windows" {
+        local exe "windows-fortran"
+    }
+    else if "`os'" == "Unix" {
+        local exe "unix-fortran"
+    }
 }
 
 /* Set tolerances for numeric comparisons.  The Windows Python version
@@ -97,100 +97,100 @@ assert         e(lambdaH)   == 1
 assert         e(lambdaL)   == 0
 assert         e(N)         == 5839
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_H)  , 6.488085265277207 ) <  `tol'
-	assert reldif( e(betaxCI_L)  , 3.259480712980887 ) <  `tol'
-	mat T_b = J(1,5,0)
-	mat T_b[1,1] =   12.3105990931158
-	mat T_b[1,2] =  8.169709964904111
-	mat T_b[1,3] =  28.93548917053018
-	mat T_b[1,4] =  5.135043764985984
-	mat T_b[1,5] =  5.201502573585918
-	matrix C_b = e(b)
-	assert mreldif( C_b , T_b ) < `tol'
-	_assert_streq `"`: rowfullnames C_b'"' `"y1"'
-	_assert_streq `"`: colfullnames C_b'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	mat drop C_b T_b
-	mat T_V = J(5,5,0)
-	mat T_V[1,1] =  4.402731051266596
-	mat T_V[1,2] =    1.6809105802654
-	mat T_V[1,3] =  14.86034025025826
-	mat T_V[1,4] =  .0262163589896056
-	mat T_V[1,5] =  .0148105709732053
-	mat T_V[2,1] =    1.6809105802654
-	mat T_V[2,2] =  936.8160737849615
-	mat T_V[2,3] = -3305.544936932158
-	mat T_V[2,4] = -20.86047836838232
-	mat T_V[2,5] =  .0945995729744964
-	mat T_V[3,1] =  14.86034025025826
-	mat T_V[3,2] = -3305.544936932158
-	mat T_V[3,3] =  11776.47628993367
-	mat T_V[3,4] =  76.32135283048623
-	mat T_V[3,5] =  2.093295532152181
-	mat T_V[4,1] =  .0262163589896056
-	mat T_V[4,2] = -20.86047836838232
-	mat T_V[4,3] =  76.32135283048623
-	mat T_V[4,4] =  .9157293950663895
-	mat T_V[4,5] =  .4385652206329565
-	mat T_V[5,1] =  .0148105709732053
-	mat T_V[5,2] =  .0945995729744964
-	mat T_V[5,3] =  2.093295532152181
-	mat T_V[5,4] =  .4385652206329565
-	mat T_V[5,5] =  .4309027116579904
-	matrix C_V = e(V)
-	assert mreldif( C_V , T_V ) < `tol'
-	_assert_streq `"`: rowfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	_assert_streq `"`: colfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	mat drop C_V T_V
+    assert reldif( e(betaxCI_H)  , 6.488085265277207 ) <  `tol'
+    assert reldif( e(betaxCI_L)  , 3.259480712980887 ) <  `tol'
+    mat T_b = J(1,5,0)
+    mat T_b[1,1] =   12.3105990931158
+    mat T_b[1,2] =  8.169709964904111
+    mat T_b[1,3] =  28.93548917053018
+    mat T_b[1,4] =  5.135043764985984
+    mat T_b[1,5] =  5.201502573585918
+    matrix C_b = e(b)
+    assert mreldif( C_b , T_b ) < `tol'
+    _assert_streq `"`: rowfullnames C_b'"' `"y1"'
+    _assert_streq `"`: colfullnames C_b'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    mat drop C_b T_b
+    mat T_V = J(5,5,0)
+    mat T_V[1,1] =  4.402731051266596
+    mat T_V[1,2] =    1.6809105802654
+    mat T_V[1,3] =  14.86034025025826
+    mat T_V[1,4] =  .0262163589896056
+    mat T_V[1,5] =  .0148105709732053
+    mat T_V[2,1] =    1.6809105802654
+    mat T_V[2,2] =  936.8160737849615
+    mat T_V[2,3] = -3305.544936932158
+    mat T_V[2,4] = -20.86047836838232
+    mat T_V[2,5] =  .0945995729744964
+    mat T_V[3,1] =  14.86034025025826
+    mat T_V[3,2] = -3305.544936932158
+    mat T_V[3,3] =  11776.47628993367
+    mat T_V[3,4] =  76.32135283048623
+    mat T_V[3,5] =  2.093295532152181
+    mat T_V[4,1] =  .0262163589896056
+    mat T_V[4,2] = -20.86047836838232
+    mat T_V[4,3] =  76.32135283048623
+    mat T_V[4,4] =  .9157293950663895
+    mat T_V[4,5] =  .4385652206329565
+    mat T_V[5,1] =  .0148105709732053
+    mat T_V[5,2] =  .0945995729744964
+    mat T_V[5,3] =  2.093295532152181
+    mat T_V[5,4] =  .4385652206329565
+    mat T_V[5,5] =  .4309027116579904
+    matrix C_V = e(V)
+    assert mreldif( C_V , T_V ) < `tol'
+    _assert_streq `"`: rowfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    _assert_streq `"`: colfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    mat drop C_V T_V
 }
 else if inlist("`exe'","windows-fortran","unix-fortran") {
-	assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  `tol'
-	assert reldif( e(betaxCI_L)  , 3.259480713112168 ) <  `tol'
-	tempname T_b
-	mat `T_b' = J(1,5,0)
-	mat `T_b'[1,1] =    12.310599093114
-	mat `T_b'[1,2] =  8.169709964978111
-	mat `T_b'[1,3] =   28.9354891702633
-	mat `T_b'[1,4] =   5.13504376498382
-	mat `T_b'[1,5] =   5.20150257358542
-	tempname C_b
-	matrix `C_b' = e(b)
-	assert mreldif( `C_b' , `T_b' ) < `tol'
-	_assert_streq `"`: rowfullnames `C_b''"' `"y1"'
-	_assert_streq `"`: colfullnames `C_b''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	mat drop `C_b' `T_b'
-	tempname T_V
-	mat `T_V' = J(5,5,0)
-	mat `T_V'[1,1] =  4.402731051063719
-	mat `T_V'[1,2] =  1.680910570472625
-	mat `T_V'[1,3] =  14.86034005429277
-	mat `T_V'[1,4] =  .0262163576425921
-	mat `T_V'[1,5] =  .0148105705706819
-	mat `T_V'[2,1] =  1.680910570472625
-	mat `T_V'[2,2] =  936.8160737460918
-	mat `T_V'[2,3] = -3305.544936154673
-	mat `T_V'[2,4] = -20.86047836198298
-	mat `T_V'[2,5] =  .0945995722412722
-	mat `T_V'[3,1] =  14.86034005429277
-	mat `T_V'[3,2] = -3305.544936154673
-	mat `T_V'[3,3] =  11776.47628212536
-	mat `T_V'[3,4] =  76.32135272938001
-	mat `T_V'[3,5] =  2.093295479416368
-	mat `T_V'[4,1] =  .0262163576425921
-	mat `T_V'[4,2] = -20.86047836198298
-	mat `T_V'[4,3] =  76.32135272938001
-	mat `T_V'[4,4] =  .9157293949360822
-	mat `T_V'[4,5] =  .4385652205906294
-	mat `T_V'[5,1] =  .0148105705706819
-	mat `T_V'[5,2] =  .0945995722412722
-	mat `T_V'[5,3] =  2.093295479416368
-	mat `T_V'[5,4] =  .4385652205906294
-	mat `T_V'[5,5] =  .4309027113843122
-	tempname C_V
-	matrix `C_V' = e(V)
-	assert mreldif( `C_V' , `T_V' ) < `tol'
-	_assert_streq `"`: rowfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	_assert_streq `"`: colfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	mat drop `C_V' `T_V'
+    assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  `tol'
+    assert reldif( e(betaxCI_L)  , 3.259480713112168 ) <  `tol'
+    tempname T_b
+    mat `T_b' = J(1,5,0)
+    mat `T_b'[1,1] =    12.310599093114
+    mat `T_b'[1,2] =  8.169709964978111
+    mat `T_b'[1,3] =   28.9354891702633
+    mat `T_b'[1,4] =   5.13504376498382
+    mat `T_b'[1,5] =   5.20150257358542
+    tempname C_b
+    matrix `C_b' = e(b)
+    assert mreldif( `C_b' , `T_b' ) < `tol'
+    _assert_streq `"`: rowfullnames `C_b''"' `"y1"'
+    _assert_streq `"`: colfullnames `C_b''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    mat drop `C_b' `T_b'
+    tempname T_V
+    mat `T_V' = J(5,5,0)
+    mat `T_V'[1,1] =  4.402731051063719
+    mat `T_V'[1,2] =  1.680910570472625
+    mat `T_V'[1,3] =  14.86034005429277
+    mat `T_V'[1,4] =  .0262163576425921
+    mat `T_V'[1,5] =  .0148105705706819
+    mat `T_V'[2,1] =  1.680910570472625
+    mat `T_V'[2,2] =  936.8160737460918
+    mat `T_V'[2,3] = -3305.544936154673
+    mat `T_V'[2,4] = -20.86047836198298
+    mat `T_V'[2,5] =  .0945995722412722
+    mat `T_V'[3,1] =  14.86034005429277
+    mat `T_V'[3,2] = -3305.544936154673
+    mat `T_V'[3,3] =  11776.47628212536
+    mat `T_V'[3,4] =  76.32135272938001
+    mat `T_V'[3,5] =  2.093295479416368
+    mat `T_V'[4,1] =  .0262163576425921
+    mat `T_V'[4,2] = -20.86047836198298
+    mat `T_V'[4,3] =  76.32135272938001
+    mat `T_V'[4,4] =  .9157293949360822
+    mat `T_V'[4,5] =  .4385652205906294
+    mat `T_V'[5,1] =  .0148105705706819
+    mat `T_V'[5,2] =  .0945995722412722
+    mat `T_V'[5,3] =  2.093295479416368
+    mat `T_V'[5,4] =  .4385652205906294
+    mat `T_V'[5,5] =  .4309027113843122
+    tempname C_V
+    matrix `C_V' = e(V)
+    assert mreldif( `C_V' , `T_V' ) < `tol'
+    _assert_streq `"`: rowfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    _assert_streq `"`: colfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    mat drop `C_V' `T_V'
 }
 /* End comparison */
 
@@ -202,7 +202,7 @@ est replay basic
 rcr SAT1000 Small_Class1000 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 assert reldif( e(betaxCI_H)  , 6.488093355120499 ) <  `tol'
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_L)  , 3.259476611208612 ) <  `tol'
+    assert reldif( e(betaxCI_L)  , 3.259476611208612 ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , 3.259476500967557 ) <  `tol'
@@ -213,8 +213,8 @@ else if inlist("`exe'","unix-fortran") {
 
 rcr SAT0001 Small_Class0001 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree 
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_L)  , 3.259111536946617 ) <  `tol'
-	assert reldif( e(betaxCI_H)  , 6.488083259649406 ) <  `tol'
+    assert reldif( e(betaxCI_L)  , 3.259111536946617 ) <  `tol'
+    assert reldif( e(betaxCI_H)  , 6.488083259649406 ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , 3.259481216660567 ) <  `tol'
@@ -228,8 +228,8 @@ else if inlist("`exe'","unix-fortran") {
 /* Scaling outcome up or treatment down, either should multiply coefficient by 1000 */
 rcr SAT1000 Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_L)  , 3259.480923495696 ) <  `tol'
-	assert reldif( e(betaxCI_H)  , 6488.085335644481 ) <  `tol'
+    assert reldif( e(betaxCI_L)  , 3259.480923495696 ) <  `tol'
+    assert reldif( e(betaxCI_H)  , 6488.085335644481 ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , 3259.481232785231 ) <  `tol'
@@ -242,8 +242,8 @@ else if inlist("`exe'","unix-fortran") {
 
 rcr SAT Small_Class0001 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_L)  , 32599.0544917943  ) <  `tol'
-	assert reldif( e(betaxCI_H)  , 64878.0395553112  ) <  `tol'
+    assert reldif( e(betaxCI_L)  , 32599.0544917943  ) <  `tol'
+    assert reldif( e(betaxCI_H)  , 64878.0395553112  ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , 32607.22424757308 ) <  `tol'
@@ -258,8 +258,8 @@ else if inlist("`exe'","unix-fortran") {
 /* Scaling outcome down or treatment up, either should multiply coefficient by 0.0001 */
 rcr SAT0001 Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_L)  , .0003259480936204 ) <  `tol'
-	assert reldif( e(betaxCI_H)  , .00064880852586   ) <  `tol'
+    assert reldif( e(betaxCI_L)  , .0003259480936204 ) <  `tol'
+    assert reldif( e(betaxCI_H)  , .00064880852586   ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , .000325948074516  ) <  `tol'
@@ -271,8 +271,8 @@ else if inlist("`exe'","unix-fortran") {
 }
 rcr SAT Small_Class1000 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
-	assert reldif( e(betaxCI_L)  , .0032594806861852 ) <  `tol'
-	assert reldif( e(betaxCI_H)  , .0064880852480392 ) <  `tol'
+    assert reldif( e(betaxCI_L)  , .0032594806861852 ) <  `tol'
+    assert reldif( e(betaxCI_H)  , .0064880852480392 ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , .0032594807011477 ) <  `tol'
@@ -303,10 +303,10 @@ rcof "noisily rcr SAT Small_Class White_Asian White_Asian" == 1
 /* More than 25 control variables */
 scalar max_controls = floor(sqrt(c(max_matsize)))-3
 if max_controls <= 25 {
-	rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 103
+    rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 103
 }
 else {
-	rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 0	
+    rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 0    
 }
 
 /***** Things that should produce a warning message but give it a try *****/
@@ -332,10 +332,10 @@ quietly save `tmp', replace
 quietly replace unrelated_variable = 0
 quietly append using `tmp'
 if inlist("`exe'","python") {
-	rcof "noisily rcr SAT Small_Class unrelated_variable" == 7103
+    rcof "noisily rcr SAT Small_Class unrelated_variable" == 7103
 }
 else if inlist("`exe'","windows-fortran","unix-fortran") {
-	rcof "noisily rcr SAT Small_Class unrelated_variable" == 1
+    rcof "noisily rcr SAT Small_Class unrelated_variable" == 1
 }
 restore
 
@@ -462,16 +462,16 @@ assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  `tol'
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(. 0)
 assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  `tol'
 if inlist("`exe'","python") & inlist(c(os),"Windows") {
-	assert reldif( e(betaxCI_H)  , 13.28548258283382 ) <  `tol'
+    assert reldif( e(betaxCI_H)  , 13.28548258283382 ) <  `tol'
 }
 else if inlist("`exe'","python") & inlist(c(os),"Unix") {
-	assert reldif( e(betaxCI_H)  , 13.94704306786475 ) <  `tol'
+    assert reldif( e(betaxCI_H)  , 13.94704306786475 ) <  `tol'
 }
 else if inlist("`exe'","windows-fortran") {
-	* assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  `tol'
+    * assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  `tol'
 }
 else if inlist("`exe'","unix-fortran") {
-	* assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  `tol'
+    * assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  `tol'
 }
 /* Going to +infinity */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 .)
@@ -591,72 +591,72 @@ mat drop `C_b' `T_b'
 est restore basic
 estat vce
 if inlist("`exe'","python") {
-	mat T_V = J(5,5,0)
-	mat T_V[1,1] =  4.402731051266596
-	mat T_V[1,2] =    1.6809105802654
-	mat T_V[1,3] =  14.86034025025826
-	mat T_V[1,4] =  .0262163589896056
-	mat T_V[1,5] =  .0148105709732053
-	mat T_V[2,1] =    1.6809105802654
-	mat T_V[2,2] =  936.8160737849615
-	mat T_V[2,3] = -3305.544936932158
-	mat T_V[2,4] = -20.86047836838232
-	mat T_V[2,5] =  .0945995729744964
-	mat T_V[3,1] =  14.86034025025826
-	mat T_V[3,2] = -3305.544936932158
-	mat T_V[3,3] =  11776.47628993367
-	mat T_V[3,4] =  76.32135283048623
-	mat T_V[3,5] =  2.093295532152181
-	mat T_V[4,1] =  .0262163589896056
-	mat T_V[4,2] = -20.86047836838232
-	mat T_V[4,3] =  76.32135283048623
-	mat T_V[4,4] =  .9157293950663895
-	mat T_V[4,5] =  .4385652206329565
-	mat T_V[5,1] =  .0148105709732053
-	mat T_V[5,2] =  .0945995729744964
-	mat T_V[5,3] =  2.093295532152181
-	mat T_V[5,4] =  .4385652206329565
-	mat T_V[5,5] =  .4309027116579904
-	matrix C_V = r(V)
-	assert mreldif( C_V , T_V ) < `tol'
-	_assert_streq `"`: rowfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	_assert_streq `"`: colfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	mat drop C_V T_V
+    mat T_V = J(5,5,0)
+    mat T_V[1,1] =  4.402731051266596
+    mat T_V[1,2] =    1.6809105802654
+    mat T_V[1,3] =  14.86034025025826
+    mat T_V[1,4] =  .0262163589896056
+    mat T_V[1,5] =  .0148105709732053
+    mat T_V[2,1] =    1.6809105802654
+    mat T_V[2,2] =  936.8160737849615
+    mat T_V[2,3] = -3305.544936932158
+    mat T_V[2,4] = -20.86047836838232
+    mat T_V[2,5] =  .0945995729744964
+    mat T_V[3,1] =  14.86034025025826
+    mat T_V[3,2] = -3305.544936932158
+    mat T_V[3,3] =  11776.47628993367
+    mat T_V[3,4] =  76.32135283048623
+    mat T_V[3,5] =  2.093295532152181
+    mat T_V[4,1] =  .0262163589896056
+    mat T_V[4,2] = -20.86047836838232
+    mat T_V[4,3] =  76.32135283048623
+    mat T_V[4,4] =  .9157293950663895
+    mat T_V[4,5] =  .4385652206329565
+    mat T_V[5,1] =  .0148105709732053
+    mat T_V[5,2] =  .0945995729744964
+    mat T_V[5,3] =  2.093295532152181
+    mat T_V[5,4] =  .4385652206329565
+    mat T_V[5,5] =  .4309027116579904
+    matrix C_V = r(V)
+    assert mreldif( C_V , T_V ) < `tol'
+    _assert_streq `"`: rowfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    _assert_streq `"`: colfullnames C_V'"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    mat drop C_V T_V
 }
 else if inlist("`exe'","windows-fortran","unix-fortran") {
-	tempname T_V
-	mat `T_V' = J(5,5,0)
-	mat `T_V'[1,1] =  4.402731051063719
-	mat `T_V'[1,2] =  1.680910570472625
-	mat `T_V'[1,3] =  14.86034005429277
-	mat `T_V'[1,4] =  .0262163576425921
-	mat `T_V'[1,5] =  .0148105705706819
-	mat `T_V'[2,1] =  1.680910570472625
-	mat `T_V'[2,2] =  936.8160737460918
-	mat `T_V'[2,3] = -3305.544936154673
-	mat `T_V'[2,4] = -20.86047836198298
-	mat `T_V'[2,5] =  .0945995722412722
-	mat `T_V'[3,1] =  14.86034005429277
-	mat `T_V'[3,2] = -3305.544936154673
-	mat `T_V'[3,3] =  11776.47628212536
-	mat `T_V'[3,4] =  76.32135272938001
-	mat `T_V'[3,5] =  2.093295479416368
-	mat `T_V'[4,1] =  .0262163576425921
-	mat `T_V'[4,2] = -20.86047836198298
-	mat `T_V'[4,3] =  76.32135272938001
-	mat `T_V'[4,4] =  .9157293949360822
-	mat `T_V'[4,5] =  .4385652205906294
-	mat `T_V'[5,1] =  .0148105705706819
-	mat `T_V'[5,2] =  .0945995722412722
-	mat `T_V'[5,3] =  2.093295479416368
-	mat `T_V'[5,4] =  .4385652205906294
-	mat `T_V'[5,5] =  .4309027113843122
-	tempname C_V
-	matrix `C_V' = r(V)
-	assert mreldif( `C_V' , `T_V' ) < `tol'
-	_assert_streq `"`: rowfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	_assert_streq `"`: colfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
-	mat drop `C_V' `T_V'
+    tempname T_V
+    mat `T_V' = J(5,5,0)
+    mat `T_V'[1,1] =  4.402731051063719
+    mat `T_V'[1,2] =  1.680910570472625
+    mat `T_V'[1,3] =  14.86034005429277
+    mat `T_V'[1,4] =  .0262163576425921
+    mat `T_V'[1,5] =  .0148105705706819
+    mat `T_V'[2,1] =  1.680910570472625
+    mat `T_V'[2,2] =  936.8160737460918
+    mat `T_V'[2,3] = -3305.544936154673
+    mat `T_V'[2,4] = -20.86047836198298
+    mat `T_V'[2,5] =  .0945995722412722
+    mat `T_V'[3,1] =  14.86034005429277
+    mat `T_V'[3,2] = -3305.544936154673
+    mat `T_V'[3,3] =  11776.47628212536
+    mat `T_V'[3,4] =  76.32135272938001
+    mat `T_V'[3,5] =  2.093295479416368
+    mat `T_V'[4,1] =  .0262163576425921
+    mat `T_V'[4,2] = -20.86047836198298
+    mat `T_V'[4,3] =  76.32135272938001
+    mat `T_V'[4,4] =  .9157293949360822
+    mat `T_V'[4,5] =  .4385652205906294
+    mat `T_V'[5,1] =  .0148105705706819
+    mat `T_V'[5,2] =  .0945995722412722
+    mat `T_V'[5,3] =  2.093295479416368
+    mat `T_V'[5,4] =  .4385652205906294
+    mat `T_V'[5,5] =  .4309027113843122
+    tempname C_V
+    matrix `C_V' = r(V)
+    assert mreldif( `C_V' , `T_V' ) < `tol'
+    _assert_streq `"`: rowfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    _assert_streq `"`: colfullnames `C_V''"' `"lambdaInf betaxInf lambda0 betaxL betaxH"'
+    mat drop `C_V' `T_V'
 }
 
 estat summarize
@@ -733,7 +733,7 @@ quietly summarize lambda
 /* If previous plot doesn't exist, create one */
 capture confirm file "rcrplot1.ps"
 if (_rc != 0) {
-	quietly graph export rcrplot1.ps, as(ps) replace
+    quietly graph export rcrplot1.ps, as(ps) replace
 }
 tempfile rcrplot
 quietly graph export `rcrplot', as(ps) replace
@@ -748,7 +748,7 @@ rcrplot, xrange(-20 20) yrange(-40 40)
 /* If previous plot doesn't exist, create one */
 capture confirm file "rcrplot2.ps"
 if (_rc != 0) {
-	quietly graph export rcrplot2.ps, as(ps) replace
+    quietly graph export rcrplot2.ps, as(ps) replace
 }
 quietly graph export `rcrplot', as(ps) replace
 checksum "rcrplot2.ps"
@@ -777,13 +777,13 @@ assert reldif( r(p)  , .0500000163998828 ) <  `tol'
    result for testing purposes. */
 rcr_config
 if r(default_version) == "python" {
-	* missing python modules, use fortran if possible
-	quietly rcr_config , forceversion(17) forceos("Windows") forcereq("junk")
-	assert r(default_version) == "windows-fortran"
-	quietly rcr_config , forceversion(17) forceos("Unix") forcereq("junk")
-	assert r(default_version) == "unix-fortran"
-	quietly rcr_config , forceversion(17) forceos("MacOS") forcereq("junk")
-	assert r(default_version) == "none"
+    * missing python modules, use fortran if possible
+    quietly rcr_config , forceversion(17) forceos("Windows") forcereq("junk")
+    assert r(default_version) == "windows-fortran"
+    quietly rcr_config , forceversion(17) forceos("Unix") forcereq("junk")
+    assert r(default_version) == "unix-fortran"
+    quietly rcr_config , forceversion(17) forceos("MacOS") forcereq("junk")
+    assert r(default_version) == "none"
 }
 * version < 16; use fortran if possible
 quietly rcr_config , forceversion(12) forceos("Windows")

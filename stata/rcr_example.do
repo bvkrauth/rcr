@@ -19,7 +19,7 @@ local fname "rcr_example.dta"
 capture confirm file `fname'
 /* Otherwise use the web version */
 if (_rc != 0) {
-	local fname "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
+    local fname "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
 }
 di "Using data file `fname'"
 use "`fname'", clear

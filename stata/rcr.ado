@@ -504,14 +504,14 @@ program define ci_conservative, rclass
     if _se[betaxL] > 0 {
         return scalar betaxCI_L = _b[betaxL]-(invnorm(1-((100-`level')/200.0))* _se[betaxL])
     }
-	else {
+    else {
         return scalar betaxCI_L = -maxdouble()/10
     }
     * Upper bound of betax's CI
     if _se[betaxH] > 0 {
         return scalar betaxCI_H = _b[betaxH]+(invnorm(1-((100-`level')/200.0))* _se[betaxH])
     }
-	else {
+    else {
         return scalar betaxCI_H = maxdouble()/10
     }
 end
@@ -542,14 +542,14 @@ program define ci_imbensmanski, rclass
     if _se[betaxL] > 0 {
         return scalar betaxCI_L = _b[betaxL]-((`cv')* _se[betaxL])
     }
-	else {
+    else {
         return scalar betaxCI_L = -maxdouble()/10
     }
     * Upper bound of betax's CI
     if _se[betaxH] > 0 {
         return scalar betaxCI_H = _b[betaxH]+((`cv')* _se[betaxH])
     }
-	else {
+    else {
         return scalar betaxCI_H = maxdouble()/10
     }
 end
@@ -561,7 +561,7 @@ program define ci_lower, rclass
     if _se[betaxH] > 0 {
         return scalar betaxCI_H = _b[betaxH]+(invnorm(1-((100-`level')/100.0))* _se[betaxH])
     }
-	else {
+    else {
         return scalar betaxCI_H = maxdouble()/10
     }
 end
@@ -572,7 +572,7 @@ program define ci_upper, rclass
     if _se[betaxL] > 0 {
         return scalar betaxCI_L = _b[betaxL]-(invnorm(1-((100-`level')/100.0))* _se[betaxL])
     }
-	else {
+    else {
         return scalar betaxCI_L = -maxdouble()/10
     }
     return scalar betaxCI_H = maxdouble()/10

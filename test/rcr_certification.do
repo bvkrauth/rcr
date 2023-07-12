@@ -47,12 +47,12 @@ quietly gen Small_Class1000 = Small_Class*1000
 quietly gen Small_Class0001 = Small_Class*0.0001
 
 /* Determine which version is supported on this system */
+local os = c(os)
 capture rcr_config
 if !_rc {
 	local exe = r(default_version)
 }
 else {
-	local os = c(os)
 	if "`os'" == "Windows" {
 		local exe "windows-fortran"
 	}
@@ -72,6 +72,8 @@ if c(os) == "Windows" & "`exe'" == "python" {
 else {
     local tol "1E-4"
 }
+
+di "Parameter values for tests: os = `os', exe = `exe', tol = `tol'"
 
 /*******************************************************************
 * Basic regression with default options 

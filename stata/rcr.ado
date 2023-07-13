@@ -24,19 +24,23 @@ program define rcr , eclass byable(recall)
         exit
     }
     * Otherwise, process all of the arguments
-    * First var = y(outcome) , Second var = x(treatment), Remaining vars= c(controls)
-    * Limit on number of control variables is a function of Stata's limits on MATSIZE
-    * Standard estimation command arguments, handled in the standard way
-    * Standard option for cluster-corrected standard errors
-    * We don't have the robust option - the program uses Stata's MEAN command, which doesn't support it
-    * alternative to cluster
-    * Undocumented option to save intermediate files
-    * Option to force a particular version
-    * Option to save details
-    * This is a special option for the type of confidence interval to calculate for BetaX
-    * Standard option for specifying the confidence level
-    * Lambda describes the lower and upper bound for the lambda (relative correlation) parameter
-    * A missing value for the upper [lower] bound indicates that there is no upper [lower] bound
+    * VARLIST is a list of 3+ variables:
+    *     First var = y(outcome)
+    *     Second var = x(treatment)
+    *     Remaining vars= c(controls)
+    * The limit on number of control variables is a function of Stata's limits
+    * on MATSIZE
+    * IF/IN/WEIGHTS are standard estimation command options
+    * CLUSTER and VCE are also standard options
+    * SAVE is an undocumented option to save intermediate files
+    * EXE is an option to force a particular version of the external program
+    * DETAILS is an option to save details for graphing
+    * CITYPE is a special option for the type of confidence interval to
+    * calculate for BetaX
+    * LEVEL is a standard option for specifying the confidence level
+    * LAMBDA describes the lower and upper bound for the lambda (relative
+    * correlation) parameter. A missing value for the upper [lower] bound
+    * indicates that there is no upper [lower] bound
     syntax varlist(min = 3) ///
             [if] [in] [fw aw pw iw] ///
             [, CLuster(varname) ///
@@ -51,15 +55,18 @@ program define rcr , eclass byable(recall)
     tempname lamb length moments lambf results V b gradient
     **** (1) Process the command options
     * Process varlist
-    * The first variable name in varlist refers to the outcome variable and will be stored in DEPVAR
+    * The first variable name in varlist refers to the outcome variable and
+    * will be stored in DEPVAR
     gettoken depvar indepvar: varlist
-    * The second variable name in varlist refers to the treatment variable and will be stored in TREATVAR
-    * The remaining variable name(s) refer to the control variable(s) and will be stored in CTRLVAR
+    * The second variable name in varlist refers to the treatment variable and
+    * will be stored in TREATVAR
+    * The remaining variable name(s) refer to the control variable(s) and will
+    * be stored in CTRLVAR
     gettoken treatvar ctrlvar: indepvar
-    * The next line processes the IF and IN user options according to Stata's rules.
+    * The next line processes the IF and IN user options according to Stata's
+    * rules.
     marksample touse
-    * The weights (fw aw pw iw) and level are automatically processed by Stata.
-    * Fill in some default values
+    * The weights (fw aw pw iw) and level are automatically processed by Stata
     if ("`citype'" == "") {
         local citype "Conservative"
     }
@@ -94,13 +101,17 @@ program define rcr , eclass byable(recall)
         }
     }
     **** (2) Set the appropriate matsize
-    * The number of explanatory variables is limited by the value of matsize.  The algorithm is based on the second moment
-    * matrix of the data.  With K variables (1 outcome, 1 explanatory, K-2 control), that matrix is
+    * The number of explanatory variables is limited by the value of matsize.
+    * The algorithm is based on the second moment
+    * matrix of the data.  With K variables (1 outcome, 1 explanatory,
+    * K-2 control), that matrix is
     * (K+1)*(K+1) because of the intercept.   So there can be no more than:
-    *      no more than 25 = floor(sqrt(800)-3) control variables for Stata BE/IC
-    *      no more than 101 = floor(sqrt(11000)-3) control variables for Stata SE/MP
-    * NOTE: The second moment matrix is symmetric, so the code could be rewritten to take advantage of that.
-    * By my calculation this would raise the Stata IC limit to 36 control variables, and the Stata SE limit to 146.
+    *      25 = floor(sqrt(800)-3) control variables for Stata BE/IC
+    *      101 = floor(sqrt(11000)-3) control variables for Stata SE/MP
+    * NOTE: The second moment matrix is symmetric, so the code could be
+    * rewritten to take advantage of that. By my calculation, this would
+    * raise the Stata IC limit to 36 control variables, and the Stata SE limit
+    * to 146.
     local mat_max = c(max_matsize)
     local mat_min = c(min_matsize)
     local mat_current = c(matsize)
@@ -117,7 +128,8 @@ program define rcr , eclass byable(recall)
     **** (3) Calculate the moment vector (moments) and its variance (V)
     * Grab the number of control variables
     local num : word count `ctrlvar'
-    * Grab the number of all the variables specified in the RCR command (should be num + 2)
+    * Grab the number of all the variables specified in the RCR command
+    * (should be num + 2)
     local numall: word count `varlist'
     * Check for whether there are enough observations
     quietly count if `touse' == 1
@@ -166,34 +178,41 @@ program define rcr , eclass byable(recall)
         }
     }
     tempvar y2 yz z2
-    * Now, for each of the variables in the moment vector, we need to do two things:
+    * Now, for each of the variables in the moment vector, we need to do two
+    * things:
     *     (1) Generate the variable if it doesn't already exist.
-    *     (2) Maintain a running list of the variables we have generated, in the macro BIGLIST
-    * WARNING: Be very careful with BIGLIST.  It can grow very large, and this creates a hidden
-    * risk in Stata.  The maximum size of a *macro* in Stata is very large (67,784 in Intercooled)
-    * but the maximum size of a *string variable* is very small (244).  What's worse
-    * is that if you use a macro in any string expression (roughly, anything that involves an equals
-    * sign) it will get quietly truncated to 244 characters.  No error or warning message.
-    * This can create very hard-to-find bugs in the program.
-    * So the rule of thumb is to never use BIGLIST in any expression involving a "=".
+    *     (2) Maintain a running list of the variables we have generated, in
+    *         the macro BIGLIST
+    * WARNING: Be very careful with BIGLIST.  It can grow very large, and this
+    * creates a hidden risk in Stata.  The maximum size of a *macro* in Stata
+    * is very large (67,784 in Intercooled) but the maximum size of a
+    * *string variable* is very small (244).  What's worse is that if you use
+    * a macro in any string expression (roughly, anything that involves an
+    * equals sign) it will get quietly truncated to 244 characters.  No error
+    * or warning message. This can create very hard-to-find bugs in the
+    * program. So the rule of thumb is to never use BIGLIST in any expression
+    * involving a "=".
     * First, add the original variables.  They don't need to be generated.
     local biglist "`ctrlvar' `depvar' `treatvar'"
     * Next, add all of the cross-products between X and (X,y,z)
     forvalues thisrow = 1 / `num'{
             forvalues thiscolumn = 1 / `num' {
                 if `thisrow' <= `thiscolumn' {
-                    * Assign values to the temp names created before, these are
-                    * X products with no repetition
-                    *``thisrow'' and ``thiscolumn'' come from elements of ctrlvar that I tokenized above
+                    * Assign values to the temp names created before, these
+                    * are X products with no repetition
+                    *``thisrow'' and ``thiscolumn'' come from elements of
+                    * ctrlvar that I tokenized above
                     capture generate double `X`thisrow'X`thiscolumn'' = ``thisrow'' * ``thiscolumn''
                     * adding X products to the local macro
                     local biglist "`biglist' `X`thisrow'X`thiscolumn''"
                 }
             }
-            * The following code assigns values to X(thisrow)Y products, thisrow changing from 1 to #ctrl vars
+            * The following code assigns values to X(thisrow)Y products,
+            * thisrow changing from 1 to #ctrl vars
             capture generate double `X`thisrow'Y' = ``thisrow'' * `depvar'
             local biglist "`biglist' `X`thisrow'Y'"
-            * The following code assigns values to X(thisrow)Z products, thisrow changing from 1 to #ctrl vars
+            * The following code assigns values to X(thisrow)Z products,
+            * thisrow changing from 1 to #ctrl vars
             capture generate double `X`thisrow'Z' = ``thisrow'' * `treatvar'
             local biglist "`biglist' `X`thisrow'Z'"
     }
@@ -211,15 +230,19 @@ program define rcr , eclass byable(recall)
     * LENGTH will be the first row in the file.  It contains three numbers:
     *    The size of the moment vector (colsof(e(b))
     *    The number of lambda ranges provided (always 1 for this program)
-    *    A big floating-point number.  All numbers above this will be treated as infinite (maxdouble()/10)
+    *    A big floating-point number.  All numbers above this will be treated
+    *    as infinite (maxdouble()/10)
     * this is the length of the moment vector and lambda vector
     matrix `length' = (colsof(e(b)), 1, maxdouble() / 10)
-    * MOMENTS will be the second row in the file.  It is the vector of moments that we just calculated
+    * MOMENTS will be the second row in the file.  It is the vector of moments
+    * that we just calculated
     matrix `moments' = e(b)
-    * LAMBF will be the third row in the file.  It replaces missing values (which Fortran can't handle) with very large values.
+    * LAMBF will be the third row in the file.  It replaces missing values
+    * (which Fortran can't handle) with very large values.
     matrix `lambf' = ( cond(missing(`lamb'[1,1]), - maxdouble(), `lamb'[1,1]), cond(missing(`lamb'[1,2]), maxdouble(), `lamb'[1,2]))
-    * The following code will check that the number of integers specified in lambda option is even
-    * It's currently unnecessary, since we currently allow 2 and only 2.  We'll keep it here in case we change.
+    * The following code will check that the number of integers specified in
+    * lambda option is even.  It's currently unnecessary, since we currently
+    * allow 2 and only 2.  We'll keep it here in case we change.
     * local ncolslamb=colsof(lamb)
     * tempvar remainder
     * generate double `remainder'=mod(`ncolslamb',2)
@@ -271,9 +294,9 @@ program define rcr , eclass byable(recall)
         di "Executable `exe' is not supported.  Run rcr_config to check configuration."
         return
     }
-    * Input path(s) to libraries required by the Linux RCR executable (this is machine-specific)
-    * The user can set the path by hand using the global variable rcr_path, or will be set to some
-    * standard Unix library locations
+    * Input path(s) to libraries required by the Linux RCR executable (this is
+    * machine-specific). The user can set the path by hand using the global
+    * variable rcr_path, or will be set to some standard Unix library locations
     if "${rcr_path}" == "" {
         local path_to_libs "LD_LIBRARY_PATH=/lib64/:/usr/local/lib64/"
     }
@@ -303,7 +326,8 @@ program define rcr , eclass byable(recall)
         * quotes around local macros won't work in Linux shell!
         shell `path_to_libs' `rcr_exe' `input_file' `output_file' `log_file' `detail_file'
     }
-    * The following lines of code pauses the Stata program until the RCR program has ended.
+    * The following lines of code pauses the Stata program until the RCR
+    * program has ended.
     * Check to see if the output_file exists
     capture confirm file "`output_file'"
     * Then repeat the following until it exists
@@ -314,12 +338,15 @@ program define rcr , eclass byable(recall)
         capture confirm file "`output_file'"
        }
     **** (7) Read the text file output by the RCR program
-    * Save the current state of the data, because we will be reading in a new file
+    * Save the current state of the data, because we will be reading in a new
+    * file
     preserve
-    * First, we read in the Fortran output file to see if the Fortran program has encountered any error
-    * If Fortran encounters any problem, it will write the word "error" in the output file
-    * We will read the output file and if it contains the word "error", the program will stop by displaying an error
-    * and printing the log file on the screen for user to detect the error
+    * First, we read in the Fortran output file to see if the Fortran program
+    * has encountered any error. If Fortran encounters any problem, it will
+    * write the word "error" in the output file We will read the output file
+    * and if it contains the word "error", the program will stop by displaying
+    * an error and printing the log file on the screen for user to detect the
+    * error
     tempname outfile
     file open `outfile' using "`log_file'", read
     file read `outfile' line
@@ -349,8 +376,9 @@ program define rcr , eclass byable(recall)
     local nobs = e(N)
     * number of clusters
     local Nclust = e(N_clust)
-    * this line grabs the number of columns in b matrix which is equivalent to the number of variables
-    * in the moment vector, we need this when we read in the moment vector into FORTRAN
+    * this line grabs the number of columns in b matrix which is equivalent to
+    *     the number of variables in the moment vector, we need this when we
+    * read in the moment vector into FORTRAN
     local ncolsb = colsof(`moments')
     * this line grabs the first column of matrix "results" which are the
     * variables of interest FORTRAN program estimated
@@ -366,7 +394,8 @@ program define rcr , eclass byable(recall)
     **** (6) Post results to e()
     * Clear out whatever's in there now
     ereturn clear
-    * Start by posting the new vector of parameter estimates and its covariance matrix
+    * Start by posting the new vector of parameter estimates and its
+    * covariance matrix
     ereturn post `b' `V', depname("`depvar'") esample(`touse') obs(`nobs')
     * Retrieve some information to display later
     ereturn local title "RCR model"
@@ -399,9 +428,9 @@ program define rcr , eclass byable(recall)
     * This should be the very last thing added to e()
     ereturn local cmd "rcr"
     **** (7) Print results
-    * refer to the program "di_rcr" below for more information on di_rcr program
+    * refer to the program "di_rcr" below for more information on di_rcr
     di_rcr, level(`level')
-    * refer to the program "Footer" below for more information on Footer program
+    * refer to the program "Footer" below for more information on Footer
     Footer_rcr, level(`level')
     * Reset MATSIZE to its original value (not needed for Stata version 16 and up).
     if (c(stata_version) < 16) {
@@ -525,12 +554,15 @@ program define ci_imbensmanski, rclass
     tempname cv_min cv_max delta cv
     scalar `cv_min' = invnorm(1 - ((100 - `level') / 100.0))
     scalar `cv_max' = invnorm(1 - ((100 - `level') / 200.0))
-    * DELTA is the estimated size of the identified set, divided by its standard error
+    * DELTA is the estimated size of the identified set, divided by its
+    * standard error
     scalar `delta' = ((_b[betaxH]) - (_b[betaxL])) / max(_se[betaxL], _se[betaxH])
-    * If either betax_H or betax_L is infinite, we essentially have a one-tailed CI: the critical value will be equal to CV_MIN
+    * If either betax_H or betax_L is infinite, we essentially have a one
+    * tailed CI: the critical value will be equal to CV_MIN
     scalar `cv' = `cv_min'
     if ( !missing(`delta')) {
-    * Otherwise, we need to calculate the critical value based on Imbens-Manski (2004), Econometrica Vol. 72
+    * Otherwise, we need to calculate the critical value based on
+    * Imbens-Manski (2004)
         while ((`cv_max' - `cv_min') > epsfloat()) {
             scalar `cv' = 0.5 * (`cv_min' + `cv_max')
             * The NORM function was renamed in later Stata versions

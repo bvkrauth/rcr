@@ -17,7 +17,8 @@ program define test_betax, rclass
     scalar `tmax' = max(`tL', `tH')
     scalar `tdelt' = (_b[betaxH] - _b[betaxL]) / max(_se[betaxL], _se[betaxH])
     scalar `pvalue' = 1 - normal(`tmax' + `tdelt') + normal(- `tmax')
-    di _newline as text " ( 1)     " as result "betax = `exp'" _newline _newline _column(10) as text "P-value = " as result %6.4f `pvalue'
+    di _newline as text " ( 1)     " as result "betax = `exp'"
+    di _newline _column(10) as text "P-value = " as result %6.4f `pvalue'
     return scalar p = `pvalue'
 end program
 

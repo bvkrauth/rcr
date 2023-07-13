@@ -51,7 +51,7 @@ program define rcr_config, rclass
         else { 
             di "  NO, your Stata version is not linked to a compatible Python installation." _newline
             di "    To fix this:
-            di "    1. Use {help python:python search} to see if you have"
+            di "    1. Use {help python:python search} to see whether you have"
             di "       a compatible version of Python available on your computer."
             di "    2. If you do not have a compatible version of Python available,"
             di "       you can install one from {browse www.anaconda.com/products/distribution} "

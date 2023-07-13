@@ -158,11 +158,11 @@ program define rcr , eclass byable(recall)
     * parsing characters pchars, which default to a space if not specified
     tokenize `ctrlvar'
     * Generate all the temporary variables we will need for the moment vector
-    forvalues i = 1 / `numall'{
-        forvalues j = 1 / `numall' {
-            tempvar X`i'X`j'
-            capture tempvar X`i'Y
-            capture tempvar X`i'Z
+    forvalues thisrow = 1 / `numall'{
+        forvalues thiscolumn = 1 / `numall' {
+            tempvar X`thisrow'X`thiscolumn'
+            capture tempvar X`thisrow'Y
+            capture tempvar X`thisrow'Z
         }
     }
     tempvar y2 yz z2
@@ -179,23 +179,23 @@ program define rcr , eclass byable(recall)
     * First, add the original variables.  They don't need to be generated.
     local biglist "`ctrlvar' `depvar' `treatvar'"
     * Next, add all of the cross-products between X and (X,y,z)
-    forvalues i = 1 / `num'{
-            forvalues j = 1 / `num' {
-                if `i' <= `j' {
+    forvalues thisrow = 1 / `num'{
+            forvalues thiscolumn = 1 / `num' {
+                if `thisrow' <= `thiscolumn' {
                     * Assign values to the temp names created before, these are
                     * X products with no repetition
-                    *``i'' and ``j'' come from elements of ctrlvar that I tokenized above
-                    capture generate double `X`i'X`j'' = ``i'' * ``j''
+                    *``thisrow'' and ``thiscolumn'' come from elements of ctrlvar that I tokenized above
+                    capture generate double `X`thisrow'X`thiscolumn'' = ``thisrow'' * ``thiscolumn''
                     * adding X products to the local macro
-                    local biglist "`biglist' `X`i'X`j''"
+                    local biglist "`biglist' `X`thisrow'X`thiscolumn''"
                 }
             }
-            * The following code assigns values to X(i)Y products, i changing from 1 to #ctrl vars
-            capture generate double `X`i'Y' = ``i'' * `depvar'
-            local biglist "`biglist' `X`i'Y'"
-            * The following code assigns values to X(i)Z products, i changing from 1 to #ctrl vars
-            capture generate double `X`i'Z' = ``i'' * `treatvar'
-            local biglist "`biglist' `X`i'Z'"
+            * The following code assigns values to X(thisrow)Y products, thisrow changing from 1 to #ctrl vars
+            capture generate double `X`thisrow'Y' = ``thisrow'' * `depvar'
+            local biglist "`biglist' `X`thisrow'Y'"
+            * The following code assigns values to X(thisrow)Z products, thisrow changing from 1 to #ctrl vars
+            capture generate double `X`thisrow'Z' = ``thisrow'' * `treatvar'
+            local biglist "`biglist' `X`thisrow'Z'"
     }
     * We also want the cross-products of y and z
     generate double `y2' = `depvar' * `depvar'
@@ -442,12 +442,12 @@ program define mat2txt
     file open `myfile' using "`saving'", write text `append' `replace'
     local nrows = rowsof(`matrix')
     local ncols = colsof(`matrix')
-    forvalues r = 1 / `nrows' {
-        local rowname: word `r' of `rownames'
+    forvalues thisrow = 1 / `nrows' {
+        local rowname: word `thisrow' of `rownames'
         file write `myfile' /* `"`rowname'"' _tab */
-        forvalues c = 1 / `ncols' {
-            if `c' <= `formatn' local fmt: word `c' of `format'
-            file write `myfile' `fmt' (`matrix'[`r',`c']) _tab
+        forvalues thiscolumn = 1 / `ncols' {
+            if `thiscolumn' <= `formatn' local fmt: word `thiscolumn' of `format'
+            file write `myfile' `fmt' (`matrix'[`thisrow',`thiscolumn']) _tab
         }
         file write `myfile' _n
     }

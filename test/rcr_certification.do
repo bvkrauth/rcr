@@ -34,8 +34,8 @@ if (c(version) >= 14) {
     set rng kiss32
 }
 set seed 53
-forvalues i = 1 / 20 {
-    quietly gen x`i' = runiform()
+forvalues vnum = 1 / 20 {
+    quietly gen x`vnum' = runiform()
 }
 if (c(version) >= 14) {
     set rng `rng'

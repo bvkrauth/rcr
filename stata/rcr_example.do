@@ -13,7 +13,7 @@ set mem 10m
 set more off
 
 /* This example uses the kindergarten group from the Project STAR data set used in the paper. */
-/* The data set has already been subject to the fixed-effects transformation */
+/* The data set has already been subject to the fixed effects transformation */
 /* Use the local version of this file if available */
 local fname "rcr_example.dta"
 capture confirm file `fname'
@@ -46,7 +46,7 @@ rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience
  * used to implement degrees-of-freedom corrections when the data has been transformed (e.g., normalization or
  * fixed-effects transformations). */
 quietly duplicates report SCHID
-local dofcorrection = r(N)/(r(N)-r(unique_value))
+local dofcorrection = r(N) / (r(N) - r(unique_value))
 di "There are " r(N) " observations, but the data have received the fixed-effects transformation." _newline /*
 */ "That is, each variable is expressed in terms of its deviation from the school-level average." _newline  /*
 */ "There are " r(unique_value) " schools in the data, so the effective number of observations is " r(N)-r(unique_value) "." _newline /*

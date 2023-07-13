@@ -41,10 +41,10 @@ if (c(version) >= 14) {
     set rng `rng'
 }
 quietly egen ID = seq()
-quietly gen SAT1000 = SAT*1000
-quietly gen SAT0001 = SAT*0.0001
-quietly gen Small_Class1000 = Small_Class*1000
-quietly gen Small_Class0001 = Small_Class*0.0001
+quietly gen SAT1000 = SAT * 1000
+quietly gen SAT0001 = SAT * 0.0001
+quietly gen Small_Class1000 = Small_Class * 1000
+quietly gen Small_Class0001 = Small_Class * 0.0001
 
 /* Determine which version is supported on this system */
 local os = c(os)
@@ -301,7 +301,7 @@ rcof "noisily rcr SAT Small_Class zero" == 1
 rcof "noisily rcr SAT Small_Class White_Asian zero" == 1
 rcof "noisily rcr SAT Small_Class White_Asian White_Asian" == 1
 /* More than 25 control variables */
-scalar max_controls = floor(sqrt(c(max_matsize)))-3
+scalar max_controls = floor(sqrt(c(max_matsize))) - 3
 if max_controls <= 25 {
     rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x20" == 103
 }
@@ -323,7 +323,7 @@ else if inlist(c(os),"Unix") {
     rcof "noisily rcr SAT Small_Class SAT" > 0
 }
 /* Outcome and control are exactly unrelated */
-/* This leads to an error in RCR.EXE.  It would be nice to catch it in the ado-file */
+/* This leads to an error in RCR.EXE.  It would be nice to catch it in the ado file */
 preserve
 keep SAT Small_Class
 tempfile tmp
@@ -345,7 +345,7 @@ rcr SAT Small_Class White_Asian
 assert reldif( e(betaxCI_H)  , 6.494755100453821 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 2.893150619179314 ) <  `tol'
 /* Up to 25 control variables */
-rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1-x19
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1 - x19
 assert reldif( e(betaxCI_H)  , 7.341531127530879 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.976272660323884 ) <  `tol'
 
@@ -372,19 +372,19 @@ rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teac
 /* Unweighted, for comparison */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 savedresults save unweighted e()
-/* FW=frequency weights, should lead to double the number of observations and smaller SE's */
+/* FW = frequency weights, should lead to double the number of observations and smaller SE's */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree [fw = two]
 assert reldif( e(betaxCI_H)  , 6.111214963474101 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.808877201524171 ) <  `tol'
-/* PW=probability weights, should lead to same number of observations and same SE's */
+/* PW = probability weights, should lead to same number of observations and same SE's */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree [pw = two]
 assert reldif( e(betaxCI_H)  , 6.488085264868134 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.259480713112181 ) <  `tol'
-/* AW=analytic weights, should lead to same number of observations and same SE's */
+/* AW = analytic weights, should lead to same number of observations and same SE's */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree [aw = two]
 assert reldif( e(betaxCI_H)  , 6.488085264868134 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.259480713112181 ) <  `tol'
-/* IW=importance weights, should lead to double the number of observations and smaller SE's */
+/* IW = importance weights, should lead to double the number of observations and smaller SE's */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree [iw = two]
 assert reldif( e(betaxCI_H)  , 6.111214963474101 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.808877201524171 ) <  `tol'
@@ -409,10 +409,10 @@ assert reldif( e(betaxCI_L)  , 2.472053399759639 ) <  `tol'
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, cluster(ID)
 assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.259480713112168 ) <  `tol'
-/* Clustering on a constant. Should give missing standard errors and (-inf,+inf) as the CI */
+/* Clustering on a constant. Should give missing standard errors and (- inf, + inf) as the CI */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, cluster(zero)
-assert         e(betaxCI_L) < -8.99e+305
-assert         e(betaxCI_H) > -8.99e+305
+assert         e(betaxCI_L) < -8.99e305
+assert         e(betaxCI_H) > -8.99e305
 
 /* This also works with vce(cluster), which should produce the same result */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster TCHID)
@@ -458,7 +458,7 @@ assert reldif( e(betaxCI_L)  , 3.259480713112168 ) <  `tol'
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 0)
 assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  `tol'
-/* Going from -infinity */
+/* Going from - infinity */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(. 0)
 assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  `tol'
 if inlist("`exe'","python") & inlist(c(os),"Windows") {
@@ -473,22 +473,22 @@ else if inlist("`exe'","windows-fortran") {
 else if inlist("`exe'","unix-fortran") {
     * assert reldif( e(betaxCI_H)  , 12.30252920699166 ) <  `tol'
 }
-/* Going to +infinity */
+/* Going to infinity */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 .)
-assert         e(betaxCI_H) > 8.99e+305
-assert         e(betaxCI_L) < -8.99e+305
-/* Going from -infinity to +infinity */
+assert         e(betaxCI_H) > 8.99e305
+assert         e(betaxCI_L) < -8.99e305
+/* Going from - infinity to infinity */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(. .)
-assert         e(betaxCI_H) > 8.99e+305
-assert         e(betaxCI_L) < -8.99e+305
+assert         e(betaxCI_H) > 8.99e305
+assert         e(betaxCI_L) < -8.99e305
 /* Just below lambdaInf */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(0 12.3)
 assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  `tol'
 assert reldif( e(betaxCI_L)  , -18.08208794130959) <  `tol'
 /* Just above lambdaInf */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(12 12.32)
-assert         e(betaxCI_H) > 8.99e+305
-assert         e(betaxCI_L) < -8.99e+305
+assert         e(betaxCI_H) > 8.99e305
+assert         e(betaxCI_L) < -8.99e305
 
 /*******************************************************************
 * LEVEL option
@@ -521,17 +521,17 @@ est replay basic
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, citype("conservative")
 assert reldif( e(betaxCI_H)  , 6.488085264868137 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.259480713112168 ) <  `tol'
-/* Specify Imbens-Manski (should be narrower than default) */
+/* Specify Imbens - Manski (should be narrower than default) */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, citype("imbens-manski")
 assert reldif( e(betaxCI_H)  , 6.466066180253211 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.291579840373562 ) <  `tol'
 /* Specify Lower. */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, citype("lower")
 assert reldif( r(betaxCI_H)  , 6.281236804837625 ) <  `tol'
-assert         r(betaxCI_L) < -8.0e+306
+assert         r(betaxCI_L) < -8.0e306
 /* Specify Upper. */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, citype("upper")
-assert         r(betaxCI_H) > 8.0e+306
+assert         r(betaxCI_H) > 8.0e306
 assert reldif( r(betaxCI_L)  , 3.561021633566327 ) <  `tol'
 /* Specify NONSENSE (or any other unsupported type).  Should generate a warning message and a missing CI */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, citype("NONSENSE")
@@ -561,7 +561,7 @@ est restore basic
 testnl _b[betaxH] = 0
 assert reldif( r(chi2)  , 62.78825430596226 ) <  `tol'
 /* Testing NLCOM */
-nlcom _b[betaxH]-_b[betaxL]
+nlcom _b[betaxH] - _b[betaxL]
 tempname b b1 v v1
 matrix `b' = r(b)
 scalar `b1' = `b'[1,1]
@@ -577,9 +577,9 @@ testnl _b[betaxH] = 0
 assert         r(p)    == .
 assert         r(chi2) == 0
 assert         r(df)   == 0
-nlcom _b[betaxH]-_b[betaxL]
+nlcom _b[betaxH] - _b[betaxL]
 tempname T_b 
-mat `T_b'=   1.7976931340e+307
+mat `T_b' = 1.7976931340e307
 tempname C_b
 matrix `C_b' = r(b)
 assert mreldif( `C_b' , `T_b' ) < `tol'
@@ -668,31 +668,31 @@ mat `T_stats'[1,3] = -15.76239002946902
 mat `T_stats'[1,4] =    127.28907462949
 mat `T_stats'[2,1] =  .3024490494947765
 mat `T_stats'[2,2] =  .4537342203017396
-mat `T_stats'[2,3] = -.1323335592008756
+mat `T_stats'[2,3] = - .1323335592008756
 mat `T_stats'[2,4] =   1.13789208746946
 mat `T_stats'[3,1] =  .6723754067477308
 mat `T_stats'[3,2] =  .2394896046268605
-mat `T_stats'[3,3] = -.3176245932522692
+mat `T_stats'[3,3] = - .3176245932522692
 mat `T_stats'[3,4] =  1.656502390874715
 mat `T_stats'[4,1] =  .4874122281212536
 mat `T_stats'[4,2] =  .4965590599853063
-mat `T_stats'[4,3] = -.1860571596338484
+mat `T_stats'[4,3] = - .1860571596338484
 mat `T_stats'[4,4] =  1.187412228121254
 mat `T_stats'[5,1] =  .4836444596677513
 mat `T_stats'[5,2] =  .4164020368805063
-mat `T_stats'[5,3] = -.4973079212846296
+mat `T_stats'[5,3] = - .4973079212846296
 mat `T_stats'[5,4] =  1.468492944516236
 mat `T_stats'[6,1] =  .8405548895358794
 mat `T_stats'[6,2] =  .2504450623319503
-mat `T_stats'[6,3] = -.0344451104641206
+mat `T_stats'[6,3] = - .0344451104641206
 mat `T_stats'[6,4] =  1.662777111758102
 mat `T_stats'[7,1] =  9.266997773591369
 mat `T_stats'[7,2] =  5.152943131556667
-mat `T_stats'[7,3] = -2.399668893075297
+mat `T_stats'[7,3] = - 2.399668893075297
 mat `T_stats'[7,4] =  25.05647145780189
 mat `T_stats'[8,1] =  .3519438259976023
 mat `T_stats'[8,2] =  .3908864114709845
-mat `T_stats'[8,3] = -.4980561740023977
+mat `T_stats'[8,3] = - .4980561740023977
 mat `T_stats'[8,4] =  1.242700128518611
 tempname C_stats
 matrix `C_stats' = r(stats)
@@ -764,7 +764,7 @@ restore
 /* Call RCRPLOT without having specified DETAILS.  Should generate an error message */
 estimates restore basic
 test_betax
-assert reldif( r(p)  , 6.75341735534e-08 ) <  `tol'
+assert reldif( r(p)  , 6.75341735534e - 08 ) <  `tol'
 test_betax =  3.29158
 assert reldif( r(p)  , .0500000163998828 ) <  `tol'
 

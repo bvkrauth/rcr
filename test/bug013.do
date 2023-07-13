@@ -13,7 +13,7 @@ log using "bug013.log", replace
 use "http://www.sfu.ca/~bkrauth/code/rcr_example.dta", clear
 
 
-/* I've constructed an example to be super-simple */
+/* I've constructed an example to be super simple */
 
 rcr SAT Small_Class White_Asian , lambda(. 0)
 

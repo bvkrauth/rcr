@@ -37,7 +37,7 @@ program define rcr , eclass byable(recall)
     * Standard option for specifying the confidence level
     * Lambda describes the lower and upper bound for the lambda (relative correlation) parameter
     * A missing value for the upper [lower] bound indicates that there is no upper [lower] bound
-    syntax varlist(min=3) ///
+    syntax varlist(min = 3) ///
             [if] [in] [fw aw pw iw] ///
             [, CLuster(varname) ///
             vce(namelist min = 2 max = 2) ///
@@ -47,7 +47,7 @@ program define rcr , eclass byable(recall)
             DETails ///
             citype(string) ///
             Level(cilevel) ///
-            lambda(numlist max=2 min=2 missingokay ) ]
+            lambda(numlist max = 2 min = 2 missingokay ) ]
     tempname lamb length moments lambf results V b gradient
     **** (1) Process the command options
     * Process varlist
@@ -65,12 +65,12 @@ program define rcr , eclass byable(recall)
     }
     if ("`lambda'" == "") {
         * The default interval is [0,1]
-        local lambda= "0 1"
+        local lambda = "0 1"
     }
     * Move the input lambda into a matrix
     local lambda : list retokenize lambda
     local lambda = subinstr("(`lambda')"," ",",",.)
-    matrix `lamb'=`lambda'
+    matrix `lamb' = `lambda'
     * If vceadj < 0, then issue an error
     if `vceadj' < 0 {
         di as error "Negative values for vceadj not allowed"
@@ -101,13 +101,13 @@ program define rcr , eclass byable(recall)
     *      no more than 101 = floor(sqrt(11000)-3) control variables for Stata SE/MP
     * NOTE: The second moment matrix is symmetric, so the code could be rewritten to take advantage of that.
     * By my calculation this would raise the Stata IC limit to 36 control variables, and the Stata SE limit to 146.
-    local mat_max=c(max_matsize)
-    local mat_min=c(min_matsize)
-    local mat_current=c(matsize)
+    local mat_max = c(max_matsize)
+    local mat_min = c(min_matsize)
+    local mat_current = c(matsize)
     local numall: word count `varlist'
-    local mat_needed = (`numall' + 1)^2
+    local mat_needed = (`numall' + 1) ^ 2
     if (`mat_needed' > `mat_max') {
-        di as error "Too many (" (`numall' - 2)    ") explanatory variables. Maximum number for this Stata version is " (floor(sqrt(c(max_matsize)))-3)
+        di as error "Too many (" (`numall' - 2)    ") explanatory variables. Maximum number for this Stata version is " (floor(sqrt(c(max_matsize))) - 3)
         exit 103
     }
     * matsize does not apply for Stata version 16 and up
@@ -158,8 +158,8 @@ program define rcr , eclass byable(recall)
     * parsing characters pchars, which default to a space if not specified
     tokenize `ctrlvar'
     * Generate all the temporary variables we will need for the moment vector
-    forvalues i=1/`numall'{
-        forvalues j=1/`numall'{
+    forvalues i = 1 / `numall'{
+        forvalues j = 1 / `numall' {
             tempvar X`i'X`j'
             capture tempvar X`i'Y
             capture tempvar X`i'Z
@@ -179,28 +179,28 @@ program define rcr , eclass byable(recall)
     * First, add the original variables.  They don't need to be generated.
     local biglist "`ctrlvar' `depvar' `treatvar'"
     * Next, add all of the cross-products between X and (X,y,z)
-    forvalues i=1/`num'{
-            forvalues j=1/`num'{
-                if `i'<=`j'{
+    forvalues i = 1 / `num'{
+            forvalues j = 1 / `num' {
+                if `i' <= `j' {
                     * Assign values to the temp names created before, these are
                     * X products with no repetition
                     *``i'' and ``j'' come from elements of ctrlvar that I tokenized above
-                    capture generate double `X`i'X`j''=``i''*``j''
+                    capture generate double `X`i'X`j'' = ``i'' * ``j''
                     * adding X products to the local macro
                     local biglist "`biglist' `X`i'X`j''"
                 }
             }
             * The following code assigns values to X(i)Y products, i changing from 1 to #ctrl vars
-            capture generate double `X`i'Y'=``i''*`depvar'
+            capture generate double `X`i'Y' = ``i'' * `depvar'
             local biglist "`biglist' `X`i'Y'"
             * The following code assigns values to X(i)Z products, i changing from 1 to #ctrl vars
-            capture generate double `X`i'Z'=``i''*`treatvar'
+            capture generate double `X`i'Z' = ``i'' * `treatvar'
             local biglist "`biglist' `X`i'Z'"
     }
     * We also want the cross-products of y and z
-    generate double `y2'=`depvar'*`depvar'
-    generate double `yz'=`depvar'*`treatvar'
-    generate double `z2'=`treatvar'*`treatvar'
+    generate double `y2' = `depvar' * `depvar'
+    generate double `yz' = `depvar' * `treatvar'
+    generate double `z2' = `treatvar' * `treatvar'
     * Since we want to replicate the same order of variables we have in
     * R code, we add `y2' `yz' `z2' at the very end
     local biglist "`biglist' `y2' `yz' `z2'"
@@ -213,11 +213,11 @@ program define rcr , eclass byable(recall)
     *    The number of lambda ranges provided (always 1 for this program)
     *    A big floating-point number.  All numbers above this will be treated as infinite (maxdouble()/10)
     * this is the length of the moment vector and lambda vector
-    matrix `length'=(colsof(e(b)),1,maxdouble()/10)
+    matrix `length' = (colsof(e(b)), 1, maxdouble() / 10)
     * MOMENTS will be the second row in the file.  It is the vector of moments that we just calculated
     matrix `moments' = e(b)
     * LAMBF will be the third row in the file.  It replaces missing values (which Fortran can't handle) with very large values.
-    matrix `lambf' = ( cond(missing(`lamb'[1,1]),-maxdouble(),`lamb'[1,1]), cond(missing(`lamb'[1,2]),maxdouble(),`lamb'[1,2]))
+    matrix `lambf' = ( cond(missing(`lamb'[1,1]), - maxdouble(), `lamb'[1,1]), cond(missing(`lamb'[1,2]), maxdouble(), `lamb'[1,2]))
     * The following code will check that the number of integers specified in lambda option is even
     * It's currently unnecessary, since we currently allow 2 and only 2.  We'll keep it here in case we change.
     * local ncolslamb=colsof(lamb)
@@ -323,7 +323,7 @@ program define rcr , eclass byable(recall)
     tempname outfile
     file open `outfile' using "`log_file'", read
     file read `outfile' line
-    while r(eof)==0 {
+    while r(eof) == 0 {
         if (strpos(lower("`line'"),"error") > 0) {
             di as error "Error in external program RCR.  Error message is:" _newline
             di as text "`line'" _newline
@@ -351,14 +351,14 @@ program define rcr , eclass byable(recall)
     local Nclust = e(N_clust)
     * this line grabs the number of columns in b matrix which is equivalent to the number of variables
     * in the moment vector, we need this when we read in the moment vector into FORTRAN
-    local ncolsb=colsof(`moments')
+    local ncolsb = colsof(`moments')
     * this line grabs the first column of matrix "results" which are the
     * variables of interest FORTRAN program estimated
     matrix `b' = `results'[1..rowsof(`results'),1]'
     * the rest of the columns of "results" matrix are gradients
-    matrix `gradient' = `results'[1..rowsof(`results'),2..(`ncolsb'+1)]
+    matrix `gradient' = `results'[1..rowsof(`results'), 2..(`ncolsb' + 1)]
     *using delta method to calculate the variance-covariance matrix
-    matrix `V' = `vceadj'*`gradient' * `V' * (`gradient'')
+    matrix `V' = `vceadj' * `gradient' * `V' * (`gradient'')
     * Put proper row/column names on b and V
     matrix colnames `b' = lambdaInf betaxInf lambda0 betaxL betaxH
     matrix rownames `V' = lambdaInf betaxInf lambda0 betaxL betaxH
@@ -375,8 +375,8 @@ program define rcr , eclass byable(recall)
     ereturn local depvar "`depvar'"
     ereturn local treatvar "`treatvar'"
     ereturn local ctrlvar "`ctrlvar'"
-    ereturn scalar lambdaL=`lamb'[1,1]
-    ereturn scalar lambdaH=`lamb'[1,2]
+    ereturn scalar lambdaL = `lamb'[1,1]
+    ereturn scalar lambdaH = `lamb'[1,2]
     ereturn local citype = proper("`citype'")
     ereturn scalar cilevel = `level'
     if (e(citype) == "Conservative") ci_conservative, level(`level')
@@ -440,13 +440,13 @@ program define mat2txt
     local saving "`saving'"
     tempname myfile
     file open `myfile' using "`saving'", write text `append' `replace'
-    local nrows=rowsof(`matrix')
-    local ncols=colsof(`matrix')
-    forvalues r=1/`nrows' {
+    local nrows = rowsof(`matrix')
+    local ncols = colsof(`matrix')
+    forvalues r = 1 / `nrows' {
         local rowname: word `r' of `rownames'
         file write `myfile' /* `"`rowname'"' _tab */
-        forvalues c=1/`ncols' {
-            if `c'<=`formatn' local fmt: word `c' of `format'
+        forvalues c = 1 / `ncols' {
+            if `c' <= `formatn' local fmt: word `c' of `format'
             file write `myfile' `fmt' (`matrix'[`r',`c']) _tab
         }
         file write `myfile' _n
@@ -502,17 +502,17 @@ program define ci_conservative, rclass
     syntax , Level(cilevel)
     * Lower bound of betax's CI
     if _se[betaxL] > 0 {
-        return scalar betaxCI_L = _b[betaxL]-(invnorm(1-((100-`level')/200.0))* _se[betaxL])
+        return scalar betaxCI_L = _b[betaxL] - (invnorm(1 - ((100 - `level') / 200.0)) * _se[betaxL])
     }
     else {
-        return scalar betaxCI_L = -maxdouble()/10
+        return scalar betaxCI_L = - maxdouble() / 10
     }
     * Upper bound of betax's CI
     if _se[betaxH] > 0 {
-        return scalar betaxCI_H = _b[betaxH]+(invnorm(1-((100-`level')/200.0))* _se[betaxH])
+        return scalar betaxCI_H = _b[betaxH] + (invnorm(1 - ((100 - `level') / 200.0)) * _se[betaxH])
     }
     else {
-        return scalar betaxCI_H = maxdouble()/10
+        return scalar betaxCI_H = maxdouble() / 10
     }
 end
 
@@ -523,46 +523,46 @@ program define ci_imbensmanski, rclass
     * for a two-tailed test).  For example, if level=95, then CV_MIN = 1.64,
     * CV_MAX= 1.96
     tempname cv_min cv_max delta cv
-    scalar `cv_min'=invnorm(1-((100-`level')/100.0))
-    scalar `cv_max'=invnorm(1-((100-`level')/200.0))
+    scalar `cv_min' = invnorm(1 - ((100 - `level') / 100.0))
+    scalar `cv_max' = invnorm(1 - ((100 - `level') / 200.0))
     * DELTA is the estimated size of the identified set, divided by its standard error
-    scalar `delta' = ((_b[betaxH])-(_b[betaxL]))/ max(_se[betaxL],_se[betaxH])
+    scalar `delta' = ((_b[betaxH]) - (_b[betaxL])) / max(_se[betaxL], _se[betaxH])
     * If either betax_H or betax_L is infinite, we essentially have a one-tailed CI: the critical value will be equal to CV_MIN
     scalar `cv' = `cv_min'
     if ( !missing(`delta')) {
     * Otherwise, we need to calculate the critical value based on Imbens-Manski (2004), Econometrica Vol. 72
         while ((`cv_max' - `cv_min') > epsfloat()) {
-            scalar `cv' = 0.5*(`cv_min' + `cv_max')
+            scalar `cv' = 0.5 * (`cv_min' + `cv_max')
             * The NORM function was renamed in later Stata versions
-            version 8: if ((norm (`cv' + `delta' )  - norm( - `cv')) - (`level'/100) < 0) scalar `cv_min' = `cv'
+            version 8: if ((norm (`cv' + `delta' )  - norm( - `cv')) - (`level' / 100) < 0) scalar `cv_min' = `cv'
             else scalar `cv_max' = `cv'
         }
     }
     * Lower bound of betax's CI
     if _se[betaxL] > 0 {
-        return scalar betaxCI_L = _b[betaxL]-((`cv')* _se[betaxL])
+        return scalar betaxCI_L = _b[betaxL] - ((`cv') * _se[betaxL])
     }
     else {
-        return scalar betaxCI_L = -maxdouble()/10
+        return scalar betaxCI_L = - maxdouble() / 10
     }
     * Upper bound of betax's CI
     if _se[betaxH] > 0 {
-        return scalar betaxCI_H = _b[betaxH]+((`cv')* _se[betaxH])
+        return scalar betaxCI_H = _b[betaxH] + ((`cv') * _se[betaxH])
     }
     else {
-        return scalar betaxCI_H = maxdouble()/10
+        return scalar betaxCI_H = maxdouble() / 10
     }
 end
 
 program define ci_lower, rclass
     syntax , Level(cilevel)
-    return scalar betaxCI_L = -maxdouble()/10
+    return scalar betaxCI_L = - maxdouble() / 10
     * Upper bound of betax's CI
     if _se[betaxH] > 0 {
-        return scalar betaxCI_H = _b[betaxH]+(invnorm(1-((100-`level')/100.0))* _se[betaxH])
+        return scalar betaxCI_H = _b[betaxH] + (invnorm(1 - ((100 - `level') / 100.0)) * _se[betaxH])
     }
     else {
-        return scalar betaxCI_H = maxdouble()/10
+        return scalar betaxCI_H = maxdouble() / 10
     }
 end
 
@@ -570,10 +570,10 @@ program define ci_upper, rclass
     syntax , Level(cilevel)
     * Lower bound of betax's CI
     if _se[betaxL] > 0 {
-        return scalar betaxCI_L = _b[betaxL]-(invnorm(1-((100-`level')/100.0))* _se[betaxL])
+        return scalar betaxCI_L = _b[betaxL] - (invnorm(1 - ((100 - `level') / 100.0)) * _se[betaxL])
     }
     else {
-        return scalar betaxCI_L = -maxdouble()/10
+        return scalar betaxCI_L = - maxdouble() / 10
     }
-    return scalar betaxCI_H = maxdouble()/10
+    return scalar betaxCI_H = maxdouble() / 10
 end

@@ -1,7 +1,7 @@
 version 8
 capture program drop rcrplot
 program define rcrplot
-    syntax [, xrange(numlist max=2 min=2 ascending) yrange(numlist max=2 min=2 ascending) ]
+    syntax [, xrange(numlist max = 2 min = 2 ascending) yrange(numlist max = 2 min = 2 ascending) ]
     tempname cmd
     local `cmd' = e(cmd)
     if ("``cmd''" != "rcr") {

@@ -18,7 +18,7 @@ log using "bug012.log", replace
 
 use "http://www.sfu.ca/~bkrauth/code/rcr_example.dta", clear
 
-/* I've constructed an example to be super-simple */
+/* I've constructed an example to be super simple */
 
 /* Normalize everything */
 foreach vname in SAT Small_Class White_Asian {

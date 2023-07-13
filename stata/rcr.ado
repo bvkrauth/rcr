@@ -18,7 +18,7 @@ capture program drop rcr
 program define rcr , eclass byable(recall)
     * If we are "replaying" (i.e. the user typed RCR with no arguments, or
     * ESTIMATES REPLAY) just display the most recent results
-    if (replay()){
+    if (replay() > 0){
         di_rcr `0'
         Footer_rcr `0'
         exit
@@ -120,7 +120,7 @@ program define rcr , eclass byable(recall)
     * Grab the number of all the variables specified in the RCR command (should be num + 2)
     local numall: word count `varlist'
     * Check for whether there are enough observations
-    quietly count if `touse'
+    quietly count if `touse' == 1
     local nobs = r(N)
     if `nobs' == 0 {
         error 2000
@@ -129,7 +129,7 @@ program define rcr , eclass byable(recall)
         error 2001
     }
     * Check to make sure the covariance matrix is positive definite
-    quietly correlate `varlist' if `touse', covariance
+    quietly correlate `varlist' if `touse' == 1, covariance
     tempname covmat
     matrix `covmat' = r(C)
     if (det(`covmat') <= 0) {
@@ -206,7 +206,7 @@ program define rcr , eclass byable(recall)
     local biglist "`biglist' `y2' `yz' `z2'"
     * This line is where we actually estimate the moment vector.  It is here
     * and only here that the if, in, weight, and cluster options are used.
-    quietly mean `biglist' if `touse' [`weight'`exp'], cluster(`cluster')
+    quietly mean `biglist' if `touse' == 1 [`weight'`exp'], cluster(`cluster')
     **** (4) Prepare the results for output to the Fortran program
     * LENGTH will be the first row in the file.  It contains three numbers:
     *    The size of the moment vector (colsof(e(b))

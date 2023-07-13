@@ -49,7 +49,7 @@ quietly gen Small_Class0001 = Small_Class * 0.0001
 /* Determine which version is supported on this system */
 local os = c(os)
 capture rcr_config
-if !_rc {
+if (_rc == 0) {
     local exe = r(default_version)
 }
 else {
@@ -420,9 +420,9 @@ savedresults compare cluster e(), tol(1.0e-8)
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster TCH) cluster(TCHI)
 savedresults compare cluster e(), tol(1.0e-8)
 savedresults drop cluster
-/* Issue an error if the vce and cluster options are in conflict */
+* Issue an error if the vce and cluster options are in conflict
 rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster TCHID) cluster(Girl)" == 100
-/* Issue an error if the cluster variable does not exist */
+* Issue an error if the cluster variable does not exist
 rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, vce(cluster NOTHING) " == 111
 
 
@@ -542,7 +542,7 @@ assert         e(betaxCI_H) == .
 * SAVE option (undocumented)
 ********************************************************************/
 /* This option tells stata to create files called in.txt, out.txt, and log.txt */
-/* First delete those files if they already exist */
+* First delete those files if they already exist
 capture erase in.txt
 capture erase out.txt
 capture erase log.txt
@@ -571,7 +571,7 @@ scalar `v1' = `v'[1,1]
 assert reldif( `v1' , .4695016651521872) < `tol'
 mat drop `b' `v'
 scalar drop `b1' `v1'
-/* What happens if the parameters are not identified? */
+/* What happens when the parameters are not identified? */
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, lambda(. .)
 testnl _b[betaxH] = 0
 assert         r(p)    == .

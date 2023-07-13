@@ -66,7 +66,7 @@ program define rcr_config, rclass
         local missing_modules ""
         foreach module in `requirements' {
             capture python which `module'
-            if _rc {
+            if (_rc > 0) {
                 local missing_modules "`module' `missing_modules'"
             }
         }

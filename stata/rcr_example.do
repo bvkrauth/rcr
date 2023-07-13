@@ -14,7 +14,7 @@ set more off
 
 /* This example uses the kindergarten group from the Project STAR data set used in the paper. */
 /* The data set has already been subject to the fixed effects transformation */
-/* Use the local version of this file if available */
+* Use the local version of this file if available
 local fname "rcr_example.dta"
 capture confirm file `fname'
 /* Otherwise use the web version */

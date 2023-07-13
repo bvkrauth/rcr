@@ -278,7 +278,7 @@ program define rcr , eclass byable(recall)
         local path_to_libs "LD_LIBRARY_PATH=/lib64/:/usr/local/lib64/"
     }
     else {
-        local path_to_libs "LD_LIBRARY_PATH=$rcr_path"
+        local path_to_libs "LD_LIBRARY_PATH=${rcr_path}"
     }
     * Check to see if the output_file already exists
     capture confirm file "`output_file'"

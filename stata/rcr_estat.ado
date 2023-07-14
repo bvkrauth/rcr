@@ -9,11 +9,11 @@ program define rcr_estat
         error 301
     }
 
-    if `"`key'"' == "," { 
-        dis as err "subcommand expected" 
+    if `"`key'"' == "," {
+        dis as err "subcommand expected"
         exit 198
     }
-    
+
     if `"`key'"' == "ic" {
         IC `rest'
     }
@@ -38,7 +38,7 @@ program define rcr_estat
 end
 
 
-// default handlers
+* default handlers
 
 program IC
     dis as err "IC option not supported with RCR model"

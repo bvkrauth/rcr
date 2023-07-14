@@ -2,7 +2,7 @@ version 8
 capture program drop test_betax
 
 program define test_betax, rclass
-    syntax [=/exp] 
+    syntax [=/exp]
     tempname cmd
     local `cmd' = e(cmd)
     if ("``cmd''" != "rcr") {

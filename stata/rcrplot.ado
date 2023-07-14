@@ -18,7 +18,7 @@ program define rcrplot
     if "`xrange'" == "" {
         local xmin -50
         local xmax 50
-    } 
+    }
     else {
         tokenize "`xrange'"
         local xmin `1'
@@ -27,7 +27,7 @@ program define rcrplot
     if "`yrange'" == "" {
         local ymin -50
         local ymax 50
-    } 
+    }
     else {
         tokenize "`yrange'"
         local ymin `1'
@@ -44,25 +44,25 @@ program define rcrplot
         local betasym "beta"
         local Lambdasym "Lambda"
         local Betasym "Beta"
-    } 
+    }
     else {
         local lambdasym "{&lambda}"
         local betasym "{&beta}{subscript:x}"
         local Lambdasym "[{&lambda}{superscript:L},{&lambda}{superscript:H}]"
-        local Betasym "[{&beta}{subscript:x}{superscript:L},{&beta}{subscript:x}{superscript:H}]"    
+        local Betasym "[{&beta}{subscript:x}{superscript:L},{&beta}{subscript:x}{superscript:H}]"
     }
     quietly keep if betax > `xmin' & betax < `xmax' & lambda > `ymin' & lambda < `ymax'
 
-    twoway line lambda betax if betax < _b[betaxInf]  || /*
-    */    line lambda betax if betax > _b[betaxInf] , lstyle(p1) || /*
-    */    line lambda betax if lambda > `lambdaL' & lambda < `lambdaH', lstyle(p1) lwidth(thick) || /*
-    */    scatteri `ymin' `betaxInf' `ymax' `betaxInf' , connect(l) msymbol(none) lpattern(dash)  || /*
-    */    scatteri `lambdaInf' `xmin' `lambdaInf' `xmax' , connect(direct) msymbol(none) lpattern(dash) || /*
-    */    scatteri `lambdaL' `xmin' `lambdaL' `betaxH' `ymin' `betaxH' `ymin' `betaxL' `lambdaH' `betaxL' `lambdaH' `xmin', connect(l) msymbol(none) lpattern(dot)  || /*
-    */    scatteri `lambdaL' `xmin' `lambdaH' `xmin'  , connect(l) msymbol(none) lwidth(thick)  || /*
-    */    scatteri `ymin' `betaxL' `ymin' `betaxH', connect(l) msymbol(none) lwidth(thick) ||  , /*
-    */    xtitle("Effect (`betasym')") ytitle("Relative correlation (`lambdasym')") legend(order(1 - " " 5 4 7 8 ) /*
-    */    label(1 "`lambdasym'(.) function") label(4 "`betasym'{superscript:{&infinity}}") label(5 "`lambdasym'{superscript:{&infinity}}") label(7 "`Lambdasym'") label(8 "`Betasym'"))
+    twoway line lambda betax if betax < _b[betaxInf]  || ///
+        line lambda betax if betax > _b[betaxInf] , lstyle(p1) || ///
+        line lambda betax if lambda > `lambdaL' & lambda < `lambdaH', lstyle(p1) lwidth(thick) || ///
+        scatteri `ymin' `betaxInf' `ymax' `betaxInf' , connect(l) msymbol(none) lpattern(dash)  || ///
+        scatteri `lambdaInf' `xmin' `lambdaInf' `xmax' , connect(direct) msymbol(none) lpattern(dash) || ///
+        scatteri `lambdaL' `xmin' `lambdaL' `betaxH' `ymin' `betaxH' `ymin' `betaxL' `lambdaH' `betaxL' `lambdaH' `xmin', connect(l) msymbol(none) lpattern(dot)  || ///
+        scatteri `lambdaL' `xmin' `lambdaH' `xmin'  , connect(l) msymbol(none) lwidth(thick)  || ///
+        scatteri `ymin' `betaxL' `ymin' `betaxH', connect(l) msymbol(none) lwidth(thick) ||  , ///
+        xtitle("Effect (`betasym')") ytitle("Relative correlation (`lambdasym')") legend(order(1 - " " 5 4 7 8 ) ///
+        label(1 "`lambdasym'(.) function") label(4 "`betasym'{superscript:{&infinity}}") label(5 "`lambdasym'{superscript:{&infinity}}") label(7 "`Lambdasym'") label(8 "`Betasym'"))
     restore
 end
 

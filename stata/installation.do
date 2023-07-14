@@ -13,7 +13,7 @@ net get rcr.pkg, replace
 ****************** MAINTENANCE **********************************
 * ADOUPDATE checks my website to see if the program has been updated since the last download
 adoupdate rcr
-* If we add the UPDATE option, any changes are applied 
+* If we add the UPDATE option, any changes are applied
 adoupdate rcr, update
 
 ****************** UNINSTALLATION **********************************

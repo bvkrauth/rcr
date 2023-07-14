@@ -6,7 +6,7 @@ program define rcr_config, rclass
     di "The current RCR package is written in Python and requires that your"
     di "Stata is set up with Python integration.  This command will help you"
     di "insure that your setup is compatible." _newline
-    
+
     local version = c(stata_version)
     if "`forceversion'" == "" {
         local version = c(stata_version)
@@ -27,7 +27,7 @@ program define rcr_config, rclass
         local requirements "`forcereq'"
     }
     local py = 1
-    
+
     if `py' == 1 {
         di "STEP 1: Does your Stata version support Python?"
         if (`version' >= 16){
@@ -48,7 +48,7 @@ program define rcr_config, rclass
             di "  YES, your Stata version is linked to a compatible Python installation"
             di "  (`python_exec')." _newline
         }
-        else { 
+        else {
             di "  NO, your Stata version is not linked to a compatible Python installation." _newline
             di "    To fix this:
             di "    1. Use {help python:python search} to see whether you have"
@@ -98,7 +98,7 @@ program define rcr_config, rclass
         di "RCR is not supported on MacOSX for Stata versions < 16."
         local default_version "none"
     }
-    else if (`py' == 0) {        
+    else if (`py' == 0) {
         di "RCR is not supported on unknown operating system: `os'"
         local default_version "none"
     }

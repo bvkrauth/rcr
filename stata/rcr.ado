@@ -33,6 +33,7 @@ program define rcr , eclass byable(recall)
     * IF/IN/WEIGHTS are standard estimation command options
     * CLUSTER and VCE are also standard options
     * SAVE is an undocumented option to save intermediate files
+    * RESCALE is an option to standardize the data
     * EXE is an option to force a particular version of the external program
     * DETAILS is an option to save details for graphing
     * CITYPE is a special option for the type of confidence interval to
@@ -46,6 +47,7 @@ program define rcr , eclass byable(recall)
             [, CLuster(varname) ///
             vce(namelist min = 2 max = 2) ///
             SAVe ///
+            REScale(string) ///
             exe(string) ///
             vceadj(real 1.0) ///
             DETails ///
@@ -67,6 +69,16 @@ program define rcr , eclass byable(recall)
     * rules.
     marksample touse
     * The weights (fw aw pw iw) and level are automatically processed by Stata
+    * Process RESCALE
+    * Option is not case sensitive
+    local rescale = lower("`rescale'")
+    * Valid answers are "yes" and "no"
+    * Default is "no" in the interest of backwards compatibility. In the next
+	* full version this default may change to "yes".
+    if !missing("`rescale'") & !inlist("`rescale'" ,"yes", "no") {
+        di as error "rescale option `rescale' not valid, must be yes or no"
+        error 111
+    }
     if ("`citype'" == "") {
         local citype "Conservative"
     }
@@ -125,7 +137,7 @@ program define rcr , eclass byable(recall)
     if (`mat_needed' > `mat_current') & (c(stata_version) < 16) {
         set matsize `mat_needed'
     }
-    **** (3) Calculate the moment vector (moments) and its variance (V)
+    **** (3) Check the data
     * Grab the number of control variables
     local num : word count `ctrlvar'
     * Grab the number of all the variables specified in the RCR command
@@ -165,6 +177,23 @@ program define rcr , eclass byable(recall)
         di as error "Warning: At least one variable is perfectly collinear with other variables."
         di as error "RCR will continue but results should be viewed with caution."
     }
+    **** (4) Rescale the data if RESCALE is set to yes
+    if "`rescale'" == "yes" {
+        tempname m sd betafac bfac
+        quietly mean `varlist' if `touse' == 1 [`weight'`exp']
+        quietly estat sd
+        matrix `m' = r(mean)
+        matrix `sd' = r(sd)
+        scalar `betafac' = `sd'[1,1] / `sd'[1,2]
+        matrix `bfac' = [1, `betafac', 1, `betafac', `betafac']
+        foreach vname in `varlist' {
+            local xname : permname `vname'
+            quietly clonevar `xname' = `vname'
+            quietly replace `vname' = (`vname' - `m'[1,"`vname'"]) / `sd'[1,"`vname'"]
+            local xnames "`xnames' `xname'"
+        }
+    }
+    **** (5) Calculate the moment vector (moments) and its variance (V)
     * Tokenize divides string into tokens, storing the result in `1', `2', ...
     * (the positional local macros).  Tokens are determined based on the
     * parsing characters pchars, which default to a space if not specified
@@ -250,7 +279,7 @@ program define rcr , eclass byable(recall)
     *     di as err "you have to specify an interval for lambda e.g. lambda(3,6)"
     *      exit 198
     *  }
-    **** (5) Output the moment vector and other information to a text file
+    **** (6) Output the moment vector and other information to a text file
     * The data will be passed in temporary files
     tempfile input_file output_file log_file detail_file
     if ("`save'" == "save") {
@@ -383,10 +412,24 @@ program define rcr , eclass byable(recall)
     * this line grabs the first column of matrix "results" which are the
     * variables of interest FORTRAN program estimated
     matrix `b' = `results'[1..rowsof(`results'),1]'
+    * Adjust estimates for rescaling if appropriate
+    if "`rescale'" == "yes" {
+        matrix `b' = `b' * diag(`bfac')
+        if (`b'[1,4] == .) {
+            matrix `b'[1, 4] = - 9.0e306
+        }
+        if (`b'[1,5] == .) {
+            matrix `b'[1, 5] = 9.0e306
+        }
+    }
     * the rest of the columns of "results" matrix are gradients
     matrix `gradient' = `results'[1..rowsof(`results'), 2..(`ncolsb' + 1)]
     *using delta method to calculate the variance-covariance matrix
     matrix `V' = `vceadj' * `gradient' * `V' * (`gradient'')
+    * Adjust covariance matrix for rescaling if appropriate
+    if "`rescale'" == "yes" {
+        matrix `V' = diag(`bfac') * `V' * diag(`bfac')
+    }
     * Put proper row/column names on b and V
     matrix colnames `b' = lambdaInf betaxInf lambda0 betaxL betaxH
     matrix rownames `V' = lambdaInf betaxInf lambda0 betaxL betaxH
@@ -436,9 +479,21 @@ program define rcr , eclass byable(recall)
     if (c(stata_version) < 16) {
         set matsize `mat_current'
     }
+    * Return rescaled variables to original scaling if appropriate
+    if "`rescale'" == "yes" {
+        foreach vname in `varlist' {
+            gettoken xname xnames: xnames
+            quietly replace `vname' = `xname'
+            quietly drop `xname'
+        }
+    }
     if "`details'" == "details" {
         quietly insheet using `detail_file', clear comma
         rename theta betax
+        * Adjust beta for rescaling if appropriate
+        if "`rescale'" == "yes" {
+            quietly replace betax = betax * `betafac'
+        }
         label variable betax "Assumed effect"
         label variable lambda "Implied relative correlation, i.e., lambda(betax)"
         label data "Detailed data generated by RCR command"

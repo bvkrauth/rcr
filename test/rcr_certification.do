@@ -211,7 +211,6 @@ else if inlist("`exe'","windows-fortran") {
 else if inlist("`exe'","unix-fortran") {
     assert reldif( e(betaxCI_L)  , 3.259476791718824 ) <  `tol'
 }
-
 rcr SAT0001 Small_Class0001 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
     assert reldif( e(betaxCI_L)  , 3.259111536946617 ) <  `tol'
@@ -240,7 +239,7 @@ else if inlist("`exe'","unix-fortran") {
     assert reldif( e(betaxCI_L)  , 3259.481445798481 ) <  `tol'
     assert reldif( e(betaxCI_H)  , 6488.085263438398 ) <  `tol'
 }
-
+* This example produces bad standard errors
 rcr SAT Small_Class0001 White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
     assert reldif( e(betaxCI_L)  , 32599.0544917943  ) <  `tol'
@@ -254,8 +253,6 @@ else if inlist("`exe'","unix-fortran") {
     assert reldif( e(betaxCI_L)  , 32599.04261071111 ) <  `tol'
     assert reldif( e(betaxCI_H)  , 64871.8357401337  ) <  `tol'
 }
-
-
 * Scaling outcome down or treatment up, either should multiply coefficient by 0.0001
 rcr SAT0001 Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
 if inlist("`exe'","python") {
@@ -812,5 +809,65 @@ quietly rcr_config , forceversion(17) forceos("Unix") nopython
 assert r(default_version) == "unix-fortran"
 quietly rcr_config , forceversion(17) forceos("MacOS") nopython
 assert r(default_version) == "none"
+
+*******************************************************************
+* RESCALE option
+*******************************************************************
+* RESCALE is optional
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+savedresults save basic e()
+* RESCALE(NO) says do not rescale.  It is the default
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, rescale("no")
+savedresults compare basic e()
+rcof "noisily rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, rescale(BAD_OPTION)" == 111
+* RESCALE(YES) means that variables should be standardized before
+* analysis begins. Coefficients and standard errors will be rescaled
+* to match the scale of the original variables.
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree, rescale("yes")
+* Compare against basic results.  They do not need to be identical, but should
+* be roughly similar for this case
+savedresults compare basic e(), tol(1e-4)
+savedresults drop basic
+* Rescale should fix some problems with instability in standard errors (and
+* maybe estimates) when variables are of substantially different scales
+* For example, it should fix bug BUG012
+
+* BUG012.DO - FIXED
+*
+* Description of bug: Standard error results are not invariant to adding
+*                     constants to data. This is because the algorithm has
+*                     trouble getting the derivatives right when the moments
+*                     are on substantially different scales.  This issue is
+*                     also addressed by bug010.do.  There the problem was that
+*                     the program didn't issue a warning message when the
+*                     standard errors were bad.  Now it issues a warning
+*                     message, but it would be nice if the derivative
+*                     algorithm were more robust.
+preserve
+* standardize
+foreach vname in SAT Small_Class White_Asian {
+    egen tmp1 = mean(`vname')
+    egen tmp2 = sd(`vname')
+    replace `vname' = (`vname' - tmp1)/tmp2
+    drop tmp1 tmp2
+}
+replace SAT = SAT + 4095.999998
+* This regression produces reasonable standard errors
+rcr SAT Small_Class White_Asian
+est store good
+savedresults save good e()
+* This regression does not
+gen SATbad = SAT + 0.000001
+rcr SATbad Small_Class White_Asian, rescale("no")
+est store bad
+* We can fix the problem by rescaling using the RESCALE(YES) option
+rcr SATbad Small_Class White_Asian, rescale("yes")
+est store rescaled
+* This is a table of results comparing good, bad and rescaled
+est table good bad rescaled, b(%9.2f) se keep(lambda0)
+* Confirm the the rescaled results are similar to the good results
+savedresults compare good e(), tol(1e-3) include(scalar: betaxCI_H betaxCI_L N matrix: b V)
+savedresults drop good
+restore
 
 log close

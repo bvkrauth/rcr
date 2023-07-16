@@ -9,6 +9,7 @@
 *                     standard errors were bad.  Now it issues a warning
 *                     message, but it would be nice if the derivative
 *                     algorithm were more robust.
+*
 clear
 discard
 set mem 400m
@@ -33,8 +34,16 @@ replace SAT = SAT + 4095.999998
 gen SATbad = SAT + 0.000001
 rcr SAT Small_Class White_Asian
 est store good
-rcr SATbad Small_Class White_Asian
+rcr SATbad Small_Class White_Asian, rescale(no)
 est store bad
+* This bug has been partially solved (Jul 2023) by adding a new RESCALE option.
+* This option allows the user to automatically rescale the data to zero mean
+* and unit variance. Currently, rescaling only occurs if the user specifically
+* requests it, but it may be made the default at a later date.
+rcr SATbad Small_Class White_Asian, rescale(yes)
+est store rescaled
+* These should all produce the same result, but note that the "bad"
+* regression has much larger standard errors.
 est table _all, b(%9.2f) se keep(lambda0)
 
 log close

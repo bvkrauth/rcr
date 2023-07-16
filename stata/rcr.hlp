@@ -31,6 +31,8 @@
 {synopt :{opt citype(string)}}set the method to calculate confidence interval;default is {cmd:citype(conservative)}{p_end}
 {synopt :{opt det:ails}}save details in memory to create plots, overwrites current data set{p_end}
 
+{syntab:Advanced options}
+{synopt :{opt exe(string)}}specify external program to use for calculations{p_end}
 {synoptline}
 
 {p 4 6 2}

@@ -600,7 +600,7 @@ program Footer_rcr
     local maxlen 57
     local vlist = e(ctrlvar)
     local vlist = ltrim("`vlist'")
-    local header "as text `"Control Variables    :"'"
+    local header "as text `"Control Variables:"'"
     foreach vname in `vlist' {
         if (length("`current_line' `vname'") > `maxlen') {
             di `header' _col(22) as result "`current_line'"

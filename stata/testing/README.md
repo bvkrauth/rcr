@@ -4,7 +4,7 @@ This folder contains files that can be used to test the
 Stata RCR package.  
 
 Tests for the Python module are located in 
-[../../python/tests](../../python/tests).
+[../../python/testing](../../python/testing).
 
 ## Tests available
 

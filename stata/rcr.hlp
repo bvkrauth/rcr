@@ -1,5 +1,5 @@
 {smcl}
-{* 01Jul2022}{...}
+{* 15Jul2023}{...}
 {cmd:help rcr}{right:also see:  {helpb rcr postestimation}, {helpb rcr_config}}
 {hline}
 
@@ -30,6 +30,10 @@
 {synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}{p_end}
 {synopt :{opt citype(string)}}set the method to calculate confidence interval;default is {cmd:citype(conservative)}{p_end}
 {synopt :{opt det:ails}}save details in memory to create plots, overwrites current data set{p_end}
+
+{syntab:Advanced options}
+{synopt :{opt exe(string)}}specify external program to use for calculations{p_end}
+{synopt :{opt res:cale(string)}}rescale data for external program? Default is {cmd:"no"}{p_end}
 
 {synoptline}
 
@@ -130,6 +134,18 @@ equations (6) and (7).{p_end}
 {opt exe(string)} specifies explicitly which external program to use.  Options include
 {cmd: python}, {cmd: windows-fortran}, and {cmd: unix-fortran}.  If not provided, an
 appropriate default will be chosen; see Technical notes below.
+{p_end}
+
+{phang}
+{opt rescale(string)} specifies whether to pre-process the data to
+zero mean and unit variance before passing it on to the external program.
+Rescaling does not usually affect the results, but can improve numerical
+accuracy and stability when the original variables are measured
+at substantially different scales. Options include {cmd: "yes"} and
+{cmd: "no"}. The default value {cmd: "auto"} is currently {cmd: "no"} in the
+interest of backwards compatibility.  Future versions may change this default,
+so if future replicability is a consideration you may want to specify an
+explicit {cmd: "yes"} or {cmd: "no"} value for this option.
 {p_end}
 
 {title:Technical notes}

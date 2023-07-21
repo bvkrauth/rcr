@@ -23,11 +23,11 @@ error if any of these cases produce an unexpected result.
 
 The following Stata do-files reproduce a current bug/issue:
 
- - *bug012.do*: Standard error results are not invariant to
+ - *test_bug012.do*: Standard error results are not invariant to
    adding constants to data.
- - *bug013.do*: Standard error results are inaccurate when 
+ - *test_bug013.do*: Standard error results are inaccurate when 
     lambda_L = -infty.
- - *bug014.do*: rcrplot doesn't work with xrange outside of 
+ - *test_bug014.do*: rcrplot doesn't work with xrange outside of 
    (-50,50).
 
 

@@ -42,7 +42,7 @@ program define rcr , eclass byable(recall)
     * LAMBDA describes the lower and upper bound for the lambda (relative
     * correlation) parameter. A missing value for the upper [lower] bound
     * indicates that there is no upper [lower] bound
-    syntax varlist(min = 3 fv) ///
+    syntax varlist(min = 3 fv ts) ///
             [if] [in] [fw aw pw iw] ///
             [, CLuster(varname) ///
             vce(namelist min = 2 max = 2) ///
@@ -57,8 +57,8 @@ program define rcr , eclass byable(recall)
     tempname lamb length moments lambf results V b gradient
     **** (1) Process the command options
     * Process varlist
-    * Check to see if factor variables are in use
-    local fvops = "`s(fvops)'" == "true" | _caller() >= 11
+    * Check to see if factor or time series variables are in use
+    local fvops = "`s(fvops)'" == "true" | "`s(tsops)'" == "true" | _caller() >= 11
     * The first variable name in varlist refers to the outcome variable and
     * will be stored in DEPVAR
     gettoken depvar indepvar: varlist
@@ -122,18 +122,23 @@ program define rcr , eclass byable(recall)
         local v11plus: di "version " string(max(11,_caller())) ", missing: "
         * The dependent and treatment variables cannot be factor variables
         _fv_check_depvar `depvar' `treatvar'
-        * Create temporary factor variables
-        fvrevar `ctrlvar' if `touse' == 1
-        * INCLUDED is the full set of variables, expanding out factors
-        * and dropping omitted variables
+        * INCLUDED is the full set of control variables, expanding out
+        *  factors and time series and dropping omitted variables
+        quietly fvrevar `ctrlvar' if `touse' == 1
         quietly `v11plus' _rmcoll `r(varlist)' if `touse' == 1, expand
         local included = ustrregexra("`r(varlist)'","o\.[A-Za-z0-9\_]+", "",.)
+        quietly fvrevar `depvar' if `touse' == 1
+        local inc_depvar = r(varlist)
+        quietly fvrevar `treatvar' if `touse' == 1
+        local inc_treatvar = r(varlist)
     }
     else {
         local included "`ctrlvar'"
+        local inc_depvar "`depvar'"
+        local inc_treatvar "`treatvar'"
     }
     * Redefine varlist to use INCLUDED rather than CTRLVAR
-    local varlist `depvar' `treatvar' `included'
+    local varlist `inc_depvar' `inc_treatvar' `included'
     **** (3) Set the appropriate matsize
     * The number of explanatory variables is limited by the value of matsize.
     * The algorithm is based on the second moment
@@ -249,7 +254,7 @@ program define rcr , eclass byable(recall)
     * program. So the rule of thumb is to never use BIGLIST in any expression
     * involving a "=".
     * First, add the original variables.  They don't need to be generated.
-    local biglist "`included' `depvar' `treatvar'"
+    local biglist "`included' `inc_depvar' `inc_treatvar'"
     * Next, add all of the cross-products between X and (X,y,z)
     forvalues thisrow = 1 / `num'{
             forvalues thiscolumn = 1 / `num' {
@@ -265,17 +270,17 @@ program define rcr , eclass byable(recall)
             }
             * The following code assigns values to X(thisrow)Y products,
             * thisrow changing from 1 to #ctrl vars
-            capture generate double `X`thisrow'Y' = ``thisrow'' * `depvar'
+            capture generate double `X`thisrow'Y' = ``thisrow'' * `inc_depvar'
             local biglist "`biglist' `X`thisrow'Y'"
             * The following code assigns values to X(thisrow)Z products,
             * thisrow changing from 1 to #ctrl vars
-            capture generate double `X`thisrow'Z' = ``thisrow'' * `treatvar'
+            capture generate double `X`thisrow'Z' = ``thisrow'' * `inc_treatvar'
             local biglist "`biglist' `X`thisrow'Z'"
     }
     * We also want the cross-products of y and z
-    generate double `y2' = `depvar' * `depvar'
-    generate double `yz' = `depvar' * `treatvar'
-    generate double `z2' = `treatvar' * `treatvar'
+    quietly generate double `y2' = `inc_depvar' * `inc_depvar'
+    quietly generate double `yz' = `inc_depvar' * `inc_treatvar'
+    quietly generate double `z2' = `inc_treatvar' * `inc_treatvar'
     * Since we want to replicate the same order of variables we have in
     * R code, we add `y2' `yz' `z2' at the very end
     local biglist "`biglist' `y2' `yz' `z2'"

@@ -913,4 +913,29 @@ rcof "noisily rcr SAT Small_Class i.zero" == 1
 rcof "noisily rcr SAT Small_Class i.studcat if studcat == 1" == 1
 
 
+*******************************************************************
+* Time series operators
+*******************************************************************
+* Should allow time series operators for dependent, treatment and control,
+* variables, possibly in combination with factor variables
+tempvar timevar
+gen `timevar' = _n
+tsset `timevar'
+reg L.SAT L.Small_Class i.studcat L.Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+scalar ols_coef = _b[L.Small_Class]
+rcr L.SAT L.Small_Class i.studcat L.Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+assert reldif(_b[betaxH],ols_coef) < `tol'
+drop `timevar'
+* Should also work with panel data
+by SCHID, sort : gen `timevar' = _n
+tsset SCHID `timevar'
+reg L.SAT L.Small_Class i.studcat L.Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+scalar ols_coef = _b[L.Small_Class]
+rcr L.SAT L.Small_Class i.studcat L.Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+assert reldif(_b[betaxH],ols_coef) < `tol'
+capture drop `timevar'
+* Should issue an error message if tsset has not been called
+tsset, clear
+rcof "noisily rcr L.SAT L.Small_Class i.studcat L.Free_Lunch White_Teacher Teacher_Experience Masters_Degree" == 111
+
 log close

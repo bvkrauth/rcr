@@ -42,7 +42,7 @@ program define rcr , eclass byable(recall)
     * LAMBDA describes the lower and upper bound for the lambda (relative
     * correlation) parameter. A missing value for the upper [lower] bound
     * indicates that there is no upper [lower] bound
-    syntax varlist(min = 3) ///
+    syntax varlist(min = 3 fv) ///
             [if] [in] [fw aw pw iw] ///
             [, CLuster(varname) ///
             vce(namelist min = 2 max = 2) ///
@@ -57,6 +57,8 @@ program define rcr , eclass byable(recall)
     tempname lamb length moments lambf results V b gradient
     **** (1) Process the command options
     * Process varlist
+    * Check to see if factor variables are in use
+    local fvops = "`s(fvops)'" == "true" | _caller() >= 11
     * The first variable name in varlist refers to the outcome variable and
     * will be stored in DEPVAR
     gettoken depvar indepvar: varlist
@@ -74,7 +76,7 @@ program define rcr , eclass byable(recall)
     local rescale = lower("`rescale'")
     * Valid answers are "yes" and "no"
     * Default is "no" in the interest of backwards compatibility. In the next
-	* full version this default may change to "yes".
+    * full version this default may change to "yes".
     if !missing("`rescale'") & !inlist("`rescale'" ,"yes", "no") {
         di as error "rescale option `rescale' not valid, must be yes or no"
         error 111
@@ -112,7 +114,27 @@ program define rcr , eclass byable(recall)
             error 100
         }
     }
-    **** (2) Set the appropriate matsize
+    **** (2) Process factor variables
+    * See Stata advice at:
+    * https://www.stata.com/support/faqs/programming/factor-variable-support/
+    if (`fvops' == 1) {
+        * Some commands need to be executed in version 11 or higher
+        local v11plus: di "version " string(max(11,_caller())) ", missing: "
+        * The dependent and treatment variables cannot be factor variables
+        _fv_check_depvar `depvar' `treatvar'
+        * Create temporary factor variables
+        fvrevar `ctrlvar' if `touse' == 1
+        * INCLUDED is the full set of variables, expanding out factors
+        * and dropping omitted variables
+        quietly `v11plus' _rmcoll `r(varlist)' if `touse' == 1, expand
+        local included = ustrregexra("`r(varlist)'","o\.[A-Za-z0-9\_]+", "",.)
+    }
+    else {
+        local included "`ctrlvar'"
+    }
+    * Redefine varlist to use INCLUDED rather than CTRLVAR
+    local varlist `depvar' `treatvar' `included'
+    **** (3) Set the appropriate matsize
     * The number of explanatory variables is limited by the value of matsize.
     * The algorithm is based on the second moment
     * matrix of the data.  With K variables (1 outcome, 1 explanatory,
@@ -131,15 +153,20 @@ program define rcr , eclass byable(recall)
     local mat_needed = (`numall' + 1) ^ 2
     if (`mat_needed' > `mat_max') {
         di as error "Too many (" (`numall' - 2)    ") explanatory variables. Maximum number for this Stata version is " (floor(sqrt(c(max_matsize))) - 3)
-        exit 103
+        error 103
     }
     * matsize does not apply for Stata version 16 and up
     if (`mat_needed' > `mat_current') & (c(stata_version) < 16) {
         set matsize `mat_needed'
     }
-    **** (3) Check the data
-    * Grab the number of control variables
-    local num : word count `ctrlvar'
+    **** (4) Check the data
+    * Grab the number of included control variables
+    local num : word count `included'
+    * If no included control variables, issue an error
+    if (`num' == 0) {
+        di as error "No variation in control variables"
+        error 1
+    }
     * Grab the number of all the variables specified in the RCR command
     * (should be num + 2)
     local numall: word count `varlist'
@@ -177,7 +204,7 @@ program define rcr , eclass byable(recall)
         di as error "Warning: At least one variable is perfectly collinear with other variables."
         di as error "RCR will continue but results should be viewed with caution."
     }
-    **** (4) Rescale the data if RESCALE is set to yes
+    **** (5) Rescale the data if RESCALE is set to yes
     if "`rescale'" == "yes" {
         tempname m sd betafac bfac
         quietly mean `varlist' if `touse' == 1 [`weight'`exp']
@@ -193,11 +220,11 @@ program define rcr , eclass byable(recall)
             local xnames "`xnames' `xname'"
         }
     }
-    **** (5) Calculate the moment vector (moments) and its variance (V)
+    **** (6) Calculate the moment vector (moments) and its variance (V)
     * Tokenize divides string into tokens, storing the result in `1', `2', ...
     * (the positional local macros).  Tokens are determined based on the
     * parsing characters pchars, which default to a space if not specified
-    tokenize `ctrlvar'
+    tokenize `included'
     * Generate all the temporary variables we will need for the moment vector
     forvalues thisrow = 1 / `numall'{
         forvalues thiscolumn = 1 / `numall' {
@@ -222,7 +249,7 @@ program define rcr , eclass byable(recall)
     * program. So the rule of thumb is to never use BIGLIST in any expression
     * involving a "=".
     * First, add the original variables.  They don't need to be generated.
-    local biglist "`ctrlvar' `depvar' `treatvar'"
+    local biglist "`included' `depvar' `treatvar'"
     * Next, add all of the cross-products between X and (X,y,z)
     forvalues thisrow = 1 / `num'{
             forvalues thiscolumn = 1 / `num' {
@@ -230,7 +257,7 @@ program define rcr , eclass byable(recall)
                     * Assign values to the temp names created before, these
                     * are X products with no repetition
                     *``thisrow'' and ``thiscolumn'' come from elements of
-                    * ctrlvar that I tokenized above
+                    * INCLUDED that I tokenized above
                     capture generate double `X`thisrow'X`thiscolumn'' = ``thisrow'' * ``thiscolumn''
                     * adding X products to the local macro
                     local biglist "`biglist' `X`thisrow'X`thiscolumn''"
@@ -252,10 +279,9 @@ program define rcr , eclass byable(recall)
     * Since we want to replicate the same order of variables we have in
     * R code, we add `y2' `yz' `z2' at the very end
     local biglist "`biglist' `y2' `yz' `z2'"
-    * This line is where we actually estimate the moment vector.  It is here
-    * and only here that the if, in, weight, and cluster options are used.
+    * This line is where we actually estimate the moment vector.
     quietly mean `biglist' if `touse' == 1 [`weight'`exp'], cluster(`cluster')
-    **** (4) Prepare the results for output to the Fortran program
+    **** (7) Prepare the results for output to the Fortran program
     * LENGTH will be the first row in the file.  It contains three numbers:
     *    The size of the moment vector (colsof(e(b))
     *    The number of lambda ranges provided (always 1 for this program)
@@ -279,7 +305,7 @@ program define rcr , eclass byable(recall)
     *     di as err "you have to specify an interval for lambda e.g. lambda(3,6)"
     *      exit 198
     *  }
-    **** (6) Output the moment vector and other information to a text file
+    **** (8) Output the moment vector and other information to a text file
     * The data will be passed in temporary files
     tempfile input_file output_file log_file detail_file
     if ("`save'" == "save") {
@@ -299,7 +325,7 @@ program define rcr , eclass byable(recall)
     quietly mat2txt, matrix(`moments') saving("`input_file'") append
     * lambda vector
     quietly mat2txt, matrix(`lambf') saving("`input_file'") append
-    **** (6) Call the RCR program
+    **** (9) Call the RCR program
     * See if Python is supported in this environment
     quietly rcr_config
     if "`exe'" == "" {
@@ -366,7 +392,7 @@ program define rcr , eclass byable(recall)
         * Check to see if the file is present
         capture confirm file "`output_file'"
        }
-    **** (7) Read the text file output by the RCR program
+    **** (10) Read the text file output by the RCR program
     * Save the current state of the data, because we will be reading in a new
     * file
     preserve
@@ -434,7 +460,7 @@ program define rcr , eclass byable(recall)
     matrix colnames `b' = lambdaInf betaxInf lambda0 betaxL betaxH
     matrix rownames `V' = lambdaInf betaxInf lambda0 betaxL betaxH
     matrix colnames `V' = lambdaInf betaxInf lambda0 betaxL betaxH
-    **** (6) Post results to e()
+    **** (11) Post results to e()
     * Clear out whatever's in there now
     ereturn clear
     * Start by posting the new vector of parameter estimates and its
@@ -470,11 +496,12 @@ program define rcr , eclass byable(recall)
     }
     * This should be the very last thing added to e()
     ereturn local cmd "rcr"
-    **** (7) Print results
+    **** (12) Print results
     * refer to the program "di_rcr" below for more information on di_rcr
     di_rcr, level(`level')
     * refer to the program "Footer" below for more information on Footer
     Footer_rcr, level(`level')
+    **** (13) Clean up
     * Reset MATSIZE to its original value (not needed for Stata version 16 and up).
     if (c(stata_version) < 16) {
         set matsize `mat_current'

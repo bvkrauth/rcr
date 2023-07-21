@@ -295,9 +295,6 @@ rcof "noisily rcr zero Small_Class White_Asian" == 1
 rcof "noisily rcr SAT zero White_Asian" == 1
 * Control variable doesn't vary
 rcof "noisily rcr SAT Small_Class zero" == 1
-* Collinearity among control variables
-rcof "noisily rcr SAT Small_Class White_Asian zero" == 1
-rcof "noisily rcr SAT Small_Class White_Asian White_Asian" == 1
 * More than 25 control variables
 scalar max_controls = floor(sqrt(c(max_matsize))) - 3
 if max_controls <= 25 {
@@ -346,6 +343,15 @@ assert reldif( e(betaxCI_L)  , 2.893150619179314 ) <  `tol'
 rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree x1 - x19
 assert reldif( e(betaxCI_H)  , 7.341531127530879 ) <  `tol'
 assert reldif( e(betaxCI_L)  , 3.976272660323884 ) <  `tol'
+* Collinearity among control variables
+* Note the behavior here has changed.  Previously, the program issued an error
+* message when control variables were collinear. Now it just omits variables
+* as needed, just like REG does.
+local tol "1e-8"
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree zero
+assert reldif( e(betaxCI_H)  , 6.488085265277207 ) <  `tol'
+rcr SAT Small_Class White_Asian Girl Free_Lunch White_Teacher Teacher_Experience Masters_Degree Girl
+assert reldif( e(betaxCI_H)  , 6.488085265277207 ) <  `tol'
 
 *******************************************************************
 * IF/IN/WEIGHT options
@@ -869,5 +875,42 @@ est table good bad rescaled, b(%9.2f) se keep(lambda0)
 savedresults compare good e(), tol(1e-3) include(scalar: betaxCI_H betaxCI_L N matrix: b V)
 savedresults drop good
 restore
+
+*******************************************************************
+* Factor variables
+*******************************************************************
+label define studcat ///
+    1 "White/Asian boy" ///
+    2 "White/Asian girl" ///
+    3 "NWA boy" ///
+    4 "NWA girl", replace
+gen studcat:studcat = 1 if (White_Asian > 0) & (Girl < 0)
+replace studcat = 2 if (White_Asian > 0) & (Girl > 0)
+replace studcat = 3 if (White_Asian < 0) & (Girl < 0)
+replace studcat = 4 if (White_Asian < 0) & (Girl > 0)
+label variable studcat "Student category"
+gen wt = (studcat == 1)
+
+* Issue an error if either of the first two variables are factor variables
+rcof "noisily rcr i.studcat SAT Small_Class Free_Lunch White_Teacher" == 198
+rcof "noisily rcr SAT i.studcat Small_Class Free_Lunch White_Teacher" == 198
+* Expand out factor variables after that
+* This is the OLS version
+reg SAT Small_Class i.studcat Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+scalar test_coef = _b[Small_Class]
+* The RCR version should produce similar results
+rcr SAT Small_Class i.studcat Free_Lunch White_Teacher Teacher_Experience Masters_Degree
+assert reldif(_b[betaxL] , test_coef ) < `tol'
+* Omit variables that do not vary given IF/IN/WEIGHTS
+reg SAT Small_Class i.studcat Free_Lunch White_Teacher Teacher_Experience Masters_Degree if studcat == 1
+scalar test_coef = _b[Small_Class]
+rcr SAT Small_Class i.studcat Free_Lunch White_Teacher Teacher_Experience Masters_Degree if studcat == 1
+assert reldif(_b[betaxL] , test_coef ) < `tol'
+rcr SAT Small_Class i.studcat Free_Lunch White_Teacher Teacher_Experience Masters_Degree [pw = wt]
+assert reldif(_b[betaxL] , test_coef ) < `tol'
+* Issue an error if there is no variation
+rcof "noisily rcr SAT Small_Class i.zero" == 1
+rcof "noisily rcr SAT Small_Class i.studcat if studcat == 1" == 1
+
 
 log close

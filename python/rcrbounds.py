@@ -2077,18 +2077,18 @@ def read_data(infile):
     try:
         # Line 1 should be three whitespace delimited numbers
         line1 = pd.read_csv(infile,
-                            delim_whitespace=True,
+                            sep=r'\s+',
                             skiprows=[1, 2],
                             header=None).values[0, ]
         n_moments, n_rc, external_big_number = tuple(line1)
         # Line 2 should be n_moments whitespace delimited numbers
         moment_vector = pd.read_csv(infile,
-                                    delim_whitespace=True,
+                                    sep=r'\s+',
                                     skiprows=[0, 2],
                                     header=None).values[0, ].astype(np.float64)
         # Lines 3+ should be two whitespace delimited numbers each
         rc_range = pd.read_csv(infile,
-                               delim_whitespace=True,
+                               sep=r'\s+',
                                skiprows=[0, 1],
                                header=None).values[0, ].astype(np.float64)
     except FileNotFoundError:

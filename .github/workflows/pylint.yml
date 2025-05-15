@@ -24,6 +24,7 @@ jobs:
         pip install statsmodels
         pip install matplotlib
         pip install pytest
+        pip install setuptools
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files 'python/*.py')

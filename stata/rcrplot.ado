@@ -51,7 +51,7 @@ program define rcrplot
         local Lambdasym "[{&lambda}{superscript:L},{&lambda}{superscript:H}]"
         local Betasym "[{&beta}{subscript:x}{superscript:L},{&beta}{subscript:x}{superscript:H}]"
     }
-    quietly keep if betax > `xmin' & betax < `xmax' & lambda > `ymin' & lambda < `ymax'
+    quietly keep if betax >= `xmin' & betax <= `xmax' & lambda >= `ymin' & lambda <= `ymax'
 
     twoway line lambda betax if betax < _b[betaxInf]  || ///
         line lambda betax if betax > _b[betaxInf] , lstyle(p1) || ///

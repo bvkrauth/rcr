@@ -1047,9 +1047,9 @@ def estimate_effect_segments(moment_vector):
     # do j=1,size(localmin)
     for j in range(1, len(localmin)):
         if localmin[j-1]:
-            effectvec[j-1] = brent(effectvec[j-2],
-                                   effectvec[j-1],
-                                   effectvec[j],
+            effectvec[j-1] = brent(effectvec.item(j-2),
+                                   effectvec.item(j-1),
+                                   effectvec.item(j),
                                    rcfast,
                                    1.0e-10,
                                    simplify_moments(moment_vector))
@@ -1247,7 +1247,7 @@ def estimate_effect(moment_vector,
     # Now we find the gradient
     # Take the gradient at both effect_L and effect_H
     for j in range(1, 3):
-        effect = effect_estimate[j-1, 0]
+        effect = effect_estimate[j-1, 0].item()
         # The gradient can only be calculated if effect is finite.
         # This was hopefully caught above but check just in case.
         if not np.isfinite(effect):

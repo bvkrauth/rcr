@@ -187,6 +187,7 @@ class RCR:
     [12.31059909  8.16970997 28.93548917  5.13504376  5.20150257]
     """
     # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-positional-arguments
     def __init__(self,
                  endog,
                  exog,
@@ -649,6 +650,7 @@ class RCRResults:
             pvalue = 1.0 - low/100.0
         return pvalue
 
+    # pylint: disable=too-many-positional-arguments
     def rcrplot(self,
                 ax=None,
                 xlim=(-50, 50),
@@ -1318,6 +1320,7 @@ def estimate_effect(moment_vector,
             # current value of h
             errmax = max(errmax, err)
             # Now we have a candidate derivative drc/deffect
+            # pylint: disable=possibly-used-before-assignment
             deffect = dfridr
             # Second, estimate the vector (drc / dmoment_vector)
             for i in range(1, len(moment_vector) + 1):
@@ -1682,6 +1685,7 @@ def estimate_parameter(func, moment_vector):
 # Standard numerical algorithms
 
 
+# pylint: disable=too-many-positional-arguments
 def brent(ax, bx, cx, func, tol, xopt):
     """Maximizes by Brent algorithm."""
     # pylint: disable=too-many-arguments,too-many-locals

@@ -1054,9 +1054,9 @@ def estimate_effect_segments(moment_vector):
                                    1.0e-10,
                                    simplify_moments(moment_vector))
         elif localmax[j-1]:
-            effectvec[j-1] = brent(effectvec[j-2],
-                                   effectvec[j-1],
-                                   effectvec[j],
+            effectvec[j-1] = brent(effectvec.item(j-2),
+                                   effectvec.item(j-1),
+                                   effectvec.item(j),
                                    negative_rcfast,
                                    1.0e-10,
                                    simplify_moments(moment_vector))
@@ -1284,7 +1284,7 @@ def estimate_effect(moment_vector,
             hh = h
             # Calculate an approximate derivative using stepsize hh
             a[0, 0] = (rcfast(effect + hh, simplified_moments) -
-                       rcfast(effect - hh, simplified_moments)) / \
+                       rcfast(effect - hh, simplified_moments)).item() / \
                       (2.0 * hh)
             # Set the error to very large
             err = big
@@ -1295,7 +1295,7 @@ def estimate_effect(moment_vector,
                 # Calculate an approximate derivative with the new
                 # stepsize
                 a[0, k-1] = ((rcfast(effect + hh, simplified_moments) -
-                              rcfast(effect - hh, simplified_moments)) /
+                              rcfast(effect - hh, simplified_moments)).item() /
                              (2.0 * hh))
                 # Then use Neville's method to estimate the error
                 for m in range(2, k + 1):
@@ -1327,7 +1327,7 @@ def estimate_effect(moment_vector,
                 hh = h
                 deps[i-1] = hh
                 a[0, 0] = ((rcfun(moment_vector + deps, effect) -
-                            rcfun(moment_vector - deps, effect)) /
+                            rcfun(moment_vector - deps, effect)).item() /
                            (2.0 * hh))
                 err = big
                 for k in range(2, ntab + 1):
@@ -1336,7 +1336,7 @@ def estimate_effect(moment_vector,
                     a[0, k - 1] = (rcfun(moment_vector + deps,
                                          effect) -
                                    rcfun(moment_vector - deps,
-                                         effect)) / (2.0 * hh)
+                                         effect)).item() / (2.0 * hh)
                     for m in range(2, k + 1):
                         a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
                                            a[m - 2, k - 2]) / \

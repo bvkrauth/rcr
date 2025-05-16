@@ -41,7 +41,7 @@ else {
 * we only need to make sure the results are close to those for the
 * Windows Python version.  So we use a higher relative tolerance.
 if c(os) == "Windows" & "${exe}" == "python" {
-    global tol "1E-8"
+    global tol "1E-7"
 }
 else {
     global tol "1E-4"

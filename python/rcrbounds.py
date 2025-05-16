@@ -1046,14 +1046,14 @@ def estimate_effect_segments(moment_vector):
     # an iterative optimization algorithm to improve the precision.
     # do j=1,size(localmin)
     for j in range(1, len(localmin)):
-        if localmin[j-1]:
+        if localmin[j-1].item():
             effectvec[j-1] = brent(effectvec.item(j-2),
                                    effectvec.item(j-1),
                                    effectvec.item(j),
-                                   rcfast,
+                                   scalar_rcfast,
                                    1.0e-10,
                                    simplify_moments(moment_vector))
-        elif localmax[j-1]:
+        elif localmax[j-1].item():
             effectvec[j-1] = brent(effectvec.item(j-2),
                                    effectvec.item(j-1),
                                    effectvec.item(j),
@@ -1558,10 +1558,13 @@ def rcfast(effect, simplified_moments):
                     np.sqrt(lf0_num[msk]/lf0_denom[msk]))
     return rc_fast
 
+def scalar_rcfast(effect, simplified_moments):
+    rc_fast = rcfast(effect, simplified_moments).item()
+    return rc_fast
 
 def negative_rcfast(effect, simplified_moments):
     """Calcualtes -rc(effect)."""
-    return -rcfast(effect, simplified_moments)
+    return -scalar_rcfast(effect, simplified_moments)
 
 
 def rcfun(moment_vector, effect):

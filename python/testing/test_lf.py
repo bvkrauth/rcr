@@ -7,6 +7,7 @@ import pytest
 from rcrbounds import rcfast, effectinf, rcinf, simplify_moments
 from rcrbounds import scalar_rcfast, negative_rcfast
 
+
 # Basic functionality
 def test_lf_basic():
     """rcfast for simple data and scalar effect"""
@@ -14,7 +15,7 @@ def test_lf_basic():
     lf_true = 0.5773502691896257
     test_lf = rcfast(0.0, simplify_moments(mv1))
     assert test_lf == pytest.approx(lf_true)
-    assert type(test_lf) is np.ndarray
+    assert isinstance(test_lf, np.ndarray)
 
 
 def test_lf_realdata(moment_vector):
@@ -23,7 +24,7 @@ def test_lf_realdata(moment_vector):
     test_lf = rcfast(np.array([0.0, 1.0, ]),
                      simplify_moments(moment_vector))
     assert test_lf == pytest.approx(lf_true)
-    assert type(test_lf) is np.ndarray
+    assert isinstance(test_lf, np.ndarray)
 
 
 def test_lf_scalar():
@@ -32,7 +33,7 @@ def test_lf_scalar():
     lf_true = 0.5773502691896257
     test_lf = scalar_rcfast(0.0, simplify_moments(mv1))
     assert test_lf == pytest.approx(lf_true)
-    assert type(test_lf) is float
+    assert isinstance(test_lf, float)
 
 
 def test_lf_negative():
@@ -41,7 +42,7 @@ def test_lf_negative():
     lf_true = -0.5773502691896257
     test_lf = negative_rcfast(0.0, simplify_moments(mv1))
     assert test_lf == pytest.approx(lf_true)
-    assert type(test_lf) is float
+    assert isinstance(test_lf, float)
 
 
 # Special cases

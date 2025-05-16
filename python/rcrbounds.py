@@ -1558,9 +1558,12 @@ def rcfast(effect, simplified_moments):
                     np.sqrt(lf0_num[msk]/lf0_denom[msk]))
     return rc_fast
 
+
 def scalar_rcfast(effect, simplified_moments):
+    """Calculates rc a single effect, returning a scalar."""
     rc_fast = rcfast(effect, simplified_moments).item()
     return rc_fast
+
 
 def negative_rcfast(effect, simplified_moments):
     """Calcualtes -rc(effect)."""

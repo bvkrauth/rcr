@@ -82,7 +82,7 @@ def test_em_invalid():
     mv1 = np.array([0, 0, 0, 1, 0.5, 0.5, 1, 0.5, 0])
     lr1 = np.array([0.0, 1.0])
     with pytest.warns(UserWarning, match="Invalid data:"):
-        test_result = estimate_model(mv1, lr1)
+        test_result = estimate_model(mv1, lr1)[0]
     assert np.all(np.isnan(test_result))
 
 
@@ -91,5 +91,5 @@ def test_em_nonid():
     mv1 = np.array([0, 0, 0, 1, 0., 0.5, 1, 0.5, 1.0])
     lr1 = np.array([0.0, 1.0])
     with pytest.warns(UserWarning, match="Model not identified:"):
-        test_result = estimate_model(mv1, lr1)
+        test_result = estimate_model(mv1, lr1)[0]
     assert np.all(np.isnan(test_result))

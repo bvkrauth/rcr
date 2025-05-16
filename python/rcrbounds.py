@@ -943,10 +943,14 @@ def estimate_model(moment_vector, rc_range):
     valid, identified = check_moments(moment_vector)
     # If moments are invalid, just stop there
     if not valid:
-        return result_matrix
+        effectvec = np.full(1, float('nan'))
+        rcvec = np.full(1, float('nan'))
+        return result_matrix, effectvec, rcvec
     # If model is not identified, just stop there
     if not identified:
-        return result_matrix
+        effectvec = np.full(1, float('nan'))
+        rcvec = np.full(1, float('nan'))
+        return result_matrix, effectvec, rcvec
     # We have closed forms for the global parameters rc_inf, effect_inf,
     # and rc(0), so we just estimate them directly.
     result_matrix[0, ] = estimate_parameter(rcinf, moment_vector)

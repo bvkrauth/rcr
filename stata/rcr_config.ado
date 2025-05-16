@@ -44,8 +44,9 @@ program define rcr_config, rclass
         di "STEP 2: Is your Stata version linked to a compatible Python installation?"
         capture python : 1
         if _rc == 0 & "`python'" == "" {
-            local python_exec = c(python_exec)
             di "  YES, your Stata version is linked to a compatible Python installation"
+		quietly python query
+		local python_exec = r(execpath)
             di "  (`python_exec')." _newline
         }
         else {

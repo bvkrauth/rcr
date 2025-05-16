@@ -1466,23 +1466,24 @@ def check_moments(moment_vector):
     if simplified_moments[4] < 0.0:
         valid = False
         warn(f"Invalid data: var(zhat) = {simplified_moments[4]} < 0")
-    if (np.abs(simplified_moments[2]) >
-       np.sqrt(simplified_moments[0] * simplified_moments[1])):
-        valid = False
-        covyz = np.abs(simplified_moments[2])
-        sdyz = np.sqrt(simplified_moments[0] * simplified_moments[1])
-        msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
-        msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
-        warn(msg1 + msg2)
-    # I'm not certain this condition can ever be triggered here
-    if np.abs(simplified_moments[5]) > np.sqrt(simplified_moments[3] *
-                                               simplified_moments[4]):
-        valid = False
-        covyz = np.abs(simplified_moments[5])
-        sdyz = np.sqrt(simplified_moments[3] * simplified_moments[4])
-        msg1 = f"Invalid data: cov(yh,zh) = {covyz}"
-        msg2 = f" > {sdyz} sqrt(var(yh)*var(zh))"
-        warn(msg1 + msg2)
+    if valid:
+        if (np.abs(simplified_moments[2]) >
+           np.sqrt(simplified_moments[0] * simplified_moments[1])):
+            valid = False
+            covyz = np.abs(simplified_moments[2])
+            sdyz = np.sqrt(simplified_moments[0] * simplified_moments[1])
+            msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
+            msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
+            warn(msg1 + msg2)
+        # I'm not certain this condition can ever be triggered here
+        if np.abs(simplified_moments[5]) > np.sqrt(simplified_moments[3] *
+                                                   simplified_moments[4]):
+            valid = False
+            covyz = np.abs(simplified_moments[5])
+            sdyz = np.sqrt(simplified_moments[3] * simplified_moments[4])
+            msg1 = f"Invalid data: cov(yh,zh) = {covyz}"
+            msg2 = f" > {sdyz} sqrt(var(yh)*var(zh))"
+            warn(msg1 + msg2)
     # Next make sure that the identifying conditions are satisfied.
     identified = valid
     if simplified_moments[0] == 0.0:

@@ -1486,18 +1486,19 @@ def check_moments(moment_vector):
             warn(msg1 + msg2)
     # Next make sure that the identifying conditions are satisfied.
     identified = valid
-    if simplified_moments[0] == 0.0:
-        identified = False
-        warn("Model not identified: var(y) = 0")
-    if simplified_moments[1] == 0.0:
-        identified = False
-        warn("Model not identified: var(z) = 0")
-    if simplified_moments[3] == 0.0:
-        identified = False
-        warn("Model not identified: var(yhat) = 0")
-    if simplified_moments[3] == simplified_moments[0]:
-        identified = False
-        warn("Model not identified: y is an exact linear function of X")
+    if valid:
+        if simplified_moments[0] == 0.0:
+            identified = False
+            warn("Model not identified: var(y) = 0")
+        if simplified_moments[1] == 0.0:
+            identified = False
+            warn("Model not identified: var(z) = 0")
+        if simplified_moments[3] == 0.0:
+            identified = False
+            warn("Model not identified: var(yhat) = 0")
+        if simplified_moments[3] == simplified_moments[0]:
+            identified = False
+            warn("Model not identified: y is an exact linear function of X")
     # We may also want to check for var(zhat)=0.
     # The model is identified in this case, but we may need to take special
     # steps to get the calculations right.

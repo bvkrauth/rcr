@@ -46,6 +46,7 @@ program define rcr_config, rclass
         capture python : 1
         if _rc == 0 & "`python'" == "" {
             di "  YES, your Stata version is linked to a compatible Python installation"
+			python search
 		quietly python query
 		local python_exec = r(execpath)
             di "  (`python_exec')." _newline

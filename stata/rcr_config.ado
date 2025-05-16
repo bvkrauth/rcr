@@ -3,10 +3,11 @@ program define rcr_config, rclass
     syntax [, forceos(string) forceversion(string) forcereq(string) nopython]
     di _newline "CONFIGURATION INFORMATION FOR RCR PACKAGE"
     di "------------------------------------------"
-    di "The current RCR package is written in Python and requires that your"
-    di "Stata is set up with Python integration.  This command will help you"
-    di "insure that your setup is compatible." _newline
-
+    di "The latest RCR package is written in Python. Using it requires " ///
+       "that Stata is set"
+	di "up to use a compatible version of Python that includes all " ///
+	   "required modules."
+	di "This command will help ensure that your setup is compatible." _newline
     local version = c(stata_version)
     if "`forceversion'" == "" {
         local version = c(stata_version)

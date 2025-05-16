@@ -134,10 +134,9 @@ def test_rr_testeffect(results):
 
 def test_rr_summary(results):
     """summary() method with default options"""
-    # pylint: disable=unidiomatic-typecheck
     test_result = results.summary()
     assert type(test_result).__name__ == "Summary"
-    assert type(test_result.tables) == list
+    assert isinstance(test_result.tables, list)
     assert len(test_result.tables) == 3
     assert len(test_result.extra_txt) > 0
 

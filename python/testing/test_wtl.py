@@ -16,7 +16,7 @@ def test_wtl_basic():
     with tempfile.TemporaryDirectory() as tmp:
         logfile = os.path.join(tmp, 'log.txt')
         set_logfile(logfile)
-        assert ~os.path.exists(logfile)
+        assert not os.path.exists(logfile)
         write_to_logfile("Line 1\n", mode="w")
         write_to_logfile("Line 2\n")
         assert os.path.exists(logfile)

@@ -19,7 +19,7 @@ assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  ${tol}
 rcr SAT Small_Class ${controls}, lambda(. 0)
 assert reldif( e(betaxCI_L)  , 3.914919882302702 ) <  ${tol}
 if inlist("${exe}","python") & inlist(c(os),"Windows") {
-    assert reldif( e(betaxCI_H)  , 13.28548258283382 ) <  ${tol}
+	assert reldif(_b[betaxH], 8.169709965020822) <  ${tol}
 }
 else if inlist("${exe}","python") & inlist(c(os),"Unix") {
     assert reldif( e(betaxCI_H)  , 13.94704306786475 ) <  ${tol}

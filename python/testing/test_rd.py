@@ -25,7 +25,7 @@ def test_rd_basic(infile):
 
 def test_rd_nonexistent():
     """raise an exception if file does not exist"""
-    assert ~os.path.exists("nonexistent-file")
+    assert not os.path.exists("nonexistent-file")
     try:
         read_data("nonexistent-file")
     except RuntimeError:

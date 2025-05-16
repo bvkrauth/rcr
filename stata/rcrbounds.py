@@ -187,6 +187,7 @@ class RCR:
     [12.31059909  8.16970997 28.93548917  5.13504376  5.20150257]
     """
     # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-positional-arguments
     def __init__(self,
                  endog,
                  exog,
@@ -649,6 +650,7 @@ class RCRResults:
             pvalue = 1.0 - low/100.0
         return pvalue
 
+    # pylint: disable=too-many-positional-arguments
     def rcrplot(self,
                 ax=None,
                 xlim=(-50, 50),
@@ -941,10 +943,14 @@ def estimate_model(moment_vector, rc_range):
     valid, identified = check_moments(moment_vector)
     # If moments are invalid, just stop there
     if not valid:
-        return result_matrix
+        effectvec = np.full(1, float('nan'))
+        rcvec = np.full(1, float('nan'))
+        return result_matrix, effectvec, rcvec
     # If model is not identified, just stop there
     if not identified:
-        return result_matrix
+        effectvec = np.full(1, float('nan'))
+        rcvec = np.full(1, float('nan'))
+        return result_matrix, effectvec, rcvec
     # We have closed forms for the global parameters rc_inf, effect_inf,
     # and rc(0), so we just estimate them directly.
     result_matrix[0, ] = estimate_parameter(rcinf, moment_vector)
@@ -1044,17 +1050,17 @@ def estimate_effect_segments(moment_vector):
     # an iterative optimization algorithm to improve the precision.
     # do j=1,size(localmin)
     for j in range(1, len(localmin)):
-        if localmin[j-1]:
-            effectvec[j-1] = brent(effectvec[j-2],
-                                   effectvec[j-1],
-                                   effectvec[j],
-                                   rcfast,
+        if localmin[j-1].item():
+            effectvec[j-1] = brent(effectvec.item(j-2),
+                                   effectvec.item(j-1),
+                                   effectvec.item(j),
+                                   scalar_rcfast,
                                    1.0e-10,
                                    simplify_moments(moment_vector))
-        elif localmax[j-1]:
-            effectvec[j-1] = brent(effectvec[j-2],
-                                   effectvec[j-1],
-                                   effectvec[j],
+        elif localmax[j-1].item():
+            effectvec[j-1] = brent(effectvec.item(j-2),
+                                   effectvec.item(j-1),
+                                   effectvec.item(j),
                                    negative_rcfast,
                                    1.0e-10,
                                    simplify_moments(moment_vector))
@@ -1245,7 +1251,7 @@ def estimate_effect(moment_vector,
     # Now we find the gradient
     # Take the gradient at both effect_L and effect_H
     for j in range(1, 3):
-        effect = effect_estimate[j-1, 0]
+        effect = effect_estimate[j-1, 0].item()
         # The gradient can only be calculated if effect is finite.
         # This was hopefully caught above but check just in case.
         if not np.isfinite(effect):
@@ -1282,7 +1288,7 @@ def estimate_effect(moment_vector,
             hh = h
             # Calculate an approximate derivative using stepsize hh
             a[0, 0] = (rcfast(effect + hh, simplified_moments) -
-                       rcfast(effect - hh, simplified_moments)) / \
+                       rcfast(effect - hh, simplified_moments)).item() / \
                       (2.0 * hh)
             # Set the error to very large
             err = big
@@ -1293,7 +1299,7 @@ def estimate_effect(moment_vector,
                 # Calculate an approximate derivative with the new
                 # stepsize
                 a[0, k-1] = ((rcfast(effect + hh, simplified_moments) -
-                              rcfast(effect - hh, simplified_moments)) /
+                              rcfast(effect - hh, simplified_moments)).item() /
                              (2.0 * hh))
                 # Then use Neville's method to estimate the error
                 for m in range(2, k + 1):
@@ -1318,13 +1324,14 @@ def estimate_effect(moment_vector,
             # current value of h
             errmax = max(errmax, err)
             # Now we have a candidate derivative drc/deffect
+            # pylint: disable=possibly-used-before-assignment
             deffect = dfridr
             # Second, estimate the vector (drc / dmoment_vector)
             for i in range(1, len(moment_vector) + 1):
                 hh = h
                 deps[i-1] = hh
                 a[0, 0] = ((rcfun(moment_vector + deps, effect) -
-                            rcfun(moment_vector - deps, effect)) /
+                            rcfun(moment_vector - deps, effect)).item() /
                            (2.0 * hh))
                 err = big
                 for k in range(2, ntab + 1):
@@ -1333,7 +1340,7 @@ def estimate_effect(moment_vector,
                     a[0, k - 1] = (rcfun(moment_vector + deps,
                                          effect) -
                                    rcfun(moment_vector - deps,
-                                         effect)) / (2.0 * hh)
+                                         effect)).item() / (2.0 * hh)
                     for m in range(2, k + 1):
                         a[m - 1, k - 1] = (a[m - 2, k - 1] * fac[m - 2] -
                                            a[m - 2, k - 2]) / \
@@ -1463,37 +1470,39 @@ def check_moments(moment_vector):
     if simplified_moments[4] < 0.0:
         valid = False
         warn(f"Invalid data: var(zhat) = {simplified_moments[4]} < 0")
-    if (np.abs(simplified_moments[2]) >
-       np.sqrt(simplified_moments[0] * simplified_moments[1])):
-        valid = False
-        covyz = np.abs(simplified_moments[2])
-        sdyz = np.sqrt(simplified_moments[0] * simplified_moments[1])
-        msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
-        msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
-        warn(msg1 + msg2)
-    # I'm not certain this condition can ever be triggered here
-    if np.abs(simplified_moments[5]) > np.sqrt(simplified_moments[3] *
-                                               simplified_moments[4]):
-        valid = False
-        covyz = np.abs(simplified_moments[5])
-        sdyz = np.sqrt(simplified_moments[3] * simplified_moments[4])
-        msg1 = f"Invalid data: cov(yh,zh) = {covyz}"
-        msg2 = f" > {sdyz} sqrt(var(yh)*var(zh))"
-        warn(msg1 + msg2)
+    if valid:
+        if (np.abs(simplified_moments[2]) >
+           np.sqrt(simplified_moments[0] * simplified_moments[1])):
+            valid = False
+            covyz = np.abs(simplified_moments[2])
+            sdyz = np.sqrt(simplified_moments[0] * simplified_moments[1])
+            msg1 = f"Invalid data: |cov(y,z)| = {covyz} "
+            msg2 = f"> {sdyz} sqrt(var(y)*var(z))"
+            warn(msg1 + msg2)
+        # I'm not certain this condition can ever be triggered here
+        if np.abs(simplified_moments[5]) > np.sqrt(simplified_moments[3] *
+                                                   simplified_moments[4]):
+            valid = False
+            covyz = np.abs(simplified_moments[5])
+            sdyz = np.sqrt(simplified_moments[3] * simplified_moments[4])
+            msg1 = f"Invalid data: cov(yh,zh) = {covyz}"
+            msg2 = f" > {sdyz} sqrt(var(yh)*var(zh))"
+            warn(msg1 + msg2)
     # Next make sure that the identifying conditions are satisfied.
     identified = valid
-    if simplified_moments[0] == 0.0:
-        identified = False
-        warn("Model not identified: var(y) = 0")
-    if simplified_moments[1] == 0.0:
-        identified = False
-        warn("Model not identified: var(z) = 0")
-    if simplified_moments[3] == 0.0:
-        identified = False
-        warn("Model not identified: var(yhat) = 0")
-    if simplified_moments[3] == simplified_moments[0]:
-        identified = False
-        warn("Model not identified: y is an exact linear function of X")
+    if valid:
+        if simplified_moments[0] == 0.0:
+            identified = False
+            warn("Model not identified: var(y) = 0")
+        if simplified_moments[1] == 0.0:
+            identified = False
+            warn("Model not identified: var(z) = 0")
+        if simplified_moments[3] == 0.0:
+            identified = False
+            warn("Model not identified: var(yhat) = 0")
+        if simplified_moments[3] == simplified_moments[0]:
+            identified = False
+            warn("Model not identified: y is an exact linear function of X")
     # We may also want to check for var(zhat)=0.
     # The model is identified in this case, but we may need to take special
     # steps to get the calculations right.
@@ -1543,8 +1552,8 @@ def rcfast(effect, simplified_moments):
     lf0_denom = (y - yhat -
                  (2.0) * effect * (yz - yzhat) +
                  effect ** 2 * (z - zhat))
-    lf1_num = (yz - yzhat - effect * (z - zhat))
-    lf1_denom = (yzhat - effect * zhat)
+    lf1_num = yz - yzhat - effect * (z - zhat)
+    lf1_denom = yzhat - effect * zhat
     msk = ((lf0_denom != 0.0) &
            (lf1_denom != 0.0) &
            (np.sign(lf0_num) == np.sign(lf0_denom)))
@@ -1554,9 +1563,15 @@ def rcfast(effect, simplified_moments):
     return rc_fast
 
 
+def scalar_rcfast(effect, simplified_moments):
+    """Calculates rc a single effect, returning a scalar."""
+    rc_fast = rcfast(effect, simplified_moments).item()
+    return rc_fast
+
+
 def negative_rcfast(effect, simplified_moments):
     """Calcualtes -rc(effect)."""
-    return -rcfast(effect, simplified_moments)
+    return -scalar_rcfast(effect, simplified_moments)
 
 
 def rcfun(moment_vector, effect):
@@ -1682,6 +1697,7 @@ def estimate_parameter(func, moment_vector):
 # Standard numerical algorithms
 
 
+# pylint: disable=too-many-positional-arguments
 def brent(ax, bx, cx, func, tol, xopt):
     """Maximizes by Brent algorithm."""
     # pylint: disable=too-many-arguments,too-many-locals
@@ -2073,18 +2089,18 @@ def read_data(infile):
     try:
         # Line 1 should be three whitespace delimited numbers
         line1 = pd.read_csv(infile,
-                            delim_whitespace=True,
+                            sep=r'\s+',
                             skiprows=[1, 2],
                             header=None).values[0, ]
         n_moments, n_rc, external_big_number = tuple(line1)
         # Line 2 should be n_moments whitespace delimited numbers
         moment_vector = pd.read_csv(infile,
-                                    delim_whitespace=True,
+                                    sep=r'\s+',
                                     skiprows=[0, 2],
                                     header=None).values[0, ].astype(np.float64)
         # Lines 3+ should be two whitespace delimited numbers each
         rc_range = pd.read_csv(infile,
-                               delim_whitespace=True,
+                               sep=r'\s+',
                                skiprows=[0, 1],
                                header=None).values[0, ].astype(np.float64)
     except FileNotFoundError:

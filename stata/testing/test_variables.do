@@ -56,7 +56,7 @@ else if inlist(c(os),"Unix") {
 preserve
 quietly expand 2, generate(unrelated_variable)
 if inlist("${exe}","python") {
-    rcof "noisily rcr SAT Small_Class unrelated_variable" == 7103
+    rcof "noisily rcr SAT Small_Class unrelated_variable" == 0
 }
 else if inlist("${exe}","windows-fortran","unix-fortran") {
     rcof "noisily rcr SAT Small_Class unrelated_variable" == 1

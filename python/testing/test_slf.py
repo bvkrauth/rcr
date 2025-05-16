@@ -16,7 +16,7 @@ def test_slf_basic():
     oldlogfile = get_logfile()
     with tempfile.TemporaryDirectory() as tmp:
         logfile = os.path.join(tmp, 'log.txt')
-        assert ~os.path.exists(logfile)
+        assert not os.path.exists(logfile)
         start_logfile(logfile)
         assert os.path.exists(logfile)
     set_logfile(oldlogfile)

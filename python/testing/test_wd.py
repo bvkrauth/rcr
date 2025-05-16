@@ -19,7 +19,7 @@ def test_wd_basic():
     rcvec = np.zeros(3)
     with tempfile.TemporaryDirectory() as tmp:
         detfile = os.path.join(tmp, 'pdet.txt')
-        assert ~os.path.exists(detfile)
+        assert not os.path.exists(detfile)
         write_details(effectvec, rcvec, detfile)
         assert os.path.exists(detfile)
 

@@ -97,20 +97,24 @@ program define rcr_config, rclass
 			   "required modules:"
             di "  `missing_modules'" _newline
 			di "To fix this, you have several options:" _newline
-			di "Option 1: Use the Anaconda distribution of Python. " ///
+			di "Option 1: Use the Python Package Installer (pip) to " ///
+			   "install the required packages"
+			di "          for your current Python installation. For most Python"
+			di "          installations, the following commands will work:"
+			foreach module in `missing_modules' {
+				di in smcl "            {stata shell python -m pip install `module'}"
+			}
+			di ""
+			di "Option 2: If Option 1 does not work, see the advice at"
+			di "          {browse blog.stata.com/2020/09/01/stata-python-integration-part-3-how-to-install-python-packages}" _newline
+			di "Option 3: Use the Anaconda distribution of Python. " ///
 			   "Anaconda is designed for use"
 			di "          in data analysis, and includes all of the " ///
 			   "required modules by default." _newline
-			di "          You can download Anaconda at {browse www.anaconda.com/products/distribution}"
-			di "          if it is not already installed on your computer." _newline
+			di "          It is available at {browse www.anaconda.com/products/distribution}." _newline
 			di "          You can then use{help python: python set exec} " ///
 			   "to tell Stata to use Anaconda."
 			di "          (this may require you to restart Stata)" _newline
-			di "Option 2: Use the Python Package Installer (pip) to " ///
-			   "install the required packages"
-			di "          for your current Python installation."
-			di "          See {browse blog.stata.com/2020/09/01/stata-python-integration-part-3-how-to-install-python-packages}"
-			di "          for instructions and advice." _newline
             local py = 0
         }
     }

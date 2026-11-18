@@ -1198,8 +1198,7 @@ def estimate_effect(moment_vector,
             for j in range(1, 3):
                 # See if that value satisfies rc(effect)-rc(j)=0 for
                 # some effect in current_effect_range
-                if (rc_range[j-1] > min(current_rc_range)) and \
-                   (rc_range[j-1] < max(current_rc_range)):
+                if min(current_rc_range) < rc_range[j-1] < max(current_rc_range):
                     # If so, find effect such that rc(effect)-rc(j)=0
                     # and put it inour list of IMPORTANT_effectS.  Of course,
                     # we can't quite find the exact effect.
@@ -1705,7 +1704,7 @@ def brent(ax, bx, cx, func, tol, xopt):
     # pylint: disable=invalid-name
     itmax = 1000
     cgold = 0.3819660
-    zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
+    zeps = 1.0e-3 * sys.float_info.epsilon
     a = min(ax, cx)
     b = max(ax, cx)
     v = bx
@@ -1790,7 +1789,7 @@ def zbrent(func, x1, x2, tol, xopt):
     # pylint: disable=consider-swap-variables
     # pylint: disable=invalid-name
     itmax = 1000
-    eps = np.finfo(float).eps   # in fortran was epsilon(x1)
+    eps = sys.float_info.epsilon   # in fortran was epsilon(x1)
     a = x1
     b = x2
     fa = func(a, xopt)

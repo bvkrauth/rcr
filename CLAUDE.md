@@ -67,7 +67,7 @@ abbreviations of the function/feature under test (e.g. `test_em.py` → `estimat
 `rcr_example.dta` from `sfu.ca`.
 
 CI (`.github/workflows/test-python-package.yml`, `pylint.yml`) runs pytest + flake8 on
-Windows/macOS/Linux across Python 3.9 and 3.14, and pylint on Ubuntu/Python 3.13.
+Windows/macOS/Linux across Python 3.10 and 3.14, and pylint on Ubuntu/Python 3.13.
 
 ### R (`r/rcrbounds/`)
 

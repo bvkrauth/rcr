@@ -53,7 +53,7 @@ program define rcr_config, rclass
         else {
             di "  NO, Stata is not detecting a Python installation on your " ///
 			   "computer."
-            di "  You can install one from {browse www.anaconda.com/products/distribution}."
+            di "  You can download one from {browse www.python.org/downloads}."
 			di "  See {browse blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/} "
 			di "  for additional instructions and advice." _newline
             local py = 0
@@ -99,12 +99,12 @@ program define rcr_config, rclass
 			di "To fix this, you have several options:" _newline
 			di "Option 1: Use the Python Package Installer (pip) to " ///
 			   "install the required packages"
-			di "          for your current Python installation. For most Python"
-			di "          installations, the following commands will work:"
-			foreach module in `missing_modules' {
-				di in smcl "            {stata shell python -m pip install `module'}"
-			}
-			di ""
+			di "          for the Python installation that Stata is using. " ///
+			   "Click on (or copy"
+			di "          and run) the following command:"
+			local pipcmd `"shell "`python_exec'" -m pip install `missing_modules'"'
+			di in smcl `"            {stata `"`pipcmd'"':`pipcmd'}"'
+			di "          You may need to restart Stata afterwards." _newline
 			di "Option 2: If Option 1 does not work, see the advice at"
 			di "          {browse blog.stata.com/2020/09/01/stata-python-integration-part-3-how-to-install-python-packages}" _newline
 			di "Option 3: Use the Anaconda distribution of Python. " ///

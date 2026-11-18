@@ -63,8 +63,8 @@ pylint rcrbounds.py rcr_example.py # must be run from python/ with explicit file
 Run a single test file with `pytest testing/test_rc.py`, or a single test with
 `pytest testing/test_rc.py::test_name`. Tests live in `python/testing/`; test file names are
 abbreviations of the function/feature under test (e.g. `test_em.py` → `estimate_model`,
-`test_rc.py` → `read_data`/`rc_*`). Some tests require network access to fetch
-`rcr_example.dta` from `sfu.ca`.
+`test_rc.py` → `read_data`/`rc_*`). Tests that use the example data read the local copy
+`python/testing/rcr_example.dta`, and fall back to downloading it from `sfu.ca` only if that file is missing.
 
 CI (`.github/workflows/test-python-package.yml`, `pylint.yml`) runs pytest + flake8 on
 Windows/macOS/Linux across Python 3.10 and 3.15, and pylint on Ubuntu/Python 3.13.

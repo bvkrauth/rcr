@@ -89,10 +89,12 @@ def fixture_moment_vector(infile):
     return read_data(infile)[3]
 
 
-@pytest.fixture(name="dat")
+@pytest.fixture(name="dat", scope="session")
 def fixture_dat():
-    """get test data from web page"""
-    fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
+    """get test data (local copy if available, otherwise web page)"""
+    fname = os.path.join(FIXTURE_DIR, "rcr_example.dta")
+    if not os.path.exists(fname):
+        fname = "http://www.sfu.ca/~bkrauth/code/rcr_example.dta"
     return pd.read_stata(fname)
 
 

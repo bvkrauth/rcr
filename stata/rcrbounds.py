@@ -1198,8 +1198,7 @@ def estimate_effect(moment_vector,
             for j in range(1, 3):
                 # See if that value satisfies rc(effect)-rc(j)=0 for
                 # some effect in current_effect_range
-                if (rc_range[j-1] > min(current_rc_range)) and \
-                   (rc_range[j-1] < max(current_rc_range)):
+                if min(current_rc_range) < rc_range[j-1] < max(current_rc_range):
                     # If so, find effect such that rc(effect)-rc(j)=0
                     # and put it inour list of IMPORTANT_effectS.  Of course,
                     # we can't quite find the exact effect.
@@ -1705,7 +1704,7 @@ def brent(ax, bx, cx, func, tol, xopt):
     # pylint: disable=invalid-name
     itmax = 1000
     cgold = 0.3819660
-    zeps = 1.0e-3 * np.finfo(float).eps  # NOT SURE THIS WILL WORK
+    zeps = 1.0e-3 * sys.float_info.epsilon
     a = min(ax, cx)
     b = max(ax, cx)
     v = bx
@@ -1790,7 +1789,7 @@ def zbrent(func, x1, x2, tol, xopt):
     # pylint: disable=consider-swap-variables
     # pylint: disable=invalid-name
     itmax = 1000
-    eps = np.finfo(float).eps   # in fortran was epsilon(x1)
+    eps = sys.float_info.epsilon   # in fortran was epsilon(x1)
     a = x1
     b = x2
     fa = func(a, xopt)
@@ -2179,6 +2178,37 @@ def write_results(result_matrix, outfile):
         write_to_logfile("RCR successfully concluded.\n")
 
 
+def add_detail_tails(effectvec, rcvec, moment_vector):
+    """Adds tail values of effect (beyond +/-50) to the details arrays.
+
+    The effect grid used by estimate_effect_segments() is dense on
+    [-50, 50] but has nothing between 50 and effectmax (and between
+    -effectmax and -50). This function adds log-spaced points in those
+    gaps, along with the corresponding values of rc(effect), so that
+    Stata's rcrplot can draw rc(effect) over a wider range (see issue #13).
+    The added points are about 1% apart for 50 < |effect| < 1e6, and
+    sparser beyond that. Estimation results are not affected.
+    """
+    effectmax = np.max(np.abs(effectvec))
+    inner_max = min(1.0e6, effectmax)
+    if inner_max <= 50.0:
+        return effectvec, rcvec
+    inner_n = int(np.ceil(np.log(inner_max / 50.0) / np.log(1.01)))
+    tails = np.geomspace(50.0, inner_max, num=inner_n + 1)[1:]
+    if effectmax > 1.0e6:
+        outer_n = int(np.ceil(2 * np.log10(effectmax / 1.0e6)))
+        tails = np.append(tails,
+                          np.geomspace(1.0e6, effectmax, num=outer_n + 1)[1:])
+    # effectmax itself is already in effectvec
+    tails = tails[tails < effectmax]
+    tails = np.concatenate([-tails, tails])
+    tail_rc = rcfast(tails, simplify_moments(moment_vector))
+    new_effectvec = np.concatenate([effectvec, tails])
+    new_rcvec = np.concatenate([rcvec, tail_rc])
+    order = np.argsort(new_effectvec, kind="stable")
+    return new_effectvec[order], new_rcvec[order]
+
+
 def write_details(effectvec, rcvec, detail_file):
     """Outputs effectvec and rcvec to _detail_file."""
     if len(detail_file) > 0:
@@ -2260,6 +2290,9 @@ def stata_exe(argv):
                   outfile0)
 
     if detail_file0 != "":
+        (effectvec0, rcvec0) = add_detail_tails(effectvec0,
+                                                rcvec0,
+                                                moment_vector0)
         write_details(effectvec0, rcvec0, detail_file0)
 
     # Close the log file

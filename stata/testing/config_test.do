@@ -7,6 +7,9 @@
 clear all
 adopath ++ ../
 
+* Set scheme for graphs
+set scheme s2mono
+
 * Get test data
 * Use local version if it exists
 global fname "rcr_example.dta"

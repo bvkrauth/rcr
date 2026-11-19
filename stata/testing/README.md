@@ -28,7 +28,9 @@ The following Stata do-files reproduce a current bug/issue:
  - `test_bug013.do`: Standard error results are inaccurate when 
     lambda_L = -infty.
  - `test_bug014.do`: rcrplot doesn't work with xrange outside of 
-   (-50,50).
+   (-50,50). Fixed in the Python version (issue #13); this do-file
+   now checks the fix, but the bug remains in the deprecated
+   Fortran version.
 
 
 

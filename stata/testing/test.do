@@ -60,9 +60,11 @@ do test_betax `0'
 * Test RCR_CONFIG command
 do test_rcr_config `0'
 
+* Test bug fixes
+do test_bug014 `0'
+
 * Test/demonstrate outstanding bugs
 do test_bug012 `0'
 do test_bug013 `0'
-do test_bug014 `0'
 
 log close

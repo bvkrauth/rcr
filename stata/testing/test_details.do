@@ -8,12 +8,25 @@ di "Data from file ${fname}" _newline ///
 * Call RCR with DETAILS specified. This also produces a plot
 rcr SAT Small_Class ${controls}, details
 * Check to make sure the DETAILS data has not changed
-assert _N == 30000
-summarize lambda , detail
-assert reldif(r(p75), 44.78824776422209 ) <  ${tol}
-assert reldif(r(p50), 36.85231368869719 ) <  ${tol}
-assert reldif(r(p25), 33.43887260299969 ) <  ${tol}
-summarize betax , detail
-assert reldif(r(p75), 25.00250025002501 ) <  ${tol}
-assert r(p50) == 0
-assert reldif(r(p25), -25.002500250025  ) <  ${tol}
+if "${exe}" == "python" {
+	assert _N == 32366	
+	summarize lambda , detail
+	assert reldif(r(p75), 43.73227676728001 ) <  ${tol}
+	assert reldif(r(p50), 36.55386215795447 ) <  ${tol}
+	assert reldif(r(p25), 32.29666075010086 ) <  ${tol}
+	summarize betax , detail
+	assert reldif(r(p75), 26.97436410307698 ) <  ${tol}
+	assert r(p50) == 0
+	assert reldif(r(p25), -26.97436410307697) <  ${tol}
+}
+else {
+	assert _N == 30000
+	summarize lambda , detail
+	assert reldif(r(p75), 44.78824776422209 ) <  ${tol}
+	assert reldif(r(p50), 36.85231368869719 ) <  ${tol}
+	assert reldif(r(p25), 33.43887260299969 ) <  ${tol}
+	summarize betax , detail
+	assert reldif(r(p75), 25.00250025002501 ) <  ${tol}
+	assert r(p50) == 0
+	assert reldif(r(p25), -25.002500250025  ) <  ${tol}	
+}

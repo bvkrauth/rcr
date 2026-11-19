@@ -24,3 +24,23 @@ if "${exe}" == "python" {
     quietly count if betax < -50 & betax > -100
     assert r(N) > 50
 }
+* Make sure plot has not changed
+* Create comparison file if it does not exist
+capture confirm file "rcrplot3.ps"
+if (_rc != 0) {
+    quietly graph export rcrplot3.ps, as(ps)
+}
+* Create current plot file
+tempfile rcrplot
+quietly graph export `rcrplot', as(ps) replace
+* Compare the two files
+checksum "rcrplot3.ps"
+local checksum = r(checksum)
+checksum `rcrplot'
+if (r(checksum) != `checksum') {
+    di as error "Current graph does not exactly match rcrplot3.ps. " ///
+        "Please visually compare the two graphs. " ///
+        "If they match, delete the current rcrplot3.ps and rerun tests. " ///
+        "If they do not match, the test has failed."
+    error 1
+}

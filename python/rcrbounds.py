@@ -2341,7 +2341,7 @@ def stata_exe(argv):
     # Stata passes missing (unbounded) values of lambda as +/- maxdouble().
     # Treat anything beyond external_big_number as infinite.
     rc_range0 = np.where(np.abs(rc_range0) >= external_big_number0,
-                         np.sign(rc_range0) * np.inf,
+                         np.copysign(np.inf, rc_range0),
                          rc_range0)
 
     # Perform the calculations and put the results in result_matrix

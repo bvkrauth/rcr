@@ -11,9 +11,15 @@ di "Data from file ${fname}" _newline ///
 *                     are on substantially different scales.  This issue is
 *                     also addressed by bug010.do.  There the problem was
 *                     that the program didn't issue a warning message when
-*                     the standard errors were bad.  Now it issues a warning
-*                     message, but it would be nice if the derivative
-*                     algorithm were more robust.
+*                     the standard errors were bad.
+*
+*                     Fix (issue #11): rcr now always centers every variable
+*                     at its mean before calculating the moment vector. The
+*                     estimates and the delta-method covariance matrix are
+*                     invariant to this, but the numerical derivatives are
+*                     much more accurate. This do-file now checks that
+*                     results (including V) are the same with and without
+*                     large constants added to the data.
 *
 * I've constructed an example to be super simple
 foreach vname in SAT Small_Class White_Asian {
@@ -23,25 +29,27 @@ foreach vname in SAT Small_Class White_Asian {
     drop m sd
 }
 replace SAT = SAT + 4095.999998
-gen SATbad = SAT + 0.000001
+* Use double so SATbad is exactly SAT plus a constant
+gen double SATbad = SAT + 0.000001
+gen double SATbig = SAT + 1e6
+gen double Small_Class_big = Small_Class + 1e4
 
-* Good results
+* Baseline results
 rcr SAT Small_Class White_Asian
 estimates store good
 savedresults save good e()
-* Bad results with large standard errors
+* Results should be the same after adding constants
 rcr SATbad Small_Class White_Asian, rescale(no)
 estimates store bad
-* The point estimates are similar but the covariance matrix is much larger
-savedresults compare good e(), tol(1e-3) ///
-    exclude(macros: depvar _estimates_name matrix: V)
-* This bug has been partially solved (Jul 2023) by adding a new RESCALE
-* option. This option allows the user to automatically rescale the data to
-* zero mean and unit variance. Currently, rescaling only occurs if the user
-* specifically requests it, but it may be made the default at a later date.
+savedresults compare good e(), tol(1e-6) ///
+    exclude(macros: depvar _estimates_name)
+rcr SATbig Small_Class_big White_Asian, rescale(no)
+estimates store big
+savedresults compare good e(), tol(1e-6) ///
+    exclude(macros: depvar treatvar _estimates_name)
 rcr SATbad Small_Class White_Asian, rescale(yes)
 estimates store rescaled
-savedresults compare good e(), tol(1e-3) exclude(macros: depvar _estimates_name)
-* These should all produce the same result, but note that the "bad"
-* regression has much larger standard errors.
+savedresults compare good e(), tol(1e-6) ///
+    exclude(macros: depvar _estimates_name)
+* These should all produce the same result
 estimates table _all, b(%9.2f) se keep(lambda0)

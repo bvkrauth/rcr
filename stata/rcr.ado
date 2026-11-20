@@ -209,22 +209,39 @@ program define rcr , eclass byable(recall)
         di as error "Warning: At least one variable is perfectly collinear with other variables."
         di as error "RCR will continue but results should be viewed with caution."
     }
-    **** (5) Rescale the data if RESCALE is set to yes
+    **** (5) Center the data, and rescale it if RESCALE is set to yes
+    * RCR estimates are invariant to adding constants to any variable, but
+    * the numerical derivatives used to calculate standard errors are not
+    * when variables have large means relative to their standard deviations
+    * (see issue #11). So we always center each variable at its (weighted)
+    * mean. If RESCALE is yes, we also divide by its standard deviation.
+    * The centered/rescaled variables are new temporary variables, so the
+    * user's data is never modified.
+    tempname m sd betafac bfac
+    quietly mean `varlist' if `touse' == 1 [`weight'`exp']
+    matrix `m' = e(b)
     if "`rescale'" == "yes" {
-        tempname m sd betafac bfac
-        quietly mean `varlist' if `touse' == 1 [`weight'`exp']
         quietly estat sd
-        matrix `m' = r(mean)
         matrix `sd' = r(sd)
         scalar `betafac' = `sd'[1,1] / `sd'[1,2]
         matrix `bfac' = [1, `betafac', 1, `betafac', `betafac']
-        foreach vname in `varlist' {
-            local xname : permname `vname'
-            quietly clonevar `xname' = `vname'
-            quietly replace `vname' = (`vname' - `m'[1,"`vname'"]) / `sd'[1,"`vname'"]
-            local xnames "`xnames' `xname'"
-        }
     }
+    local cvarlist ""
+    local i = 0
+    foreach vname in `varlist' {
+        local i = `i' + 1
+        tempvar cvar`i'
+        if "`rescale'" == "yes" {
+            quietly generate double `cvar`i'' = (`vname' - `m'[1,`i']) / `sd'[1,`i'] if `touse' == 1
+        }
+        else {
+            quietly generate double `cvar`i'' = `vname' - `m'[1,`i'] if `touse' == 1
+        }
+        local cvarlist "`cvarlist' `cvar`i''"
+    }
+    gettoken inc_depvar included : cvarlist
+    gettoken inc_treatvar included : included
+    local varlist `inc_depvar' `inc_treatvar' `included'
     **** (6) Calculate the moment vector (moments) and its variance (V)
     * Tokenize divides string into tokens, storing the result in `1', `2', ...
     * (the positional local macros).  Tokens are determined based on the
@@ -510,14 +527,6 @@ program define rcr , eclass byable(recall)
     * Reset MATSIZE to its original value (not needed for Stata version 16 and up).
     if (c(stata_version) < 16) {
         set matsize `mat_current'
-    }
-    * Return rescaled variables to original scaling if appropriate
-    if "`rescale'" == "yes" {
-        foreach vname in `varlist' {
-            gettoken xname xnames: xnames
-            quietly replace `vname' = `xname'
-            quietly drop `xname'
-        }
     }
     if "`details'" == "details" {
         quietly insheet using `detail_file', clear comma

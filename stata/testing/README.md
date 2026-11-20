@@ -24,7 +24,8 @@ error if any of these cases produce an unexpected result.
 The following Stata do-files reproduce a current bug/issue:
 
  - `test_bug012.do`: Standard error results are not invariant to
-   adding constants to data.
+   adding constants to data. Fixed (issue #11) by always centering the
+   data; this do-file now checks the fix.
  - `test_bug013.do`: Standard error results are inaccurate when 
     lambda_L = -infty.
  - `test_bug014.do`: rcrplot doesn't work with xrange outside of 

@@ -320,3 +320,34 @@ def test_rf_unbounded_rc(dat, rcr_formula, rc_range, flip):
     assert result.params[j] == result.params[1]
     assert se[j] == pytest.approx(se[1])
     assert result.cov_params[j, 1] == pytest.approx(se[1] ** 2)
+
+
+@pytest.mark.parametrize("rc_low", [-np.inf, -1e6, -1000.0])
+@pytest.mark.parametrize("flip", [1.0, -1.0])
+def test_rf_one_control(dat, rc_low, flip):
+    """with one control, rc(effect) jumps between finite values at
+    effect_inf, so the bound is effect_inf whenever rc_low is beyond the
+    jump (issue #86)"""
+    # pylint: disable=no-member
+    endog, exog = patsy.dmatrices("SAT + Small_Class ~ White_Asian", dat)
+    endog = np.asarray(endog) * np.array([1.0, flip])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = RCR(endog, exog, rc_range=np.array([rc_low, 0.0])).fit()
+    se = result.params_se()
+    j = 4 if flip > 0 else 3
+    assert result.params[j] == result.params[1]
+    assert se[j] == pytest.approx(se[1])
+
+
+def test_rf_large_rc(model):
+    """large but finite rc_range gives an accurate bound and standard
+    error, without a spurious warning (issue #86)"""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = model.fit(rc_range=np.array([-1e6, 0.0]))
+    # The upper bound is the root of rc(effect) = -1e6, not effect_inf
+    assert result.params[4] < result.params[1]
+    assert model.rcvals(result.params[4:5])[0][0] == pytest.approx(-1e6)
+    # Checked against a direct numerical derivative of the root
+    assert result.params_se()[4] == pytest.approx(30.60606, rel=1e-5)

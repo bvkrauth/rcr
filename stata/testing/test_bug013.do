@@ -24,3 +24,11 @@ if "${exe}" == "python" {
     assert _b[betaxH] == _b[betaxInf]
     assert reldif(_se[betaxH], _se[betaxInf]) < ${tol}
 }
+*                     Follow-up (issue #86): with one control, lambda(betax)
+*                     jumps between finite values at betaxInf, so the bound
+*                     is also betaxInf for large finite lambda_L.
+rcr SAT Small_Class White_Asian , lambda(-1000 0)
+if "${exe}" == "python" {
+    assert _b[betaxH] == _b[betaxInf]
+    assert reldif(_se[betaxH], _se[betaxInf]) < ${tol}
+}

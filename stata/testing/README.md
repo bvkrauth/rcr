@@ -21,13 +21,14 @@ error if any of these cases produce an unexpected result.
 
 ### Bugs/issues
 
-The following Stata do-files reproduce a current bug/issue:
+The following Stata do-files reproduce past bugs/issues and check their fixes:
 
  - `test_bug012.do`: Standard error results are not invariant to
    adding constants to data. Fixed (issue #11) by always centering the
    data; this do-file now checks the fix.
  - `test_bug013.do`: Standard error results are inaccurate when 
-    lambda_L = -infty.
+    lambda_L = -infty. Fixed in the Python version (issue #10); this
+    do-file now checks the fix.
  - `test_bug014.do`: rcrplot doesn't work with xrange outside of 
    (-50,50). Fixed in the Python version (issue #13); this do-file
    now checks the fix, but the bug remains in the deprecated

@@ -1255,9 +1255,24 @@ def estimate_effect(moment_vector,
         # Otherwise the the upper bound for effect is the maximum value in
         # IMPORTANT_effectS that is in range
         effect_estimate[1, 0] = max(important_effects[inrange])
+    # If rc(effect) goes to -infinity (or +infinity) as effect approaches
+    # effect_inf from one side, and rc_range includes that limit, then the
+    # identified set contains values of effect arbitrarily close to
+    # effect_inf. If a bound lies on that side of effect_inf, the bound is
+    # effect_inf itself, not a root of rc(effect) = rc_range. The grid only
+    # gets close to effect_inf, so we set the bound to exactly effect_inf
+    # and use its gradient (see issue #10).
+    at_effect_inf = pole_bounds(effect_estimate[:, 0],
+                                rc_range,
+                                effect_inf,
+                                simplified_moments)
     # Now we find the gradient
     # Take the gradient at both effect_L and effect_H
     for j in range(1, 3):
+        if at_effect_inf[j-1]:
+            effect_estimate[j-1, :] = estimate_parameter(effectinf,
+                                                         moment_vector)
+            continue
         effect = effect_estimate[j-1, 0].item()
         # The gradient can only be calculated if effect is finite.
         # This was hopefully caught above but check just in case.
@@ -1386,6 +1401,41 @@ def estimate_effect(moment_vector,
         #   deffect/dmoments = -(drc/dmoments)/(drc/deffect)
         effect_estimate[j-1, 1:] = -dmoments / deffect
     return effect_estimate
+
+
+def pole_bounds(bounds, rc_range, effect_inf, simplified_moments):
+    """Checks whether the bounds on effect are actually effect_inf.
+
+    rc(effect) has a pole at effect_inf: it goes to +infinity on one side
+    and -infinity on the other. If rc_range includes the limit from below
+    and the upper bound is below effect_inf, then the upper bound is
+    effect_inf. Similarly, if rc_range includes the limit from above and
+    the lower bound is above effect_inf, then the lower bound is effect_inf.
+
+    Returns a pair of booleans (lower bound, upper bound).
+    """
+    result = [False, False]
+    if not (np.isfinite(effect_inf) and np.all(np.isfinite(bounds))):
+        return result
+    # The sign of the limit of rc(effect) as effect approaches effect_inf
+    # from below (see bracket_effect_inf)
+    sign_below = np.sign(simplified_moments[2] -
+                         simplified_moments[5] *
+                         simplified_moments[1] /
+                         simplified_moments[4])
+    if sign_below == 0.0:
+        return result
+    limit_below = sign_below * np.inf
+    limit_above = -limit_below
+    # Lower bound is effect_inf if the set approaches it from above
+    if (bounds[0] > effect_inf and
+       rc_range[0] <= limit_above <= rc_range[1]):
+        result[0] = True
+    # Upper bound is effect_inf if the set approaches it from below
+    if (bounds[1] < effect_inf and
+       rc_range[0] <= limit_below <= rc_range[1]):
+        result[1] = True
+    return result
 
 
 def simplify_moments(moment_vector):
@@ -2286,6 +2336,11 @@ def stata_exe(argv):
     # Read in the data from INFILE
     (external_big_number0, moment_vector0,
         rc_range0) = read_data(infile0)[2:5]
+    # Stata passes missing (unbounded) values of lambda as +/- maxdouble().
+    # Treat anything beyond external_big_number as infinite.
+    rc_range0 = np.where(np.abs(rc_range0) >= external_big_number0,
+                         np.sign(rc_range0) * np.inf,
+                         rc_range0)
 
     # Perform the calculations and put the results in result_matrix
     (result_matrix0, effectvec0, rcvec0) = estimate_model(moment_vector0,

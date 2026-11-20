@@ -3,10 +3,13 @@ TEST_ET.PY: Unit tests for estimate_effect()
 """
 
 
+import warnings
+
 import pytest
 import numpy as np
 
-from rcrbounds import estimate_effect_segments, estimate_effect
+from rcrbounds import estimate_effect_segments, estimate_effect, \
+    estimate_parameter, effectinf
 
 
 # Basic functionality
@@ -105,9 +108,14 @@ def test_et_norclow(moment_vector):
     lr0 = np.array([-np.inf, 1])
     effect_segments = estimate_effect_segments(moment_vector)[0]
     et_true = np.array([5.13504376,  8.16970996])
-    with pytest.warns(UserWarning, match="Inaccurate SE"):
+    # This used to produce an "Inaccurate SE" warning (issue #10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         test_et = estimate_effect(moment_vector, lr0, effect_segments)
     assert test_et[:, 0] == pytest.approx(et_true)
+    # effect_H is effect_inf, so it has the same value and gradient
+    assert np.array_equal(test_et[1, :],
+                          estimate_parameter(effectinf, moment_vector))
 
 
 def test_et_norchigh(moment_vector):

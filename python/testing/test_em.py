@@ -1,6 +1,8 @@
 """
 TEST_EM.PY: Unit tests for estimate_model()
 """
+import warnings
+
 import pytest
 import numpy as np
 
@@ -36,10 +38,13 @@ def test_em_norclow(moment_vector):
     lr0 = np.array([-np.inf, 1])
     true_em = np.array([12.31059909,  8.16970996, 28.93548917,
                         5.13504376,  8.16970996])
-    with pytest.warns(UserWarning, match="Inaccurate SE"):
+    # This used to produce an "Inaccurate SE" warning (issue #10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         test_result = estimate_model(moment_vector, lr0)[0]
     assert test_result[:, 0] == pytest.approx(true_em)
-    # need to check gradient too
+    # effect_H is effect_inf, so it has the same gradient
+    assert np.array_equal(test_result[4, :], test_result[1, :])
 
 
 def test_em_norchigh(moment_vector):

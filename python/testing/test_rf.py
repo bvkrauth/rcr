@@ -69,8 +69,9 @@ def test_rf_lrnolb(model):
                              28.93548917,
                              5.13504376,
                              8.16970997])
-    # This will produce a warning
-    with pytest.warns(UserWarning, match="Inaccurate SE"):
+    # This used to produce an "Inaccurate SE" warning (issue #10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         results = model.fit(rc_range=np.asarray([-np.inf, 1]))
     assert results.params == pytest.approx(trueparams)
 
@@ -299,3 +300,23 @@ def test_rf_shift_invariant(dat, rcr_formula, shift):
         shifted = RCR(endog, exog).fit()
     assert shifted.params == pytest.approx(base.params, rel=1e-8)
     assert shifted.cov_params == pytest.approx(base.cov_params, rel=1e-6)
+
+
+@pytest.mark.parametrize("rc_range,flip", [((-np.inf, 0.0), 1.0),
+                                           ((-np.inf, 1.0), 1.0),
+                                           ((-np.inf, 0.0), -1.0)])
+def test_rf_unbounded_rc(dat, rcr_formula, rc_range, flip):
+    """bound next to effect_inf equals effect_inf, with the same standard
+    error, when rc_range is unbounded (issue #10)"""
+    # pylint: disable=no-member
+    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    endog = np.asarray(endog) * np.array([1.0, flip])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = RCR(endog, exog, rc_range=np.array(rc_range)).fit()
+    se = result.params_se()
+    # The upper bound (or lower bound if treatment is flipped) is effect_inf
+    j = 4 if flip > 0 else 3
+    assert result.params[j] == result.params[1]
+    assert se[j] == pytest.approx(se[1])
+    assert result.cov_params[j, 1] == pytest.approx(se[1] ** 2)

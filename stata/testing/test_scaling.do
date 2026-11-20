@@ -13,20 +13,22 @@ quietly gen Small_Class0001 = Small_Class * 0.0001
 
 * Rescaling both, should leave results roughly unchanged
 rcr SAT1000 Small_Class1000 ${controls}
-assert reldif( e(betaxCI_H)  , 6.488093355120499 ) <  ${tol}
 if inlist("`exe'","python") {
-    assert reldif( e(betaxCI_L)  , 3.259476611208612 ) <  ${tol}
+	assert reldif( e(betaxCI_L)  , 3.259480712946689 ) <  ${tol}
+	assert reldif( e(betaxCI_H)  , 6.488085264914115 ) <  ${tol}
 }
 else if inlist("`exe'","windows-fortran") {
+assert reldif( e(betaxCI_H)  , 6.488093355120499 ) <  ${tol}
     assert reldif( e(betaxCI_L)  , 3.259476500967557 ) <  ${tol}
 }
 else if inlist("`exe'","unix-fortran") {
+assert reldif( e(betaxCI_H)  , 6.488093355120499 ) <  ${tol}
     assert reldif( e(betaxCI_L)  , 3.259476791718824 ) <  ${tol}
 }
 rcr SAT0001 Small_Class0001 ${controls}
 if inlist("`exe'","python") {
-    assert reldif( e(betaxCI_L)  , 3.259111536946617 ) <  ${tol}
-    assert reldif( e(betaxCI_H)  , 6.488083259649406 ) <  ${tol}
+	assert reldif( e(betaxCI_L)  , 3.259480712946689 ) <  ${tol}
+	assert reldif( e(betaxCI_H)  , 6.488085264914115 ) <  ${tol}
 }
 else if inlist("`exe'","windows-fortran") {
     assert reldif( e(betaxCI_L)  , 3.259481216660567 ) <  ${tol}

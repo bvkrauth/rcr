@@ -27,7 +27,8 @@ The following Stata do-files reproduce past bugs/issues and check their fixes:
    adding constants to data. Fixed (issue #11) by always centering the
    data; this do-file now checks the fix.
  - `test_bug013.do`: Standard error results are inaccurate when 
-    lambda_L = -infty. Fixed in the Python version (issue #10); this
+    lambda_L = -infty, or with one control and large finite lambda_L.
+    Fixed in the Python version (issues #10 and #86); this
     do-file now checks the fix.
  - `test_bug014.do`: rcrplot doesn't work with xrange outside of 
    (-50,50). Fixed in the Python version (issue #13); this do-file

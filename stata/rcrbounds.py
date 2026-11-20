@@ -1255,16 +1255,15 @@ def estimate_effect(moment_vector,
         # Otherwise the the upper bound for effect is the maximum value in
         # IMPORTANT_effectS that is in range
         effect_estimate[1, 0] = max(important_effects[inrange])
-    # If rc(effect) goes to -infinity (or +infinity) as effect approaches
-    # effect_inf from one side, and rc_range includes that limit, then the
-    # identified set contains values of effect arbitrarily close to
-    # effect_inf. If a bound lies on that side of effect_inf, the bound is
-    # effect_inf itself, not a root of rc(effect) = rc_range. The grid only
-    # gets close to effect_inf, so we set the bound to exactly effect_inf
-    # and use its gradient (see issue #10).
+    # If the identified set contains values of effect arbitrarily close to
+    # effect_inf on one side, and a bound lies on that side of effect_inf,
+    # the bound is effect_inf itself, not a root of rc(effect) = rc_range.
+    # The grid only gets close to effect_inf, so we set the bound to
+    # exactly effect_inf and use its gradient (see issues #10 and #86).
     at_effect_inf = pole_bounds(effect_estimate[:, 0],
                                 rc_range,
                                 effect_inf,
+                                effect_segments,
                                 simplified_moments)
     # Now we find the gradient
     # Take the gradient at both effect_L and effect_H
@@ -1343,10 +1342,12 @@ def estimate_effect(moment_vector,
                 if abs(a[k - 1, k - 1] - a[k - 2, k - 2]) >= (safe * err):
                     break
             # errmax is the biggest approximation error so far for the
-            # current value of h
-            errmax = max(errmax, err)
-            # Now we have a candidate derivative drc/deffect
+            # current value of h, relative to the size of the derivative
+            # when it is larger than one. Near effect_inf, rc(effect) is
+            # very steep, so an absolute error is not useful (issue #86).
             # pylint: disable=possibly-used-before-assignment
+            errmax = max(errmax, err / max(1.0, abs(dfridr)))
+            # Now we have a candidate derivative drc/deffect
             deffect = dfridr
             # Second, estimate the vector (drc / dmoment_vector)
             for i in range(1, len(moment_vector) + 1):
@@ -1380,8 +1381,8 @@ def estimate_effect(moment_vector,
                        (safe * err):
                         break
                 # errmax is the biggest approximation error so far for the
-                # current value of h
-                errmax = max(errmax, err)
+                # current value of h (relative, as above)
+                errmax = max(errmax, err / max(1.0, abs(dfridr)))
                 dmoments[i - 1] = dfridr
                 deps[i - 1] = 0.0
             # At this point we have estimates of the derivatives stored in
@@ -1403,38 +1404,39 @@ def estimate_effect(moment_vector,
     return effect_estimate
 
 
-def pole_bounds(bounds, rc_range, effect_inf, simplified_moments):
+def pole_bounds(bounds, rc_range, effect_inf, effect_segments,
+                simplified_moments):
     """Checks whether the bounds on effect are actually effect_inf.
 
-    rc(effect) has a pole at effect_inf: it goes to +infinity on one side
-    and -infinity on the other. If rc_range includes the limit from below
-    and the upper bound is below effect_inf, then the upper bound is
-    effect_inf. Similarly, if rc_range includes the limit from above and
-    the lower bound is above effect_inf, then the lower bound is effect_inf.
+    rc(effect) is discontinuous at effect_inf. Usually it goes to
+    +infinity on one side and -infinity on the other, but when the
+    controls predict y and z in exactly the same way (for example, with a
+    single control) it jumps between two finite values (issue #86).
+    effect_segments includes a pair of values that bracket effect_inf
+    closely (see bracket_effect_inf). Between each bracketing value and
+    effect_inf, rc(effect) runs from its value at the bracketing value to
+    its limit at effect_inf, and any root of rc(effect) = rc_range in that
+    interval cannot be found numerically. So if rc at the lower
+    bracketing value is in rc_range and the upper bound is below
+    effect_inf, the upper bound is effect_inf. Similarly, if rc at the
+    upper bracketing value is in rc_range and the lower bound is above
+    effect_inf, the lower bound is effect_inf.
 
     Returns a pair of booleans (lower bound, upper bound).
     """
     result = [False, False]
     if not (np.isfinite(effect_inf) and np.all(np.isfinite(bounds))):
         return result
-    # The sign of the limit of rc(effect) as effect approaches effect_inf
-    # from below (see bracket_effect_inf)
-    sign_below = np.sign(simplified_moments[2] -
-                         simplified_moments[5] *
-                         simplified_moments[1] /
-                         simplified_moments[4])
-    if sign_below == 0.0:
-        return result
-    limit_below = sign_below * np.inf
-    limit_above = -limit_below
+    below = effect_segments[effect_segments < effect_inf]
+    above = effect_segments[effect_segments > effect_inf]
     # Lower bound is effect_inf if the set approaches it from above
-    if (bounds[0] > effect_inf and
-       rc_range[0] <= limit_above <= rc_range[1]):
-        result[0] = True
+    if bounds[0] > effect_inf and len(above) > 0:
+        rc_above = scalar_rcfast(np.min(above), simplified_moments)
+        result[0] = bool(rc_range[0] <= rc_above <= rc_range[1])
     # Upper bound is effect_inf if the set approaches it from below
-    if (bounds[1] < effect_inf and
-       rc_range[0] <= limit_below <= rc_range[1]):
-        result[1] = True
+    if bounds[1] < effect_inf and len(below) > 0:
+        rc_below = scalar_rcfast(np.max(below), simplified_moments)
+        result[1] = bool(rc_range[0] <= rc_below <= rc_range[1])
     return result
 
 
@@ -2339,7 +2341,7 @@ def stata_exe(argv):
     # Stata passes missing (unbounded) values of lambda as +/- maxdouble().
     # Treat anything beyond external_big_number as infinite.
     rc_range0 = np.where(np.abs(rc_range0) >= external_big_number0,
-                         np.sign(rc_range0) * np.inf,
+                         np.copysign(np.inf, rc_range0),
                          rc_range0)
 
     # Perform the calculations and put the results in result_matrix

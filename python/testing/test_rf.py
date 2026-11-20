@@ -1,10 +1,11 @@
 """
 TEST_RF.RC Unit tests for fit() method of RCR object
 """
-
+import warnings
 
 import pytest
 import numpy as np
+import patsy
 
 from rcrbounds import RCR, RCRResults
 
@@ -261,17 +262,40 @@ def test_rf_clust_and_wt(endog, exog, clusters, weights):
                 cov_type="cluster",
                 groupvar=clusters,
                 weights=weights)
-    truecov = np.array([[6.50239759e+02,  1.07844382e+02, -9.32223483e+02,
-                         -1.31757653e-01, -2.38992069e+01],
-                        [1.07844382e+02,  9.97990718e+03, -4.14671277e+03,
-                         2.72173698e+01, -6.49984265e+01],
-                        [-9.32223483e+02, -4.14671277e+03,  2.95964719e+03,
-                         -1.76052641e+01,  5.18035063e+01],
-                        [-1.31757653e-01,  2.72173698e+01, -1.76052641e+01,
+    # Values updated when data centering was added (issue #11); the
+    # lambdaInf row moved by up to 5e-6 in absolute terms, toward a
+    # high-precision check of var(lambdaInf) = 650.23965.
+    truecov = np.array([[6.50239675e+02,  1.07844519e+02, -9.32223494e+02,
+                         -1.31752968e-01, -2.38992019e+01],
+                        [1.07844519e+02,  9.97990718e+03, -4.14671277e+03,
+                         2.72173699e+01, -6.49984264e+01],
+                        [-9.32223494e+02, -4.14671277e+03,  2.95964718e+03,
+                         -1.76052641e+01,  5.18035061e+01],
+                        [-1.31752968e-01,  2.72173699e+01, -1.76052641e+01,
                          2.18090187e+00,  1.96384166e+00],
-                        [-2.38992069e+01, -6.49984265e+01,  5.18035063e+01,
+                        [-2.38992019e+01, -6.49984264e+01,  5.18035061e+01,
                          1.96384166e+00,  3.39851221e+00]])
     result = model.fit()
     assert result.model.nobs == 3325
     assert result.model.ngroups == 184
     assert result.cov_params == pytest.approx(truecov)
+
+
+@pytest.mark.parametrize("shift", [1.0e4, 1.0e6])
+def test_rf_shift_invariant(dat, rcr_formula, shift):
+    """estimates and standard errors do not change when constants
+    are added to the data (issue #11)"""
+    # pylint: disable=no-member
+    endog, exog = patsy.dmatrices(rcr_formula, dat)
+    base = RCR(endog, exog).fit()
+    shifted_dat = dat.copy()
+    shifted_dat["SAT"] = shifted_dat["SAT"] + shift
+    shifted_dat["Small_Class"] = shifted_dat["Small_Class"] + shift / 100
+    shifted_dat["Teacher_Experience"] = (shifted_dat["Teacher_Experience"] +
+                                         shift / 100)
+    endog, exog = patsy.dmatrices(rcr_formula, shifted_dat)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        shifted = RCR(endog, exog).fit()
+    assert shifted.params == pytest.approx(base.params, rel=1e-8)
+    assert shifted.cov_params == pytest.approx(base.cov_params, rel=1e-6)

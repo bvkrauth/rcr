@@ -295,7 +295,15 @@ class RCR:
     def _get_mv(self,
                 estimate_cov=False):
         """Calculates the moment vector used in RCR estimation."""
-        xyz = np.concatenate((self.exog, self.endog), axis=1)
+        xyz = np.concatenate((self.exog, self.endog), axis=1).astype(float)
+        # Center every variable except the intercept (first column) at its
+        # (weighted) mean. RCR estimates are invariant to adding constants
+        # to any variable, but the numerical derivatives used to calculate
+        # standard errors are not when the raw moments are large relative
+        # to the variances (see issue #11).
+        xyz[:, 1:] = xyz[:, 1:] - np.average(xyz[:, 1:],
+                                             axis=0,
+                                             weights=self.weights)
         k = xyz.shape[1]
         msk = np.triu(np.full((k, k), True)).flatten()
         xyzzyx = np.apply_along_axis(bkouter, 1, xyz, msk=msk)[:, 1:]

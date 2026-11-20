@@ -138,7 +138,9 @@ appropriate default will be chosen; see Technical notes below.
 
 {phang}
 {opt rescale(string)} specifies whether to pre-process the data to
-zero mean and unit variance before passing it on to the external program.
+unit variance before passing it on to the external program. (The data
+are always centered at zero mean, which does not affect the estimates
+but improves the accuracy of the standard errors.)
 Rescaling does not usually affect the results, but can improve numerical
 accuracy and stability when the original variables are measured
 at substantially different scales. Options include {cmd: "yes"} and
